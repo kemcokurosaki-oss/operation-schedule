@@ -618,10 +618,9 @@ function setTaskTypeFilter(type) {
     }
 }
 
-function togglePlanFilter()     { setTaskTypeFilter('planning'); }
-function toggleDrawingFilter()  { setTaskTypeFilter('drawing'); }
-function toggleLongtermFilter() { setTaskTypeFilter('long_lead_item'); }
-function toggleTripFilter()     { setTaskTypeFilter('business_trip'); }
+function togglePlanFilter()    { setTaskTypeFilter('planning'); }
+function toggleDrawingFilter() { setTaskTypeFilter('drawing'); }
+function toggleTripFilter()    { setTaskTypeFilter('business_trip'); }
 
 // 工事番号セレクトボックスの表示更新
 function updateDisplay() {
