@@ -84,7 +84,7 @@ gantt.config.editor_types.number = {
 };
 
 // 担当者プルダウン用インラインエディタ
-const OWNER_OPTIONS = ['藤山','田中','安岡','川邊','檀','堀井','宮﨑','津田','古村','柴田','橋本','松本(英)'];
+const OWNER_OPTIONS = ["堀尾", "三浦", "黒見", "大西(元)", "大西(優)", "木本", "前田", "本郷", "大重"];
 gantt.config.editor_types.owner_select = {
     show: function(id, column, config, placeholder) {
         const opts = OWNER_OPTIONS.map(n =>
@@ -734,7 +734,7 @@ async function _finalizePendingNewTaskToDb(id) {
             completed_sheets: Number(item.completed_sheets) || 0,
             task_type: taskTypeResolved,
             wish_date: item.wish_date || null,
-            is_detailed: true,
+            is_detailed: false,
             hyphen: item.hyphen ?? null,
             last_updated_by: (typeof window._getCurrentEditorName === 'function' ? window._getCurrentEditorName() : '') || ''
         };
@@ -803,7 +803,7 @@ function _computeSortOrderForInsert(projectNumber, machine, unit, taskType, excl
     gantt.eachTask(function(task) {
         if (excludeTaskId != null && String(task.id) === String(excludeTaskId)) return;
         const isDetailed = (task.is_detailed === true || String(task.is_detailed).toUpperCase() === 'TRUE');
-        if (!isDetailed) return;
+        if (isDetailed) return;
         if (String(task.project_number || '').trim() !== pn) return;
         if (String(task.task_type || 'drawing') !== tt) return;
         candidates.push(task);
@@ -853,7 +853,7 @@ function createTask(afterTaskId) {
 
     const visibleTasks = gantt.getTaskByTime().filter(t => {
         const isDetailed = (t.is_detailed === true || String(t.is_detailed).toUpperCase() === 'TRUE');
-        if (!isDetailed) return false;
+        if (isDetailed) return false;
         if (String(t.project_number) !== pf) return false;
         if (currentTaskTypeFilter && String(t.task_type) !== currentTaskTypeFilter) return false;
         return true;
@@ -918,7 +918,7 @@ function createTask(afterTaskId) {
         completed_sheets: 0,
         task_type: taskType,
         wish_date: wishDefault,
-        is_detailed: true,
+        is_detailed: false,
         sort_order: initialSortOrder,
         has_no_date: false,
         add_row_count: 1
@@ -1498,7 +1498,7 @@ function switchColumns(filterType) {
 // スタイルとテンプレート
 gantt.templates.task_text = function(start, end, task) {
     const colorClass = getOwnerColorClass(task.owner);
-    const textColor = (["owner-tsuda", "owner-shibata", "owner-matsumoto"].includes(colorClass)) ? "#222" : "#fff";
+    const textColor = (["owner-hongo", "owner-default"].includes(colorClass)) ? "#222" : "#fff";
     return `<span style="color:${textColor};">${task.text}</span>`;
 };
 
@@ -1530,8 +1530,13 @@ gantt.attachEvent("onBeforeTaskDisplay", function(id, task) {
     if (typeof _taskVisibleOnGantt === 'function') {
         return _taskVisibleOnGantt(task);
     }
+    // 操業工程表では設計工程表のデータ（is_detailed=true）は非表示にする
     const isDetailed = (task.is_detailed === true || String(task.is_detailed).toUpperCase() === 'TRUE');
-    if (!isDetailed) return false;
+    if (isDetailed) return false;
+    
+    // 操業工程表用の表示条件
+    // 現時点では、is_detailed=true 以外のすべてのタスクを表示する設定
+    
     if (currentProjectFilter.length > 0 && !currentProjectFilter.includes(String(task.project_number))) return false;
     if (currentTaskTypeFilter && String(task.task_type) !== currentTaskTypeFilter) return false;
     if (currentOwnerFilter.length > 0) {
