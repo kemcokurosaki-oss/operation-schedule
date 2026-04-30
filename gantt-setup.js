@@ -1,0 +1,1551 @@
+// Gantt 基本構成
+gantt.config.date_format = "%Y-%m-%d";
+
+// date入力で値を選択した時点でインライン編集を確定する
+function _commitInlineDateEdit(inputEl) {
+    if (!inputEl) return;
+    setTimeout(function() {
+        try { inputEl.blur(); } catch (e) {}
+        try {
+            if (gantt.ext && gantt.ext.inlineEditors && gantt.ext.inlineEditors.save) {
+                gantt.ext.inlineEditors.save();
+            }
+        } catch (e) {}
+        try {
+            if (gantt.ext && gantt.ext.inlineEditors && gantt.ext.inlineEditors.hide) {
+                gantt.ext.inlineEditors.hide();
+            }
+        } catch (e) {}
+    }, 0);
+}
+
+// パスワードマネージャの誤検知を避ける共通属性
+function _gridInputAttrs(extraAttrs) {
+    const base = 'autocomplete="off" autocapitalize="off" autocorrect="off" spellcheck="false" data-lpignore="true" data-1p-ignore="true" data-form-type="other"';
+    return extraAttrs ? `${base} ${extraAttrs}` : base;
+}
+
+// 文字列用インラインエディタ（ブラウザの資格情報候補を抑制）
+gantt.config.editor_types.text = {
+    show: function(id, column, config, placeholder) {
+        placeholder.innerHTML = `<input type="text" ${_gridInputAttrs('name="grid_inline_text"')} style="width:100%;height:100%;border:1px solid #7986cb;font-family:メイリオ,sans-serif;font-size:12px;box-sizing:border-box;">`;
+    },
+    hide: function() {},
+    set_value: function(value, id, column, node) {
+        const inp = node.querySelector("input");
+        if (inp) inp.value = (value == null) ? "" : String(value);
+    },
+    get_value: function(id, column, node) {
+        const inp = node.querySelector("input");
+        return inp ? inp.value : "";
+    },
+    is_changed: function(value, id, column, node) {
+        return String(value ?? "") !== String(this.get_value(id, column, node) ?? "");
+    },
+    is_valid: function() { return true; },
+    save: function() {},
+    focus: function(node) {
+        const inp = node.querySelector("input");
+        if (inp) inp.focus();
+    }
+};
+
+// 数値用インラインエディタ（ブラウザの資格情報候補を抑制）
+gantt.config.editor_types.number = {
+    show: function(id, column, config, placeholder) {
+        const minAttr = (column && column.editor && column.editor.min != null) ? ` min="${String(column.editor.min)}"` : "";
+        const maxAttr = (column && column.editor && column.editor.max != null) ? ` max="${String(column.editor.max)}"` : "";
+        const stepAttr = (column && column.editor && column.editor.step != null) ? ` step="${String(column.editor.step)}"` : "";
+        placeholder.innerHTML = `<input type="number"${minAttr}${maxAttr}${stepAttr} ${_gridInputAttrs('name="grid_inline_number"')} style="width:100%;height:100%;border:1px solid #7986cb;font-family:メイリオ,sans-serif;font-size:12px;box-sizing:border-box;">`;
+    },
+    hide: function() {},
+    set_value: function(value, id, column, node) {
+        const inp = node.querySelector("input");
+        if (inp) inp.value = (value == null || value === "") ? "" : String(value);
+    },
+    get_value: function(id, column, node) {
+        const inp = node.querySelector("input");
+        if (!inp) return "";
+        if (inp.value === "") return "";
+        const num = Number(inp.value);
+        return Number.isFinite(num) ? num : "";
+    },
+    is_changed: function(value, id, column, node) {
+        const current = this.get_value(id, column, node);
+        if (current === "" && (value == null || value === "")) return false;
+        return Number(value) !== Number(current);
+    },
+    is_valid: function() { return true; },
+    save: function() {},
+    focus: function(node) {
+        const inp = node.querySelector("input");
+        if (inp) inp.focus();
+    }
+};
+
+// 担当者プルダウン用インラインエディタ
+const OWNER_OPTIONS = ['藤山','田中','安岡','川邊','檀','堀井','宮﨑','津田','古村','柴田','橋本','松本(英)'];
+gantt.config.editor_types.owner_select = {
+    show: function(id, column, config, placeholder) {
+        const opts = OWNER_OPTIONS.map(n =>
+            `<option value="${n}">${n}</option>`
+        ).join('');
+        placeholder.innerHTML = `<select ${_gridInputAttrs('name="grid_inline_owner"')} style="width:100%;height:100%;border:1px solid #7986cb;font-family:メイリオ,sans-serif;font-size:13px;box-sizing:border-box;"><option value=""></option>${opts}</select>`;
+    },
+    hide: function() {},
+    set_value: function(value, id, column, node) {
+        node.querySelector('select').value = value || '';
+    },
+    get_value: function(id, column, node) {
+        return node.querySelector('select').value;
+    },
+    is_changed: function(value, id, column, node) {
+        return value !== this.get_value(id, column, node);
+    },
+    is_valid: function() { return true; },
+    save: function() {},
+    focus: function(node) {
+        var sel = node.querySelector('select');
+        if (sel) sel.focus();
+    }
+};
+
+// ステータスプルダウン用インラインエディタ
+gantt.config.editor_types.status_select = {
+    show: function(id, column, config, placeholder) {
+        placeholder.innerHTML = `<select ${_gridInputAttrs('name="grid_inline_status"')} style="width:100%;height:100%;border:1px solid #7986cb;font-family:メイリオ,sans-serif;font-size:13px;box-sizing:border-box;">
+            <option value=""></option>
+            <option value="未">未</option>
+            <option value="完了">完了</option>
+        </select>`;
+    },
+    hide: function() {},
+    set_value: function(value, id, column, node) {
+        node.querySelector('select').value = value || '';
+    },
+    get_value: function(id, column, node) {
+        return node.querySelector('select').value;
+    },
+    is_changed: function(value, id, column, node) {
+        return value !== this.get_value(id, column, node);
+    },
+    is_valid: function() { return true; },
+    save: function() {},
+    focus: function(node) {
+        var sel = node.querySelector('select');
+        if (sel) sel.focus();
+    }
+};
+
+// 開始日インラインエディタ（計画・出張モード用）
+gantt.config.editor_types.start_date_editor = {
+    show: function(id, column, config, placeholder) {
+        placeholder.innerHTML = `<input type="date" ${_gridInputAttrs('name="grid_inline_start_date"')} style="width:100%;height:100%;border:1px solid #7986cb;font-family:メイリオ,sans-serif;font-size:12px;box-sizing:border-box;">`;
+        var inp = placeholder.querySelector('input');
+        if (inp) {
+            inp.addEventListener('change', function() {
+                _commitInlineDateEdit(inp);
+            });
+        }
+    },
+    hide: function() {},
+    set_value: function(value, id, column, node) {
+        const inp = node.querySelector('input');
+        if (!value) { inp.value = ''; return; }
+        inp.value = _toDateStr(new Date(value));
+    },
+    get_value: function(id, column, node) {
+        const val = node.querySelector('input').value;
+        if (!val) return gantt.getTask(id).start_date;
+        const parts = val.split('-').map(Number);
+        return new Date(parts[0], parts[1] - 1, parts[2]);
+    },
+    is_changed: function(value, id, column, node) {
+        const nv = this.get_value(id, column, node);
+        if (!value || !nv) return true;
+        return value.getTime() !== nv.getTime();
+    },
+    is_valid: function() { return true; },
+    save: function() {},
+    focus: function(node) {
+        const inp = node.querySelector('input');
+        if (inp) { inp.focus(); if (inp.showPicker) try { inp.showPicker(); } catch(e) {} }
+    }
+};
+
+// 完了予定日専用インラインエディタ
+// Supabaseには実際の完了日(YYYY-MM-DD)を保存し、gantt内部では+1日した排他的終了日を使う
+gantt.config.editor_types.completion_date = {
+    show: function(id, column, config, placeholder) {
+        placeholder.innerHTML = '<input type="date" ' + _gridInputAttrs('name="grid_inline_end_date"') + '>';
+        var inp = placeholder.querySelector('input');
+        inp.addEventListener('change', function() {
+            if (!this.value) {
+                _completionDateClear(id);
+                return;
+            }
+            _commitInlineDateEdit(inp);
+        });
+    },
+    hide: function() {},
+    set_value: function(value, id, column, node) {
+        var inp = node.querySelector('input');
+        if (!value || gantt.getTask(id).has_no_date) { inp.value = ''; return; }
+        var d = gantt.date.add(new Date(value), -1, 'day');
+        inp.value = _toDateStr(d);
+    },
+    get_value: function(id, column, node) {
+        var val = node.querySelector('input').value;
+        if (!val) {
+            _clearingEndDateId = id;
+            var task = gantt.getTask(id);
+            var base = (task.start_date instanceof Date) ? task.start_date : new Date();
+            return gantt.date.add(base, 1, 'day');
+        }
+        _clearingEndDateId = null;
+        gantt.getTask(id).has_no_date = false; // 日付再入力時にフラグリセット
+        var parts = val.split('-').map(Number);
+        var completion = new Date(parts[0], parts[1] - 1, parts[2]);
+        return gantt.date.add(completion, 1, 'day');
+    },
+    is_changed: function(value, id, column, node) {
+        var val = node.querySelector('input').value;
+        var origNoDate = !!gantt.getTask(id).has_no_date;
+        var newNoDate  = !val;
+        if (origNoDate && newNoDate) return false;
+        if (origNoDate !== newNoDate) return true;
+        var nv = this.get_value(id, column, node);
+        if (!value || !nv) return true;
+        return value.getTime() !== nv.getTime();
+    },
+    is_valid: function() { return true; },
+    save: function() {},
+    focus: function(node) {
+        var inp = node.querySelector('input');
+        if (!inp) return;
+        inp.focus();
+        if (inp.showPicker) try { inp.showPicker(); } catch(e) {}
+    }
+};
+
+// 総枚数/完了枚数用インラインエディタ（100上限に丸めない）
+gantt.config.editor_types.sheet_count = {
+    show: function(id, column, config, placeholder) {
+        const min = (column && column.editor && column.editor.min != null) ? String(column.editor.min) : "0";
+        const maxAttr = (column && column.editor && column.editor.max != null) ? ` max="${String(column.editor.max)}"` : "";
+        placeholder.innerHTML = `<input type="number" min="${min}"${maxAttr} ${_gridInputAttrs('name="grid_inline_sheet_count"')} style="width:100%;height:100%;border:1px solid #7986cb;font-family:メイリオ,sans-serif;font-size:12px;box-sizing:border-box;">`;
+    },
+    hide: function() {},
+    set_value: function(value, id, column, node) {
+        const inp = node.querySelector("input");
+        inp.value = (value == null || value === "") ? "" : String(value);
+    },
+    get_value: function(id, column, node) {
+        const inp = node.querySelector("input");
+        const raw = inp ? inp.value : "";
+        if (raw === "") return 0;
+        const num = Number(raw);
+        if (!Number.isFinite(num)) return 0;
+        return Math.max(0, Math.floor(num));
+    },
+    is_changed: function(value, id, column, node) {
+        return Number(value) !== Number(this.get_value(id, column, node));
+    },
+    is_valid: function() { return true; },
+    save: function() {},
+    focus: function(node) {
+        const inp = node.querySelector("input");
+        if (inp) inp.focus();
+    }
+};
+
+// 完了予定日クリアボタン：エディタAPIを使わずタスクを直接更新
+function _completionDateClear(taskId) {
+    // インラインエディターを閉じる（APIがあれば使う）
+    try {
+        if (gantt.ext && gantt.ext.inlineEditors) {
+            gantt.ext.inlineEditors.hide();
+        }
+    } catch(e) {}
+
+    var task = gantt.getTask(taskId);
+    if (!task) return;
+    var base = (task.start_date instanceof Date) ? task.start_date : new Date();
+    task.end_date = gantt.date.add(base, 1, 'day');
+    task.has_no_date = true;
+    _clearingEndDateId = taskId;
+    gantt.updateTask(taskId);
+}
+gantt.config.auto_scheduling = true; // 自動スケジューリングを有効化
+gantt.config.drag_links = false; // バー周辺のリンク作成用ハンドル（▲）を非表示
+gantt.config.drag_progress = false; // バー上の進捗ドラッグハンドルを非表示
+gantt.config.start_date = new Date(2025, 0, 1);  // 2025年1月1日
+gantt.config.end_date = new Date(2027, 0, 1);    // 2026年12月31日まで含める
+gantt.config.fit_tasks = false; // 自動調整を無効化
+
+// グリッド幅をレイアウトで固定する関数（dhtmlxGanttの自動スケーリングを防ぐ）
+function _setLayout(gridWidth) {
+    gantt.config.layout = {
+        css: "gantt_container",
+        rows: [
+            {
+                cols: [
+                    {
+                        width: gridWidth,
+                        min_width: 80,
+                        rows: [
+                            { view: "grid", scrollX: "scrollHor", scrollY: "scrollVer" }
+                        ]
+                    },
+                    { resizer: true, width: 1 },
+                    { view: "timeline", scrollX: "scrollHor", scrollY: "scrollVer" },
+                    { view: "scrollbar", id: "scrollVer" }
+                ]
+            },
+            { view: "scrollbar", id: "scrollHor" }
+        ]
+    };
+    gantt.config.grid_width = gridWidth;
+}
+
+function _getColsSum(cols) {
+    return cols.reduce((sum, c) => sum + (c.width || 0), 0);
+}
+
+_setLayout(_getColsSum(_getDrawingColumns()));
+gantt.config.min_column_width = 22; // カレンダーの列幅を22に設定
+gantt.config.inline_editors_save_on_blur = true; // フォーカスが外れたとき自動保存
+gantt.config.row_height = 30;
+gantt.config.scale_height = 60; // 3段構成（20px * 3）に合わせて調整
+// マーカープラグインは initialize() 内で有効化するため、ここでは行わない
+
+// ズーム設定
+const zoomConfig = {
+    levels: [
+        {
+            name: "day",
+            scale_height: 60, // 3段構成（20px * 3）
+            min_column_width: 22,
+            scales: [
+                {unit: "month", step: 1, format: "%Y/%n"},
+                {unit: "day", step: 1, format: "%j", css: function(date) {
+                    const dow = date.getDay();
+                    if (dow === 0) return 'gantt-scale-sun';
+                    if (_isHoliday(date)) return 'gantt-scale-holiday';
+                    if (dow === 6) return 'gantt-scale-sat';
+                    return '';
+                }},
+                {unit: "day", step: 1, format: (date) => ["日", "月", "火", "水", "木", "金", "土"][date.getDay()], css: function(date) {
+                    const dow = date.getDay();
+                    if (dow === 0) return 'gantt-scale-sun';
+                    if (_isHoliday(date)) return 'gantt-scale-holiday';
+                    if (dow === 6) return 'gantt-scale-sat';
+                    return '';
+                }}
+            ]
+        },
+        {
+            name: "week",
+            scale_height: 60, // 2段構成（30px * 2）
+            min_column_width: 22,
+            scales: [
+                {unit: "month", step: 1, format: "%Y/%n"},
+                {unit: "week", step: 1, format: "%j"}
+            ]
+        }
+    ]
+};
+gantt.ext.zoom.init(zoomConfig);
+gantt.ext.zoom.setLevel("day");
+
+function setZoom(level, btn) {
+    gantt.ext.zoom.setLevel(level);
+    document.querySelectorAll('.zoom-btn').forEach(b => b.classList.remove('active'));
+    btn.classList.add('active');
+    if (isResourceView) updateResourceData();
+}
+
+// 選択削除ボタンの表示更新
+function _updateMultiDeleteBtn() {
+    const btn = document.getElementById('multi_delete_btn');
+    const editBtn = document.getElementById('multi_edit_btn');
+    const count = _gridSelection.size;
+    const show = _isEditor && count >= 1;
+    if (btn) {
+        const delCount = document.getElementById('multi_delete_count');
+        if (delCount) delCount.textContent = count;
+        btn.style.display = show ? '' : 'none';
+    }
+    if (editBtn) {
+        const editCount = document.getElementById('multi_edit_count');
+        if (editCount) editCount.textContent = count;
+        editBtn.style.display = show ? '' : 'none';
+    }
+}
+
+// グリッド選択ハイライトを DOM に反映
+function _applyGridSelection() {
+    document.querySelectorAll('#gantt_here .gantt_row[task_id]').forEach(el => {
+        el.classList.toggle('grid-row-selected', _gridSelection.has(el.getAttribute('task_id')));
+    });
+}
+
+// 複数タスク一括削除
+async function deleteSelectedTasks() {
+    const ids = [..._gridSelection].map(id => Number(id));
+    if (ids.length === 0) return;
+    if (!confirm(`選択した ${ids.length} 件のタスクを削除しますか？`)) return;
+
+    const { error } = await supabaseClient
+        .from('tasks')
+        .delete()
+        .in('id', ids);
+
+    if (error) {
+        console.error("Error deleting tasks:", error);
+        alert("削除に失敗しました。\n" + error.message);
+        return;
+    }
+
+    await loadData();
+    document.getElementById('multi_delete_btn').style.display = 'none';
+}
+
+function _resetMultiEditForm() {
+    const container = document.getElementById("multi_edit_form");
+    if (container) {
+        container.querySelectorAll("[data-me-key]").forEach(function(el) {
+            el.value = "";
+        });
+    }
+}
+
+function _sanitizeLabelHtml(html) {
+    return String(html || "")
+        .replace(/<br\s*\/?>/gi, " ")
+        .replace(/<[^>]*>/g, " ")
+        .replace(/\s+/g, " ")
+        .trim();
+}
+
+function _buildMultiEditFieldDefs() {
+    const cols = Array.isArray(gantt.config.columns) ? gantt.config.columns : [];
+    const defs = [];
+    const used = new Set();
+    const mode = String(gantt.config._columnFilterType || currentTaskTypeFilter || "drawing");
+    const isDrawingMode = (mode === "drawing");
+    const isLongLeadMode = (mode === "long_lead_item" || mode === "longterm");
+
+    cols.forEach(function(col) {
+        if (!col || !col.editor || !col.name) return;
+        if (col.name === "add_btn" || col.name === "progress") return;
+        const mapTo = col.editor.map_to || col.name;
+        if (!mapTo || used.has(mapTo)) return;
+        used.add(mapTo);
+
+        let inputType = "text";
+        let options = null;
+        if (mapTo === "start_date" || mapTo === "end_date") {
+            inputType = "date";
+        } else if (col.editor.type === "number") {
+            inputType = "number";
+        } else if (mapTo === "owner") {
+            inputType = "select";
+            options = ["", ...OWNER_OPTIONS];
+        } else if (mapTo === "status") {
+            inputType = "select";
+            options = ["", "未", "完了"];
+        }
+
+        let group = _getMultiEditGroup(mapTo);
+        if (isLongLeadMode && mapTo === "status") {
+            // 長納期品モードでは「状態」を進捗グループに表示する
+            group = "progress";
+        }
+
+        defs.push({
+            key: mapTo,
+            label: _sanitizeLabelHtml(col.label || mapTo),
+            inputType: inputType,
+            options: options,
+            group: group
+        });
+    });
+
+    // 期日（wish_date）はグリッド列に無いので、対象モードのみ末尾に追加する
+    const shouldAddWishDate = (isDrawingMode || isLongLeadMode);
+    if (shouldAddWishDate && !used.has("wish_date")) {
+        defs.push({
+            key: "wish_date",
+            label: isLongLeadMode ? "手配期日" : "出図希望日",
+            inputType: "date",
+            options: null,
+            group: "dates"
+        });
+        used.add("wish_date");
+    }
+
+    // 長納期品では「状態」を「担当」の直後に移動して表示
+    if (isLongLeadMode) {
+        const ownerIdx = defs.findIndex(function(def) { return def.key === "owner"; });
+        const statusIdx = defs.findIndex(function(def) { return def.key === "status"; });
+        if (ownerIdx >= 0 && statusIdx >= 0 && statusIdx !== ownerIdx + 1) {
+            const statusDef = defs.splice(statusIdx, 1)[0];
+            const insertIdx = defs.findIndex(function(def) { return def.key === "owner"; });
+            defs.splice(insertIdx + 1, 0, statusDef);
+        }
+    }
+    return defs;
+}
+
+function _getMultiEditGroup(key) {
+    if (["project_number", "machine", "unit"].includes(key)) return "project";
+    if (key === "text") return "task_name";
+    if (key === "owner") return "owner";
+    if (["start_date", "end_date", "wish_date"].includes(key)) return "dates";
+    if (["total_sheets", "completed_sheets"].includes(key)) return "progress";
+    return "details";
+}
+
+function _renderMultiEditForm() {
+    const container = document.getElementById("multi_edit_form");
+    if (!container) return [];
+    const defs = _buildMultiEditFieldDefs();
+
+    const mode = String(gantt.config._columnFilterType || currentTaskTypeFilter || "drawing");
+    const isLongLeadMode = (mode === "long_lead_item" || mode === "longterm");
+    const sections = isLongLeadMode
+        ? [
+            { id: "project",  title: "① 工事番号・機械・ユニット" },
+            { id: "task_name", title: "② タスク名" },
+            { id: "details",  title: "③ 詳細情報" },
+            { id: "owner",    title: "④ 担当者" },
+            { id: "progress", title: "⑥ 進捗" },
+            { id: "dates",    title: "⑤ 開始日・終了日・期日" }
+        ]
+        : [
+            { id: "project",  title: "① 工事番号・機械・ユニット" },
+            { id: "task_name", title: "② タスク名" },
+            { id: "details",  title: "③ 詳細情報" },
+            { id: "owner",    title: "④ 担当者" },
+            { id: "progress", title: "⑥ 進捗" },
+            { id: "dates",    title: "⑤ 開始日・終了日・期日" }
+        ];
+
+    function renderField(def) {
+        if (def.inputType === "select") {
+            const opts = (def.options || []).map(function(v) {
+                const txt = v || "変更しない";
+                return `<option value="${v}">${txt}</option>`;
+            }).join("");
+            return `<label>${def.label}<select data-me-key="${def.key}" data-me-type="select">${opts}</select></label>`;
+        }
+        const type = def.inputType === "number" ? "number" : (def.inputType === "date" ? "date" : "text");
+        const placeholder = type === "text" ? "未入力なら変更しない" : "";
+        return `<label>${def.label}<input type="${type}" data-me-key="${def.key}" data-me-type="${def.inputType}" placeholder="${placeholder}"></label>`;
+    }
+
+    container.innerHTML = sections.map(function(section) {
+        const fields = defs.filter(function(def) { return def.group === section.id; });
+        if (fields.length === 0) return "";
+        return `<div class="multi-edit-row">
+            ${fields.map(renderField).join("")}
+        </div>`;
+    }).join("");
+    return defs;
+}
+
+let _multiEditDragInitDone = false;
+function _initMultiEditDrag() {
+    if (_multiEditDragInitDone) return;
+    const overlay = document.getElementById("multi_edit_overlay");
+    if (!overlay) return;
+    const dialog = overlay.querySelector(".archive-dialog");
+    const handle = dialog ? dialog.querySelector("h3") : null;
+    if (!dialog || !handle) return;
+
+    let dragging = false;
+    let startX = 0;
+    let startY = 0;
+    let startLeft = 0;
+    let startTop = 0;
+
+    function onMove(e) {
+        if (!dragging) return;
+        const dx = e.clientX - startX;
+        const dy = e.clientY - startY;
+        dialog.style.margin = "0";
+        dialog.style.position = "fixed";
+        dialog.style.left = `${Math.max(8, startLeft + dx)}px`;
+        dialog.style.top = `${Math.max(8, startTop + dy)}px`;
+    }
+
+    function onUp() {
+        if (!dragging) return;
+        dragging = false;
+        document.removeEventListener("mousemove", onMove);
+        document.removeEventListener("mouseup", onUp);
+    }
+
+    handle.addEventListener("mousedown", function(e) {
+        if (e.button !== 0) return;
+        const rect = dialog.getBoundingClientRect();
+        dragging = true;
+        startX = e.clientX;
+        startY = e.clientY;
+        startLeft = rect.left;
+        startTop = rect.top;
+        document.addEventListener("mousemove", onMove);
+        document.addEventListener("mouseup", onUp);
+        e.preventDefault();
+    });
+
+    _multiEditDragInitDone = true;
+}
+
+function openMultiEditModal() {
+    if (!_isEditor) return;
+    const ids = [..._gridSelection];
+    if (ids.length === 0) {
+        alert("行を選択してから一括編集してください。");
+        return;
+    }
+    const overlay = document.getElementById("multi_edit_overlay");
+    if (!overlay) return;
+    _initMultiEditDrag();
+    const label = document.getElementById("multi_edit_count_label");
+    if (label) label.textContent = `対象: ${ids.length}件`;
+    _renderMultiEditForm();
+    overlay.classList.add("open");
+}
+
+function closeMultiEditModal() {
+    const overlay = document.getElementById("multi_edit_overlay");
+    if (!overlay) return;
+    overlay.classList.remove("open");
+}
+
+async function applyMultiEdit() {
+    const ids = [..._gridSelection].map(function(id) { return Number(id); }).filter(Boolean);
+    if (ids.length === 0) {
+        alert("対象行がありません。");
+        closeMultiEditModal();
+        return;
+    }
+
+    const patch = {};
+    const container = document.getElementById("multi_edit_form");
+    if (container) {
+        container.querySelectorAll("[data-me-key]").forEach(function(el) {
+            const key = el.getAttribute("data-me-key");
+            const type = el.getAttribute("data-me-type");
+            const raw = el.value;
+            if (!key) return;
+            if (type === "number") {
+                if (raw === "") return;
+                const n = Number(raw);
+                if (!Number.isFinite(n)) return;
+                patch[key] = n;
+                return;
+            }
+            if (String(raw).trim() === "") return;
+            patch[key] = (type === "text") ? raw.trim() : raw;
+        });
+    }
+
+    if (Object.keys(patch).length === 0) {
+        alert("更新する項目を入力してください。");
+        return;
+    }
+
+    const _editorForPatch = (typeof window._getCurrentEditorName === 'function' ? window._getCurrentEditorName() : '') || '';
+    if (_editorForPatch) patch.last_updated_by = _editorForPatch;
+
+    try {
+        const { error } = await supabaseClient
+            .from("tasks")
+            .update(patch)
+            .in("id", ids);
+        if (error) {
+            console.error("Error in applyMultiEdit:", error);
+            alert("一括編集に失敗しました。\n" + error.message);
+            return;
+        }
+        closeMultiEditModal();
+        await loadData();
+    } catch (e) {
+        console.error("Exception in applyMultiEdit:", e);
+        alert("一括編集中に予期せぬエラーが発生しました。");
+    }
+}
+
+// ライトボックスで入力してから Supabase に保存する仮タスク（createTask 用）
+let _pendingNewTaskLightboxId = null;
+// ライトボックス「保存」後、フォーム反映済みのタスクで INSERT する（onAfterTaskUpdate が発火しない環境向け）
+let _postLightboxInsertTaskId = null;
+let _finalizePendingInsertInProgress = false;
+// クライアントのみ削除（DBに触れない）するとき onAfterTaskDelete を抑止する
+let _suppressTaskDeleteId = null;
+
+async function _finalizePendingNewTaskToDb(id) {
+    if (_finalizePendingInsertInProgress) return;
+    if (_pendingNewTaskLightboxId == null || String(_pendingNewTaskLightboxId) !== String(id)) return;
+    if (!gantt.isTaskExists(id)) {
+        _pendingNewTaskLightboxId = null;
+        return;
+    }
+
+    _finalizePendingInsertInProgress = true;
+    try {
+        const item = gantt.getTask(id);
+        const taskTypeResolved = item.task_type || currentTaskTypeFilter || "drawing";
+        const baseSortOrder = _computeSortOrderForInsert(
+            item.project_number,
+            item.machine,
+            item.unit,
+            taskTypeResolved,
+            id
+        );
+        const addRowCount = Math.max(1, Math.min(100, Number(item.add_row_count) || 1));
+
+        const endDateStr = item.has_no_date
+            ? null
+            : _toDateStr(gantt.date.add(new Date(item.end_date), -1, "day"));
+
+        const insertBaseRow = {
+            text: item.text || "",
+            start_date: _toDateStr(item.start_date),
+            end_date: endDateStr,
+            project_number: item.project_number,
+            machine: item.machine || "",
+            unit: item.unit || "",
+            unit2: item.unit2 || "",
+            model_type: item.model_type || "",
+            part_number: item.part_number || "",
+            quantity: Number(item.quantity) || 0,
+            manufacturer: item.manufacturer || "",
+            status: item.status || "",
+            customer_name: item.customer_name || "",
+            project_details: item.project_details || "",
+            characteristic: item.characteristic || "",
+            derivation: item.derivation || "",
+            owner: item.owner || "",
+            total_sheets: Number(item.total_sheets) || 0,
+            completed_sheets: Number(item.completed_sheets) || 0,
+            task_type: taskTypeResolved,
+            wish_date: item.wish_date || null,
+            is_detailed: true,
+            hyphen: item.hyphen ?? null,
+            last_updated_by: (typeof window._getCurrentEditorName === 'function' ? window._getCurrentEditorName() : '') || ''
+        };
+
+        const insertRows = Array.from({ length: addRowCount }, function(_, idx) {
+            return {
+                ...insertBaseRow,
+                sort_order: baseSortOrder + (idx * 1000)
+            };
+        });
+
+        const { data, error } = await supabaseClient
+            .from("tasks")
+            .insert(insertRows)
+            .select();
+
+        if (error) {
+            console.error("Error adding task:", error);
+            alert("タスクの追加に失敗しました。\n" + error.message);
+            _pendingNewTaskLightboxId = null;
+            _suppressTaskDeleteId = id;
+            if (gantt.isTaskExists(id)) gantt.deleteTask(id);
+            _suppressTaskDeleteId = null;
+            return;
+        }
+
+        _pendingNewTaskLightboxId = null;
+        _suppressTaskDeleteId = id;
+        if (gantt.isTaskExists(id)) gantt.deleteTask(id);
+        _suppressTaskDeleteId = null;
+
+        await loadData();
+
+        if (data && data[0]) {
+            gantt.showTask(data[0].id);
+        }
+    } catch (e) {
+        console.error("Exception in _finalizePendingNewTaskToDb:", e);
+        alert("タスク追加処理中にエラーが発生しました。");
+        _pendingNewTaskLightboxId = null;
+    } finally {
+        _finalizePendingInsertInProgress = false;
+    }
+}
+
+function _sortOrderValue(t) {
+    return (t.sort_order != null) ? t.sort_order : (Number(t.id) * 1000);
+}
+
+function _normKey(s) {
+    return String(s || '').trim();
+}
+
+/**
+ * 保存時の工事番号・機械・ユニットに基づき sort_order を決める。
+ * 同じ3つを持つ行があれば、その並びの末尾の直後に入る。なければその工事番号＋タスク種の末尾。
+ * excludeTaskId: 仮追加行を候補から外す
+ */
+function _computeSortOrderForInsert(projectNumber, machine, unit, taskType, excludeTaskId) {
+    const tt = String(taskType || currentTaskTypeFilter || 'drawing');
+    const pn = String(projectNumber || '').trim();
+    const m = _normKey(machine);
+    const u = _normKey(unit);
+
+    const candidates = [];
+    gantt.eachTask(function(task) {
+        if (excludeTaskId != null && String(task.id) === String(excludeTaskId)) return;
+        const isDetailed = (task.is_detailed === true || String(task.is_detailed).toUpperCase() === 'TRUE');
+        if (!isDetailed) return;
+        if (String(task.project_number || '').trim() !== pn) return;
+        if (String(task.task_type || 'drawing') !== tt) return;
+        candidates.push(task);
+    });
+    candidates.sort((a, b) => _sortOrderValue(a) - _sortOrderValue(b));
+
+    let lastMatchIdx = -1;
+    for (let i = 0; i < candidates.length; i++) {
+        if (_normKey(candidates[i].machine) === m && _normKey(candidates[i].unit) === u) {
+            lastMatchIdx = i;
+        }
+    }
+
+    if (lastMatchIdx >= 0) {
+        const afterTask = candidates[lastMatchIdx];
+        if (lastMatchIdx + 1 < candidates.length) {
+            const nextTask = candidates[lastMatchIdx + 1];
+            return Math.round((_sortOrderValue(afterTask) + _sortOrderValue(nextTask)) / 2);
+        }
+        return _sortOrderValue(afterTask) + 1000;
+    }
+
+    if (candidates.length > 0) {
+        return _sortOrderValue(candidates[candidates.length - 1]) + 1000;
+    }
+    return 1000;
+}
+
+function _getSingleFilterValue(filterValues) {
+    if (!Array.isArray(filterValues) || filterValues.length !== 1) return "";
+    return String(filterValues[0] || "").trim();
+}
+
+// 新規タスク追加：まずライトボックスで入力 → 保存で Supabase に挿入
+// afterTaskId: グリッドの+ボタンから呼ばれた場合はその行の機械・ユニットを初期値に使う
+function createTask(afterTaskId) {
+    if (currentProjectFilter.length !== 1) {
+        alert("工事番号を選択してからタスクを追加してください。");
+        return;
+    }
+    if (_pendingNewTaskLightboxId != null) {
+        alert("新規追加の編集画面が開いています。先に保存またはキャンセルしてください。");
+        return;
+    }
+    const projectNumber = currentProjectFilter[0];
+    const pf = String(projectNumber);
+
+    const visibleTasks = gantt.getTaskByTime().filter(t => {
+        const isDetailed = (t.is_detailed === true || String(t.is_detailed).toUpperCase() === 'TRUE');
+        if (!isDetailed) return false;
+        if (String(t.project_number) !== pf) return false;
+        if (currentTaskTypeFilter && String(t.task_type) !== currentTaskTypeFilter) return false;
+        return true;
+    }).sort((a, b) => _sortOrderValue(a) - _sortOrderValue(b));
+
+    let inheritMachine = _getSingleFilterValue(currentMachineFilter);
+    let inheritUnit = _getSingleFilterValue(currentUnitFilter);
+    let inheritOwner = _getSingleFilterValue(currentOwnerFilter);
+    if (afterTaskId != null) {
+        const t = gantt.getTask(afterTaskId);
+        if (t) {
+            inheritMachine = t.machine || "";
+            inheritUnit = t.unit || "";
+            if (!inheritOwner) {
+                inheritOwner = t.owner || "";
+            }
+        }
+    } else if (visibleTasks.length > 0) {
+        const last = visibleTasks[visibleTasks.length - 1];
+        if (!inheritMachine) inheritMachine = last.machine || "";
+        if (!inheritUnit) inheritUnit = last.unit || "";
+    }
+
+    const today = new Date();
+    const startDate = new Date(today);
+    startDate.setDate(startDate.getDate() - 13);
+    const taskType = currentTaskTypeFilter || "drawing";
+    const initialSortOrder = _computeSortOrderForInsert(
+        projectNumber,
+        inheritMachine,
+        inheritUnit,
+        taskType,
+        null
+    );
+
+    const newId = gantt.uid();
+    _pendingNewTaskLightboxId = newId;
+
+    const wishDefault = (taskType === 'planning' || taskType === 'business_trip') ? null : _toDateStr(today);
+
+    gantt.addTask({
+        id: newId,
+        $new: true,
+        text: "",
+        start_date: startDate,
+        end_date: gantt.date.add(today, 1, 'day'),
+        project_number: projectNumber,
+        machine: inheritMachine,
+        unit: inheritUnit,
+        unit2: "",
+        model_type: "",
+        part_number: "",
+        quantity: 0,
+        manufacturer: "",
+        status: "",
+        customer_name: "",
+        project_details: "",
+        characteristic: "",
+        derivation: "",
+        owner: inheritOwner,
+        total_sheets: 0,
+        completed_sheets: 0,
+        task_type: taskType,
+        wish_date: wishDefault,
+        is_detailed: true,
+        sort_order: initialSortOrder,
+        has_no_date: false,
+        add_row_count: 1
+    });
+
+    gantt.showLightbox(newId);
+}
+
+// 完了予定日クリア時：フラグを元にhas_no_dateを設定
+gantt.attachEvent("onBeforeTaskUpdate", function(id, task) {
+    if (_clearingEndDateId === id) {
+        task.has_no_date = true;
+        _clearingEndDateId = null;
+    }
+    return true;
+});
+
+// Supabase への保存処理（バーのドラッグ等、gantt内部でタスクが追加された場合の安全網）
+gantt.attachEvent("onAfterTaskAdd", async function(id, item) {
+    // createTask() は gantt.addTask で仮行を作り、保存時に onAfterTaskUpdate で INSERT する
+});
+
+gantt.attachEvent("onAfterTaskUpdate", async function(id, item) {
+    try {
+        // 新規（createTask の仮行）の DB 反映は onAfterLightbox 経由の _finalizePendingNewTaskToDb で行う
+        if (_pendingNewTaskLightboxId != null && String(id) === String(_pendingNewTaskLightboxId)) {
+            return;
+        }
+
+        // has_no_dateの場合はend_dateをnullで保存、それ以外は-1日して完了日を保存
+        const endDateStr = item.has_no_date
+            ? null
+            : _toDateStr(gantt.date.add(new Date(item.end_date), -1, 'day'));
+
+        const { error } = await supabaseClient
+            .from('tasks')
+            .update({
+                text: item.text,
+                start_date: _toDateStr(item.start_date),
+                end_date: endDateStr,
+                project_number: item.project_number,
+                machine: item.machine,
+                unit: item.unit,
+                unit2: item.unit2,
+                model_type: item.model_type,
+                part_number: item.part_number,
+                quantity: item.quantity,
+                manufacturer: item.manufacturer,
+                status: item.status,
+                customer_name: item.customer_name,
+                project_details: item.project_details,
+                hyphen: item.hyphen ?? null,
+                characteristic: item.characteristic,
+                derivation: item.derivation,
+                owner: item.owner,
+                total_sheets: Number(item.total_sheets) || 0,
+                completed_sheets: Number(item.completed_sheets) || 0,
+                duration: item.duration,
+                task_type: item.task_type || currentTaskTypeFilter || "drawing",
+                wish_date: item.wish_date || null,
+                last_updated_by: (typeof window._getCurrentEditorName === 'function' ? window._getCurrentEditorName() : '') || ''
+            })
+            .eq('id', id);
+
+        if (error) {
+            console.error("Error updating task:", error);
+            alert("タスクの更新に失敗しました。\n" + error.message);
+        } else {
+            if (isResourceView) updateResourceData();
+            // ▼マークの色を即時更新
+            requestAnimationFrame(_renderWishDateMarks);
+        }
+    } catch (e) {
+        console.error("Exception in onAfterTaskUpdate:", e);
+        alert("タスク更新中に予期せぬエラーが発生しました。");
+    }
+});
+
+// ドラッグ（移動・リサイズ）後にSupabaseへ保存
+gantt.attachEvent("onAfterTaskDrag", async function(id, mode, e) {
+    if (_pendingNewTaskLightboxId != null && String(_pendingNewTaskLightboxId) === String(id)) {
+        return;
+    }
+    const item = gantt.getTask(id);
+    const completionDate = gantt.date.add(new Date(item.end_date), -1, 'day');
+    try {
+        const { error } = await supabaseClient
+            .from('tasks')
+            .update({
+                start_date: _toDateStr(item.start_date),
+                end_date: _toDateStr(completionDate),
+                last_updated_by: (typeof window._getCurrentEditorName === 'function' ? window._getCurrentEditorName() : '') || ''
+            })
+            .eq('id', id);
+        if (error) console.error("Error saving drag:", error);
+        else if (isResourceView) updateResourceData();
+    } catch(e) {
+        console.error("Exception in onAfterTaskDrag:", e);
+    }
+});
+
+gantt.attachEvent("onAfterTaskDelete", async function(id, item) {
+    if (_suppressTaskDeleteId != null && String(_suppressTaskDeleteId) === String(id)) {
+        _suppressTaskDeleteId = null;
+        return;
+    }
+    try {
+        const { error } = await supabaseClient
+            .from('tasks')
+            .delete()
+            .eq('id', id);
+        
+        if (error) {
+            console.error("Error deleting task:", error);
+            alert("タスクの削除に失敗しました。\n" + error.message);
+        }
+    } catch (e) {
+        console.error("Exception in onAfterTaskDelete:", e);
+        alert("タスク削除中に予期せぬエラーが発生しました。");
+    }
+});
+
+// 編集画面（ライトボックス）のセクション定義（タスクタイプ別）
+function _getLightboxSections(taskType) {
+    if (taskType === 'long_lead_item') {
+        return [
+            { name: "project_number",   height: 30, map_to: "project_number", type: "textarea" },
+            { name: "machine",          height: 30, map_to: "machine",         type: "textarea" },
+            { name: "unit",             height: 30, map_to: "unit",            type: "textarea" },
+            { name: "description",      height: 30, map_to: "text",            type: "textarea_full" },
+            { name: "part_number",      height: 30, map_to: "part_number",     type: "textarea" },
+            { name: "quantity",         height: 30, map_to: "quantity",        type: "textarea" },
+            { name: "manufacturer",            height: 30, map_to: "manufacturer",           type: "textarea" },
+            { name: "owner",            height: 30, map_to: "owner",           type: "owner_select_lb" },
+            { name: "end_date",         height: 30, map_to: "end_date",        type: "template" },
+            { name: "wish_date_lb",     height: 30, map_to: "wish_date",       type: "wish_date_lb" },
+            { name: "add_row_count",    height: 30, map_to: "add_row_count",   type: "add_row_count_lb" },
+        ];
+    } else if (taskType === 'planning' || taskType === 'business_trip') {
+        return [
+            { name: "project_number",  height: 30, map_to: "project_number",  type: "textarea" },
+            { name: "customer_name",   height: 30, map_to: "customer_name",   type: "textarea" },
+            { name: "project_details", height: 30, map_to: "project_details", type: "textarea" },
+            { name: "description",     height: 30, map_to: "text",            type: "textarea_full" },
+            { name: "owner",           height: 30, map_to: "owner",           type: "owner_select_lb" },
+            { name: "date_range",      height: 30, map_to: "start_date",      type: "date_range" },
+            { name: "add_row_count",   height: 30, map_to: "add_row_count",   type: "add_row_count_lb" },
+        ];
+    } else {
+        // drawing（デフォルト）
+        return [
+            { name: "project_number",   height: 30, map_to: "project_number",  type: "textarea" },
+            { name: "machine",          height: 30, map_to: "machine",          type: "textarea" },
+            { name: "unit",             height: 30, map_to: "unit",             type: "textarea" },
+            { name: "description",      height: 30, map_to: "text",             type: "textarea_full" },
+            { name: "model_type",       height: 30, map_to: "model_type",       type: "textarea" },
+            { name: "unit2",            height: 30, map_to: "unit2",            type: "textarea" },
+            { name: "characteristic",   height: 30, map_to: "characteristic",   type: "textarea" },
+            { name: "derivation",       height: 30, map_to: "derivation",       type: "textarea" },
+            { name: "owner",            height: 30, map_to: "owner",            type: "owner_select_lb" },
+            { name: "sheets_pair",      height: 30, map_to: "total_sheets",     type: "sheets_pair" },
+            { name: "date_range",       height: 30, map_to: "start_date",       type: "date_range" },
+            { name: "wish_date_lb",     height: 30, map_to: "wish_date",        type: "wish_date_lb" },
+            { name: "add_row_count",    height: 30, map_to: "add_row_count",    type: "add_row_count_lb" },
+        ];
+    }
+}
+
+gantt.config.lightbox.sections = _getLightboxSections('drawing');
+
+gantt.locale.labels.section_project_number   = "工事番号";
+gantt.locale.labels.section_machine          = "機械";
+gantt.locale.labels.section_unit             = "ユニット";
+gantt.locale.labels.section_description      = "組立図面名 / 品名 / タスク";
+gantt.locale.labels.section_model_type       = "機種";
+gantt.locale.labels.section_unit2            = "ユニット2";
+gantt.locale.labels.section_characteristic   = "特性";
+gantt.locale.labels.section_derivation       = "派生";
+gantt.locale.labels.section_owner            = "担当";
+gantt.locale.labels.section_total_sheets     = "総枚数";
+gantt.locale.labels.section_completed_sheets = "完了枚数";
+gantt.locale.labels.section_sheets_pair      = "枚数";
+gantt.locale.labels.section_start_date       = "開始日";
+gantt.locale.labels.section_end_date         = "完了予定日";
+gantt.locale.labels.section_date_range       = "期間";
+gantt.locale.labels.section_part_number      = "型式・図番";
+gantt.locale.labels.section_quantity         = "個数";
+gantt.locale.labels.section_manufacturer            = "メーカー";
+gantt.locale.labels.section_customer_name    = "客先";
+gantt.locale.labels.section_project_details  = "工事名";
+gantt.locale.labels.section_wish_date_lb     = "出図希望日 / 手配期日";
+gantt.locale.labels.section_add_row_count    = "追加行数";
+
+// カスタムテンプレート（input type="date"）
+// 全幅テキストエリア（組立図面名・品名など）
+gantt.form_blocks["textarea_full"] = {
+    render: function(sns) {
+        return "<div class='gantt_cal_ltext'><textarea class='lb-textarea-full' style='height:26px;font-size:12px;line-height:18px;padding:4px 4px 0 4px;box-sizing:border-box;resize:none;overflow:hidden;border:1px solid #ccc;border-radius:4px;'></textarea></div>";
+    },
+    set_value: function(node, value, task, sns) {
+        node.querySelector("textarea").value = value || '';
+    },
+    get_value: function(node, task, sns) {
+        return node.querySelector("textarea").value;
+    },
+    focus: function(node) {
+        node.querySelector("textarea").focus();
+    }
+};
+
+// 担当プルダウン（ライトボックス用）
+gantt.form_blocks["owner_select_lb"] = {
+    render: function(sns) {
+        const opts = ['', ...OWNER_OPTIONS].map(n =>
+            `<option value="${n}">${n || '-- 未選択 --'}</option>`).join('');
+        return `<div class='gantt_cal_ltext'><select style='width:100%;height:30px;border:1px solid #ccc;border-radius:4px;padding:0 5px;'>${opts}</select></div>`;
+    },
+    set_value: function(node, value, task, sns) {
+        node.querySelector("select").value = value || '';
+    },
+    get_value: function(node, task, sns) {
+        return node.querySelector("select").value;
+    },
+    focus: function(node) {
+        node.querySelector("select").focus();
+    }
+};
+
+// 新規追加時にまとめて何行追加するか指定するプルダウン
+gantt.form_blocks["add_row_count_lb"] = {
+    render: function(sns) {
+        return `<div class='gantt_cal_ltext' style='display:flex;align-items:center;gap:6px;'>
+            <input type='number' min='1' max='100' step='1' style='width:70px;height:26px;border:1px solid #ccc;border-radius:4px;padding:0 4px;font-size:12px;'>
+            <span style='font-size:12px;color:#555;'>行</span>
+        </div>`;
+    },
+    set_value: function(node, value, task, sns) {
+        const select = node.querySelector("input[type='number']");
+        const normalized = Number(value) || 1;
+        select.value = String(Math.max(1, Math.min(100, normalized)));
+        const isPendingNew = (_pendingNewTaskLightboxId != null && String(_pendingNewTaskLightboxId) === String(task.id));
+        select.disabled = !isPendingNew;
+    },
+    get_value: function(node, task, sns) {
+        const val = Number(node.querySelector("input[type='number']").value) || 1;
+        return Math.max(1, Math.min(100, val));
+    },
+    focus: function(node) {
+        const el = node.querySelector("input[type='number']");
+        if (el && !el.disabled) el.focus();
+    }
+};
+
+// 出図希望日 / 手配期日（wish_date、文字列 YYYY-MM-DD）ライトボックス用
+gantt.form_blocks["wish_date_lb"] = {
+    render: function(sns) {
+        return "<div class='gantt_cal_ltext'><input type='date' style='width:110px;height:26px;border:1px solid #ccc;border-radius:4px;padding:0 4px;font-size:12px;'></div>";
+    },
+    set_value: function(node, value, task, sns) {
+        node.querySelector("input").value = value || '';
+    },
+    get_value: function(node, task, sns) {
+        return node.querySelector("input").value || null;
+    },
+    focus: function(node) {
+        node.querySelector("input").focus();
+    }
+};
+
+gantt.form_blocks["template"] = {
+    render: function(sns) {
+        return "<div class='gantt_cal_ltext'><input type='date' id='cal_" + sns.name + "' style='width:110px;height:26px;border:1px solid #ccc;border-radius:4px;padding:0 4px;font-size:12px;'></div>";
+    },
+    set_value: function(node, value, task, sns) {
+        const input = node.querySelector("input");
+        if (value) {
+            const date = new Date(value);
+            const y = date.getFullYear();
+            const m = ("0" + (date.getMonth() + 1)).slice(-2);
+            const d = ("0" + date.getDate()).slice(-2);
+            input.value = `${y}-${m}-${d}`;
+        }
+    },
+    get_value: function(node, task, sns) {
+        return node.querySelector("input").value;
+    },
+    focus: function(node) {
+        node.querySelector("input").focus();
+    }
+};
+
+// 総枚数と完了枚数を横並びで表示するカスタムフォームブロック
+gantt.form_blocks["sheets_pair"] = {
+    render: function(sns) {
+        return `<div class='gantt_cal_ltext' style='display:flex;gap:6px;align-items:center;'>
+            <span style='font-size:11px;white-space:nowrap;color:#555;'>総枚数</span>
+            <input type='number' id='lb_total_sheets' min='0' style='width:60px;height:26px;border:1px solid #ccc;border-radius:4px;padding:0 4px;font-size:12px;'>
+            <span style='font-size:11px;white-space:nowrap;color:#555;'>完了枚数</span>
+            <input type='number' id='lb_completed_sheets' min='0' style='width:60px;height:26px;border:1px solid #ccc;border-radius:4px;padding:0 4px;font-size:12px;'>
+        </div>`;
+    },
+    set_value: function(node, value, task, sns) {
+        document.getElementById('lb_total_sheets').value     = task.total_sheets     || '';
+        document.getElementById('lb_completed_sheets').value = task.completed_sheets || '';
+    },
+    get_value: function(node, task, sns) {
+        task.total_sheets     = document.getElementById('lb_total_sheets').value;
+        task.completed_sheets = document.getElementById('lb_completed_sheets').value;
+        return task.total_sheets;
+    },
+    focus: function(node) {
+        const el = document.getElementById('lb_total_sheets');
+        if (el) el.focus();
+    }
+};
+
+// 開始日と完了予定日を横並びで表示するカスタムフォームブロック
+gantt.form_blocks["date_range"] = {
+    render: function(sns) {
+        return `<div class='gantt_cal_ltext' style='display:flex;gap:6px;align-items:center;'>
+            <span style='font-size:11px;white-space:nowrap;color:#555;'>開始日</span>
+            <input type='date' id='cal_start_date' style='width:110px;height:26px;border:1px solid #ccc;border-radius:4px;padding:0 4px;font-size:12px;'>
+            <span style='font-size:11px;white-space:nowrap;color:#555;'>完了予定日</span>
+            <input type='date' id='cal_end_date' style='width:110px;height:26px;border:1px solid #ccc;border-radius:4px;padding:0 4px;font-size:12px;'>
+        </div>`;
+    },
+    set_value: function(node, value, task, sns) {
+        const startInput = document.getElementById('cal_start_date');
+        const endInput   = document.getElementById('cal_end_date');
+        if (task.start_date) {
+            const d = new Date(task.start_date);
+            startInput.value = `${d.getFullYear()}-${("0"+(d.getMonth()+1)).slice(-2)}-${("0"+d.getDate()).slice(-2)}`;
+        }
+        if (task.end_date) {
+            // end_date はDHTMLX排他的終了（翌日0時）なので1日引いて表示
+            const d = new Date(task.end_date.getTime() - 24*60*60*1000);
+            endInput.value = `${d.getFullYear()}-${("0"+(d.getMonth()+1)).slice(-2)}-${("0"+d.getDate()).slice(-2)}`;
+        }
+    },
+    get_value: function(node, task, sns) {
+        // 実際の保存処理は onLightboxSave で行う
+        return task.start_date;
+    },
+    focus: function(node) {
+        const el = document.getElementById('cal_start_date');
+        if (el) el.focus();
+    }
+};
+
+// 完了予定日と期間から開始日を計算するロジック
+gantt.attachEvent("onTaskLoading", function(task){
+    if (task.start_date && task.end_date) {
+        // 初期読み込み時はそのまま
+    }
+    return true;
+});
+
+// ライトボックス保存時の処理
+gantt.attachEvent("onLightboxSave", function(id, task, is_new){
+    const startEl = document.getElementById("cal_start_date");
+    const endEl   = document.getElementById("cal_end_date");
+    const startStr = startEl ? startEl.value : "";
+    const endStr   = endEl   ? endEl.value   : "";
+    const duration = parseInt(task.duration) || 1;
+
+    if (startStr && endStr) {
+        task.start_date = new Date(startStr);
+        task.end_date = new Date(endStr);
+        task.end_date = gantt.date.add(task.end_date, 1, "day");
+        task.duration = gantt.calculateDuration(task.start_date, task.end_date);
+    } else if (startStr && duration) {
+        task.start_date = new Date(startStr);
+        task.end_date = gantt.date.add(task.start_date, duration, "day");
+    } else if (endStr && duration) {
+        task.end_date = new Date(endStr);
+        task.end_date = gantt.date.add(task.end_date, 1, "day");
+        task.start_date = gantt.date.add(task.end_date, -duration, "day");
+    }
+
+    if (_pendingNewTaskLightboxId != null && String(_pendingNewTaskLightboxId) === String(id)) {
+        _postLightboxInsertTaskId = id;
+    }
+
+    return true;
+});
+
+// ライトボックス表示前の処理（担当別モード時は非表示）
+gantt.attachEvent("onBeforeLightbox", function(id) {
+    if (isResourceFullscreen) return false;
+    const task = gantt.getTask(id);
+    const taskType = task ? (task.task_type || 'drawing') : 'drawing';
+    gantt.config.lightbox.sections = _getLightboxSections(taskType);
+
+    if (taskType === 'long_lead_item') {
+        gantt.locale.labels.section_description  = "品名";
+        gantt.locale.labels.section_wish_date_lb = "手配期日";
+    } else if (taskType === 'planning' || taskType === 'business_trip') {
+        gantt.locale.labels.section_description  = "タスク";
+    } else {
+        gantt.locale.labels.section_description  = "組立図面名";
+        gantt.locale.labels.section_wish_date_lb = "出図希望日";
+    }
+
+    return true;
+});
+
+// ライトボックスを閉じた時の後処理
+gantt.attachEvent("onAfterLightbox", function() {
+    const insertId = _postLightboxInsertTaskId;
+    _postLightboxInsertTaskId = null;
+    if (insertId != null) {
+        setTimeout(function() {
+            _finalizePendingNewTaskToDb(insertId);
+        }, 0);
+    }
+    return true;
+});
+
+gantt.attachEvent("onLightboxCancel", function(id) {
+    if (_postLightboxInsertTaskId != null && String(_postLightboxInsertTaskId) === String(id)) {
+        _postLightboxInsertTaskId = null;
+    }
+    if (_pendingNewTaskLightboxId != null && String(_pendingNewTaskLightboxId) === String(id)) {
+        _pendingNewTaskLightboxId = null;
+        _suppressTaskDeleteId = id;
+        if (gantt.isTaskExists(id)) gantt.deleteTask(id);
+        _suppressTaskDeleteId = null;
+    }
+    return true;
+});
+
+// 日付フォーマット共通テンプレート
+function _fmtDate(obj) {
+    if (obj.has_no_date || !obj.end_date) return "";
+    // end_dateはdhtmlxGanttの排他的終了（完了日の翌日0時）なので1日引いて完了日を表示
+    const date = new Date(obj.end_date.getTime() - 24 * 60 * 60 * 1000);
+    const y = String(date.getFullYear()).slice(-2);
+    const m = ("0" + (date.getMonth() + 1)).slice(-2);
+    const d = ("0" + date.getDate()).slice(-2);
+    return `${y}/${m}/${d}`;
+}
+
+// 進捗テンプレート
+function _progressTemplate(obj) {
+    const total = parseFloat(obj.total_sheets) || 0;
+    const completed = parseFloat(obj.completed_sheets) || 0;
+    const taskType = String(obj.task_type || "");
+    let progress = 0;
+    if (total > 0) {
+        progress = Math.min(100, Math.round((completed / total) * 100));
+    }
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+    const isDrawingComplete = (taskType === "drawing" && progress >= 100);
+    const isOverdue = (progress === 0 && obj.end_date && obj.end_date < today);
+    const fillClass = isDrawingComplete
+        ? "progress-fill progress-complete"
+        : (isOverdue ? "progress-fill progress-overdue" : "progress-fill");
+    const textColor = isDrawingComplete ? "#666" : "black";
+    const fillWidth = isOverdue ? "100%" : `${progress}%`;
+    return `<div class="progress-cell-container">
+                <div class="${fillClass}" style="width:${fillWidth};"></div>
+                <span style="position:relative; z-index:2; color:${textColor}; font-weight:normal;">${progress}%</span>
+            </div>`;
+}
+
+function _isCompletedForDisplay(task) {
+    const taskType = String(task.task_type || "");
+
+    if (taskType === "drawing") {
+        const total = parseFloat(task.total_sheets) || 0;
+        if (total <= 0) return false;
+        const completed = parseFloat(task.completed_sheets) || 0;
+        const progress = Math.min(100, Math.round((completed / total) * 100));
+        return progress >= 100;
+    }
+
+    if (taskType === "long_lead_item") {
+        return String(task.status || "").trim() === "完了";
+    }
+
+    return false;
+}
+
+// 図面列定義（デフォルト）
+function _getDrawingColumns() {
+    return [
+        { name: "project_number",   label: "工事<br>番号",   width: 35, align: "center", editor: { type: "text",   map_to: "project_number" } },
+        { name: "machine",          label: "機械",           width: 35, align: "center", editor: { type: "text",   map_to: "machine" } },
+        { name: "unit",             label: "ユニ",           width: 45, align: "center", editor: { type: "text",   map_to: "unit" } },
+        { name: "text",             label: "組立図面名",     width: 235, tree: true,      editor: { type: "text",   map_to: "text" } },
+        { name: "model_type",       label: "機種",           width: 30, align: "center", editor: { type: "text",   map_to: "model_type" } },
+        { name: "unit2",            label: "ユニ<br>2",      width: 30, align: "center", editor: { type: "text",   map_to: "unit2" } },
+        { name: "dash",             label: "-",              width: 25, align: "center", template: (task) => task.hyphen ?? "-", editor: { type: "text", map_to: "hyphen" } },
+        { name: "characteristic",   label: "特性",           width: 30, align: "center", editor: { type: "text",   map_to: "characteristic" } },
+        { name: "derivation",       label: "派生",           width: 30, align: "center", editor: { type: "text",   map_to: "derivation" } },
+        { name: "owner",            label: "担当",           width: 45, align: "center", editor: { type: "owner_select", map_to: "owner" } },
+        { name: "total_sheets",     label: "総<br>枚数",     width: 50, align: "center", editor: { type: "sheet_count", map_to: "total_sheets",     min: 0 } },
+        { name: "completed_sheets", label: "完了<br>枚数",   width: 50, align: "center", editor: { type: "sheet_count", map_to: "completed_sheets", min: 0 } },
+        { name: "progress",         label: "進捗",           width: 40, align: "center", template: _progressTemplate },
+        { name: "end_date",         label: "完了<br>予定日", width: 65, align: "center", template: _fmtDate, editor: { type: "completion_date", map_to: "end_date" } },
+        { name: "add_btn",          label: "",               width: 30, align: "center", template: (task) => _isEditor ? `<div class='custom_add_btn' onclick='createTask(${task.id})'>+</div>` : '' }
+    ];
+}
+// 図面列合計: 18+18+120+16+16+14+16+16+16+16+16+20+20+20 = 342px
+
+// 長納期品列定義
+function _getLongtermColumns() {
+    return [
+        { name: "project_number", label: "工事<br>番号", width: 35,  align: "center", editor: { type: "text",   map_to: "project_number" } },
+        { name: "machine",    label: "機械",           width: 32,  align: "center", editor: { type: "text",   map_to: "machine" } },
+        { name: "unit",       label: "ユニ",           width: 40,  align: "center", editor: { type: "text",   map_to: "unit" } },
+        { name: "text",       label: "品名",           width: 173, tree: true,      editor: { type: "text",   map_to: "text" } },
+        { name: "part_number", label: "型式・図番",     width: 115, align: "left", editor: { type: "text",   map_to: "part_number" } },
+        { name: "quantity",   label: "個数",           width: 28,  align: "center", editor: { type: "number", map_to: "quantity", min: 0, max: 99 } },
+        { name: "manufacturer",      label: "メーカー",       width: 70,  align: "center", editor: { type: "text",   map_to: "manufacturer" } },
+        { name: "owner",      label: "担当",           width: 40,  align: "center", editor: { type: "owner_select", map_to: "owner" } },
+        { name: "end_date",   label: "手配<br>予定日", width: 60,  align: "center", template: _fmtDate, editor: { type: "completion_date", map_to: "end_date" } },
+        { name: "status",     label: "状態",           width: 32,  align: "center",
+          template: function(task) {
+              const v = task.status || '';
+              if (v === '未') return `<span style="display:block;width:100%;background:#e53935;color:#000;border-radius:2px;">${v}</span>`;
+              return v;
+          },
+          editor: { type: "status_select", map_to: "status" } },
+        { name: "add_btn",    label: "",               width: 25,  align: "center", template: (task) => _isEditor ? `<div class='custom_add_btn' onclick='createTask(${task.id})'>+</div>` : '' }
+    ];
+}
+// 長納期品列合計: 32+42+190+85+28+70+32+60+20 = 559px
+
+// 列設定の初期化（固定初期幅）
+gantt.config.columns = _getDrawingColumns();
+gantt.config._columnFilterType = 'drawing';
+
+// 出張列定義
+function _getTripColumns() {
+    return [
+        { name: "project_number",  label: "工事番号", width: 60,  align: "center", editor: { type: "text", map_to: "project_number" } },
+        { name: "machine",         label: "機械",     width: 40,  align: "center", editor: { type: "text", map_to: "machine" } },
+        { name: "unit",            label: "ユニ",     width: 40,  align: "center", editor: { type: "text", map_to: "unit" } },
+        { name: "text",            label: "タスク",   width: 210, tree: true,      editor: { type: "text", map_to: "text" } },
+        { name: "owner",           label: "担当",     width: 60,  align: "center", editor: { type: "owner_select", map_to: "owner" } },
+        { name: "start_date",      label: "開始日",   width: 65,  align: "center",
+          template: function(task) {
+            if (!task.start_date) return "";
+            const d = task.start_date;
+            const yy = String(d.getFullYear()).slice(-2);
+            const mm = String(d.getMonth() + 1).padStart(2, '0');
+            const dd = String(d.getDate()).padStart(2, '0');
+            return yy + '/' + mm + '/' + dd;
+          },
+          editor: { type: "start_date_editor", map_to: "start_date" } },
+        { name: "end_date",        label: "終了日",   width: 65,  align: "center", template: _fmtDate, editor: { type: "completion_date", map_to: "end_date" } },
+        { name: "add_btn",         label: "",         width: 25,  align: "center", template: (task) => _isEditor ? `<div class='custom_add_btn' onclick='createTask(${task.id})'>+</div>` : '' }
+    ];
+}
+// 計画/出張列合計: 60+35+35+245+35+65+65+25 = 565px
+
+function _colSetKeyFromFilter(filterType) {
+    if (filterType === 'long_lead_item') return 'longterm';
+    if (filterType === 'business_trip' || filterType === 'planning') return 'trip';
+    return 'default';
+}
+
+// 列セット切り替え
+function switchColumns(filterType) {
+    var baseCols;
+    if (filterType === 'long_lead_item') baseCols = _getLongtermColumns();
+    else if (filterType === 'business_trip' || filterType === 'planning') baseCols = _getTripColumns();
+    else baseCols = _getDrawingColumns();
+    gantt.config.columns = baseCols;
+    gantt.config._columnFilterType = filterType;
+    _setLayout(_getColsSum(baseCols));
+    gantt.render();
+}
+
+// スタイルとテンプレート
+gantt.templates.task_text = function(start, end, task) {
+    const colorClass = getOwnerColorClass(task.owner);
+    const textColor = (["owner-tsuda", "owner-shibata", "owner-matsumoto"].includes(colorClass)) ? "#222" : "#fff";
+    return `<span style="color:${textColor};">${task.text}</span>`;
+};
+
+gantt.templates.task_class = function(start, end, task) {
+    let css = task.has_no_date ? "hidden_bar " : "";
+    css += getOwnerColorClass(task.owner);
+    return css;
+};
+gantt.templates.timeline_cell_class = function(task, date) {
+    if (gantt.getState().scale_unit === "day" &&
+        (date.getDay() === 0 || date.getDay() === 6 || _isHoliday(date))) return "weekend";
+    return "";
+};
+
+gantt.templates.grid_row_class = function(start, end, task) {
+    return _isCompletedForDisplay(task) ? "gantt-row-completed" : "";
+};
+// スケールヘッダーの土日・社内休日セルにクラスを付与（描画時に適用されるためスクロールで崩れない）
+gantt.templates.scale_cell_class = function(date) {
+    const dow = date.getDay();
+    if (dow === 0) return 'gantt-scale-sun';
+    if (_isHoliday(date)) return 'gantt-scale-holiday';
+    if (dow === 6) return 'gantt-scale-sat';
+    return '';
+};
+
+// フィルタリング（is_detailedのみ表示、かつ各種フィルタ）— data.js の _taskVisibleOnGantt と同期
+gantt.attachEvent("onBeforeTaskDisplay", function(id, task) {
+    if (typeof _taskVisibleOnGantt === 'function') {
+        return _taskVisibleOnGantt(task);
+    }
+    const isDetailed = (task.is_detailed === true || String(task.is_detailed).toUpperCase() === 'TRUE');
+    if (!isDetailed) return false;
+    if (currentProjectFilter.length > 0 && !currentProjectFilter.includes(String(task.project_number))) return false;
+    if (currentTaskTypeFilter && String(task.task_type) !== currentTaskTypeFilter) return false;
+    if (currentOwnerFilter.length > 0) {
+        const taskOwners = String(task.owner || '').split(/[,、\s]+/).map(o => o.trim());
+        if (!currentOwnerFilter.some(f => taskOwners.includes(f))) return false;
+    }
+    if (currentMachineFilter.length > 0) {
+        const m = String(task.machine || '').trim();
+        if (!currentMachineFilter.includes(m)) return false;
+    }
+    if (currentUnitFilter.length > 0) {
+        const u = String(task.unit || '').trim();
+        if (!currentUnitFilter.includes(u)) return false;
+    }
+    return true;
+});
+
