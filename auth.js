@@ -91,13 +91,12 @@ function handleAuthBtn() {
 
 // ===== ヘルプツールチップ =====
 // 表示モードボタン（activeなものだけ表示）
-var MODE_FILTER_IDS = ['resource_home_btn', 'plan_filter_btn', 'drawing_filter_btn', 'longterm_filter_btn', 'trip_filter_btn'];
+var MODE_FILTER_IDS = ['resource_home_btn', 'plan_filter_btn', 'drawing_filter_btn', 'trip_filter_btn'];
 var MODE_FILTER_TIPS = {
-    'resource_home_btn':   { title: '担当別（表示中）',   text: '担当者別リソースを全画面表示中\nクリックで通常のガントチャートに戻ります' },
-    'plan_filter_btn':     { title: '計画（表示中）',     text: '計画タスクのみ表示中\nクリックで解除します' },
-    'drawing_filter_btn':  { title: '図面（表示中）',     text: '図面タスクのみ表示中（デフォルト）\nクリックで解除します' },
-    'longterm_filter_btn': { title: '長納期品（表示中）', text: '長納期部品タスクのみ表示中\nクリックで解除します' },
-    'trip_filter_btn':     { title: '出張（表示中）',     text: '出張タスクのみ表示中\nクリックで解除します' },
+    'resource_home_btn':  { title: '担当別（表示中）',   text: '担当者別リソースを全画面表示中\nクリックで通常のガントチャートに戻ります' },
+    'plan_filter_btn':    { title: '計画（表示中）',     text: '計画タスクのみ表示中\nクリックで解除します' },
+    'drawing_filter_btn': { title: '試運転（表示中）',   text: '試運転タスクのみ表示中（デフォルト）\nクリックで解除します' },
+    'trip_filter_btn':    { title: '出張（表示中）',     text: '出張タスクのみ表示中\nクリックで解除します' },
 };
 var HELP_TIPS = [
     { id: 'zoom_day_btn',        title: '日単位',            text: '1日単位で詳細表示（デフォルト）' },
