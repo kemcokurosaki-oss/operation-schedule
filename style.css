@@ -226,18 +226,15 @@ html, body { margin: 0; padding: 0; height: 100%; overflow: hidden; font-family:
 .resource-bar-text { padding: 0 5px; overflow: hidden; text-overflow: ellipsis; }
 
 /* 担当者ごとのバーの色設定（区別しやすいように調整） */
-.owner-fujiyama { background-color: #e74c3c !important; border-color: #c0392b !important; color: #fff !important; } /* 鮮やかな赤 */
-.owner-tanaka { background-color: #3498db !important; border-color: #2980b9 !important; color: #fff !important; }   /* 鮮やかな青 */
-.owner-yasuoka { background-color: #2ecc71 !important; border-color: #27ae60 !important; color: #fff !important; }  /* 鮮やかな緑 */
-.owner-kawabe { background-color: #f39c12 !important; border-color: #d35400 !important; color: #fff !important; }  /* オレンジ */
-.owner-dan { background-color: #9b59b6 !important; border-color: #8e44ad !important; color: #fff !important; }     /* 濃い紫 */
-.owner-horii { background-color: #1abc9c !important; border-color: #16a085 !important; color: #fff !important; }   /* ターコイズ */
-.owner-miyazaki { background-color: #e84393 !important; border-color: #d63031 !important; color: #fff !important; } /* 濃いピンク */
-.owner-tsuda { background-color: #badc58 !important; border-color: #6ab04c !important; color: #222 !important; }   /* ライム */
-.owner-komura { background-color: #2c3e50 !important; border-color: #1a252f !important; color: #fff !important; }   /* ネイビー */
-.owner-shibata { background-color: #f1c40f !important; border-color: #f39c12 !important; color: #222 !important; }  /* 鮮やかな黄 */
-.owner-hashimoto { background-color: #686de0 !important; border-color: #4834d4 !important; color: #fff !important; } /* ロイヤルブルー */
-.owner-matsumoto { background-color: #7ed6df !important; border-color: #22a6b3 !important; color: #222 !important; } /* 明るい水色 */
+.owner-horio { background-color: #e74c3c !important; border-color: #c0392b !important; color: #fff !important; } /* 堀尾: 赤 */
+.owner-miura { background-color: #3498db !important; border-color: #2980b9 !important; color: #fff !important; } /* 三浦: 青 */
+.owner-kuromi { background-color: #2ecc71 !important; border-color: #27ae60 !important; color: #fff !important; } /* 黒見: 緑 */
+.owner-onishi-m { background-color: #f39c12 !important; border-color: #d35400 !important; color: #fff !important; } /* 大西(元): オレンジ */
+.owner-onishi-y { background-color: #9b59b6 !important; border-color: #8e44ad !important; color: #fff !important; } /* 大西(優): 紫 */
+.owner-kimoto { background-color: #1abc9c !important; border-color: #16a085 !important; color: #fff !important; } /* 木本: ターコイズ */
+.owner-maeda { background-color: #e84393 !important; border-color: #d63031 !important; color: #fff !important; } /* 前田: ピンク */
+.owner-hongo { background-color: #badc58 !important; border-color: #6ab04c !important; color: #222 !important; } /* 本郷: ライム */
+.owner-oshige { background-color: #2c3e50 !important; border-color: #1a252f !important; color: #fff !important; } /* 大重: ネイビー */
 .owner-default { background-color: #95a5a6 !important; border-color: #7f8c8d !important; color: #fff !important; }  /* グレー */
 
 /* コンフリクト背景（無効化：透明に設定） */

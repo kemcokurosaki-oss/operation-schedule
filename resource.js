@@ -14,19 +14,15 @@ const COLUMN_WIDTHS = [55, 55, 250, 50, 60, 30, 40, 40, 60, 60, 60, 60, 110, 44]
 
 // 担当者とCSSクラスのマップ
 const ownerColorMap = {
-    "藤山": "owner-fujiyama",
-    "田中(善)": "owner-tanaka",
-    "田中": "owner-tanaka",
-    "安岡": "owner-yasuoka",
-    "川邊": "owner-kawabe",
-    "檀": "owner-dan",
-    "堀井": "owner-horii",
-    "宮﨑": "owner-miyazaki",
-    "津田": "owner-tsuda",
-    "古村": "owner-komura",
-    "柴田": "owner-shibata",
-    "橋本": "owner-hashimoto",
-    "松本(英)": "owner-matsumoto"
+    "堀尾": "owner-horio",
+    "三浦": "owner-miura",
+    "黒見": "owner-kuromi",
+    "大西(元)": "owner-onishi-m",
+    "大西(優)": "owner-onishi-y",
+    "木本": "owner-kimoto",
+    "前田": "owner-maeda",
+    "本郷": "owner-hongo",
+    "大重": "owner-oshige"
 };
 
 function getOwnerColorClass(ownerStr) {
@@ -255,8 +251,8 @@ function _getRenderedGanttGridWidth() {
 }
 
 function updateResourceData() {
-    // 指定された担当者の並び順（藤山～松本(英)、外注は除外）
-    const targetOwners = ["藤山", "田中(善)", "安岡", "川邊", "檀", "堀井", "宮﨑", "津田", "古村", "柴田", "橋本", "松本(英)"];
+    // 指定された担当者の並び順（堀尾～大重、外注は除外）
+    const targetOwners = ["堀尾", "三浦", "黒見", "大西(元)", "大西(優)", "木本", "前田", "本郷", "大重"];
     
     const activeOwners = [];
     
@@ -266,14 +262,9 @@ function updateResourceData() {
         gantt.eachTask(function(task){
             if (hasTask) return;
             const isDetailed = (task.is_detailed === true || String(task.is_detailed).toLowerCase() === "true" || String(task.is_detailed).toLowerCase() === "t" || String(task.is_detailed) === "1");
-            if (isDetailed && task.owner) {
+            if (!isDetailed && task.owner) {
                 const owners = String(task.owner).split(/[,、\s]+/).map(o => o.trim());
-                // 田中(善)の場合、"田中(善)" または "田中" が含まれているかチェック
-                if (ownerName === "田中(善)") {
-                    if (owners.includes("田中(善)") || owners.includes("田中")) {
-                        hasTask = true;
-                    }
-                } else if (owners.includes(ownerName)) {
+                if (owners.includes(ownerName)) {
                     hasTask = true;
                 }
             }
@@ -341,19 +332,15 @@ function renderResourceTimeline(owners) {
         gantt.eachTask(t => {
             const isDetailed = (t.is_detailed === true || String(t.is_detailed).toLowerCase() === "true" || String(t.is_detailed).toLowerCase() === "t" || String(t.is_detailed) === "1");
             let isMatch = false;
-            if (isDetailed && t.owner) {
+            if (!isDetailed && t.owner) {
                 const taskOwners = String(t.owner).split(/[,、\s]+/).map(o => o.trim());
-                if (ownerName === "田中(善)") {
-                    isMatch = taskOwners.includes("田中(善)") || taskOwners.includes("田中");
-                } else {
-                    isMatch = taskOwners.includes(ownerName);
-                }
+                isMatch = taskOwners.includes(ownerName);
             }
             if (isMatch) allOwnerTasks.push(t);
         });
 
         const colorClass = getOwnerColorClass(ownerName);
-        const textColor = (["owner-tsuda", "owner-shibata", "owner-matsumoto"].includes(colorClass)) ? "#222" : "#fff";
+        const textColor = (["owner-hongo", "owner-default"].includes(colorClass)) ? "#222" : "#fff";
 
         // 4行（タスク種別ごと）を描画
         TASK_TYPE_ROWS.forEach((rowDef, rowIndex) => {
@@ -452,13 +439,9 @@ function renderOwnerDetailTimeline(ownerName) {
     gantt.eachTask(t => {
         const isDetailed = (t.is_detailed === true || String(t.is_detailed).toLowerCase() === "true" || String(t.is_detailed).toLowerCase() === "t" || String(t.is_detailed) === "1");
         let isMatch = false;
-        if (isDetailed && t.owner) {
+        if (!isDetailed && t.owner) {
             const taskOwners = String(t.owner).split(/[,、\s]+/).map(o => o.trim());
-            if (ownerName === "田中(善)") {
-                isMatch = taskOwners.includes("田中(善)") || taskOwners.includes("田中");
-            } else {
-                isMatch = taskOwners.includes(ownerName);
-            }
+            isMatch = taskOwners.includes(ownerName);
         }
         if (isMatch) ownerTasks.push(t);
     });
@@ -487,7 +470,7 @@ function renderOwnerDetailTimeline(ownerName) {
     };
 
     const colorClass = getOwnerColorClass(ownerName);
-    const textColor = (["owner-tsuda", "owner-shibata", "owner-matsumoto"].includes(colorClass)) ? "#222" : "#fff";
+    const textColor = (["owner-hongo", "owner-default"].includes(colorClass)) ? "#222" : "#fff";
 
     let html = `<div style="width: ${totalWidth}px; position: relative;">`;
     ownerTasks.forEach(t => {
@@ -792,8 +775,9 @@ function _isTaskDisplayed(task) {
     if (typeof _taskVisibleOnGantt === 'function') {
         return _taskVisibleOnGantt(task);
     }
+    // 操業工程表では設計工程表のデータ（is_detailed=true）は非表示にする
     const isDetailed = (task.is_detailed === true || String(task.is_detailed).toUpperCase() === 'TRUE');
-    if (!isDetailed) return false;
+    if (isDetailed) return false;
     if (currentProjectFilter.length > 0 && !currentProjectFilter.includes(String(task.project_number))) return false;
     if (currentTaskTypeFilter && String(task.task_type) !== currentTaskTypeFilter) return false;
     if (currentOwnerFilter.length > 0) {

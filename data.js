@@ -130,7 +130,13 @@ function _escapeHtmlAttr(s) {
 
 /** onBeforeTaskDisplay と同じ：詳細行（ガントに出る行）のみ true */
 function _isDetailedTaskRow(row) {
-    return row.is_detailed === true || String(row.is_detailed).toUpperCase() === 'TRUE';
+    // 操業工程表では設計工程表のデータ（is_detailed=true）は非表示にする
+    const isDetailed = row.is_detailed === true || String(row.is_detailed).toUpperCase() === 'TRUE';
+    if (isDetailed) return false;
+
+    // 操業工程表用の表示条件
+    // 現時点では、is_detailed=true 以外のすべてのタスクを表示する設定
+    return true;
 }
 
 function _taskPassesCommonFilters(task) {
@@ -955,10 +961,10 @@ async function initialize() {
         const projectNumber = src.project_number;
         const taskType = src.task_type;
         const _getSO = t => (t.sort_order != null) ? t.sort_order : t.id * 1000;
-        const allTasks = gantt.getTaskByTime().filter(t => {
-            const isDetailed = (t.is_detailed === true || String(t.is_detailed).toUpperCase() === 'TRUE');
-            if (!isDetailed) return false;
-            if (String(t.project_number) !== String(projectNumber)) return false;
+    const allTasks = gantt.getTaskByTime().filter(t => {
+        const isDetailed = (t.is_detailed === true || String(t.is_detailed).toUpperCase() === 'TRUE');
+        if (isDetailed) return false;
+        if (String(t.project_number) !== String(projectNumber)) return false;
             if (taskType && String(t.task_type) !== String(taskType)) return false;
             return true;
         }).sort((a, b) => _getSO(a) - _getSO(b));
@@ -1023,7 +1029,7 @@ async function initialize() {
                 completed_sheets: _n('completed_sheets'),
                 wish_date:        src.wish_date || null,
                 task_type:        currentTaskTypeFilter || src.task_type || "drawing",
-                is_detailed:      true,
+                is_detailed:      false,
                 sort_order:       insertSortOrder
             }])
             .select();
@@ -1076,7 +1082,7 @@ async function initialize() {
         const _getSO = t => (t.sort_order != null) ? t.sort_order : t.id * 1000;
         const visibleTasks = gantt.getTaskByTime().filter(t => {
             const isDetailed = (t.is_detailed === true || String(t.is_detailed).toUpperCase() === 'TRUE');
-            if (!isDetailed) return false;
+            if (isDetailed) return false;
             if (String(t.project_number) !== String(destProject)) return false;
             if (currentTaskTypeFilter && String(t.task_type) !== currentTaskTypeFilter) return false;
             return true;
@@ -1116,7 +1122,7 @@ async function initialize() {
                 completed_sheets: Number(src.completed_sheets) || 0,
                 wish_date:        src.wish_date        || null,
                 task_type:        currentTaskTypeFilter || src.task_type || "drawing",
-                is_detailed:      true,
+                is_detailed:      false,
                 sort_order:       baseSO + (i + 1) * 1000
             };
         });
