@@ -535,7 +535,6 @@ function updateFilterButtons() {
     document.getElementById('resource_home_btn').classList.toggle('active', isResourceFullscreen);
     document.getElementById('plan_filter_btn').classList.toggle('active', currentTaskTypeFilter === 'planning');
     document.getElementById('drawing_filter_btn').classList.toggle('active', currentTaskTypeFilter === 'drawing');
-    document.getElementById('longterm_filter_btn').classList.toggle('active', currentTaskTypeFilter === 'long_lead_item');
     document.getElementById('trip_filter_btn').classList.toggle('active', currentTaskTypeFilter === 'business_trip');
     // 担当別モード中はボタン行の上下余白を均等にして行を調整
     const filterBtnRow = document.getElementById('filter_btn_row');
