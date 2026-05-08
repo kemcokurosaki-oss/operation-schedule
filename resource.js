@@ -777,7 +777,13 @@ function _isTaskDisplayed(task) {
     if (typeof _taskVisibleOnGantt === 'function') {
         return _taskVisibleOnGantt(task);
     }
-    // 操業工程表では設計工程表のデータ（is_detailed=true）は非表示にする
+    if (currentTaskTypeFilter === 'drawing') {
+        if (typeof _isOperationMajorItem === 'function') {
+            return _isOperationMajorItem(task.major_item);
+        }
+        const mi = String(task.major_item ?? '').replace(/\s+/g, '').trim();
+        return mi.includes('操業');
+    }
     const isDetailed = (task.is_detailed === true || String(task.is_detailed).toUpperCase() === 'TRUE');
     if (isDetailed) return false;
     if (currentProjectFilter.length > 0 && !currentProjectFilter.includes(String(task.project_number))) return false;
