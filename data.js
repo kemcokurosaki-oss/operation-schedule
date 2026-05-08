@@ -1076,6 +1076,7 @@ async function initialize() {
                 wish_date:        src.wish_date || null,
                 task_type:        currentTaskTypeFilter || src.task_type || "drawing",
                 is_detailed:      false,
+                major_item:       (currentTaskTypeFilter === 'drawing') ? '操業' : (src.major_item || null),
                 sort_order:       insertSortOrder
             }])
             .select();
