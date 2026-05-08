@@ -143,9 +143,13 @@ function _isDetailedTaskRow(row) {
 function _taskPassesCommonFilters(task) {
     if (currentProjectFilter.length > 0 && !currentProjectFilter.includes(String(task.project_number))) return false;
     if (currentTaskTypeFilter === 'drawing') {
-        // 試運転モード: is_detailed に関わらず major_item='操業' のタスクをすべて表示
-        if (String(task.major_item || '') !== '操業') return false;
-        return true;
+        // 試運転モード: major_item='操業' のタスクをすべて表示
+        const mi = String(task.major_item ?? '').trim();
+        const pass = (mi === '操業');
+        if (!pass) {
+            console.log('[試運転フィルター除外]', 'id:', task.id, 'project:', task.project_number, 'major_item:', JSON.stringify(task.major_item), 'task_type:', task.task_type);
+        }
+        return pass;
     }
     if (!_isDetailedTaskRow(task)) return false;
     if (currentTaskTypeFilter) {
@@ -153,6 +157,22 @@ function _taskPassesCommonFilters(task) {
     }
     return true;
 }
+
+// ブラウザコンソールから呼べるデバッグ関数
+window._debugDrawingFilter = function() {
+    console.log('=== 試運転フィルターデバッグ ===');
+    console.log('currentTaskTypeFilter:', currentTaskTypeFilter);
+    const all = [], pass = [], fail = [];
+    gantt.eachTask(function(t) {
+        const mi = String(t.major_item ?? '').trim();
+        all.push(t);
+        if (mi === '操業') pass.push({ id: t.id, project: t.project_number, major_item: t.major_item, task_type: t.task_type });
+        else fail.push({ id: t.id, project: t.project_number, major_item: JSON.stringify(t.major_item), task_type: t.task_type });
+    });
+    console.log('全タスク数:', all.length, '| 操業タスク(通過):', pass.length, '| 非操業(除外):', fail.length);
+    console.log('通過タスク:', pass);
+    console.log('除外タスク(先頭20件):', fail.slice(0, 20));
+};
 
 /**
  * 機械フィルター以外（担当者まで）でガントに表示される行か（機械候補一覧用）
