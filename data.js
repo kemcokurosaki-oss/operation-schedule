@@ -679,12 +679,22 @@ function updateDisplay() {
 
 // 工事番号フィルターの初期化
 async function initProjectSelect(projectParam) {
-    const { data } = await supabaseClient
-        .from('tasks')
-        .select('project_number, customer_name, project_details, machine, unit, is_detailed, task_type, owner')
-        .neq('is_archived', true)
-        .range(0, 9999);
-    if (!data) return;
+    const PAGE_SIZE = 500;
+    let allData = [];
+    let from = 0;
+    while (true) {
+        const { data: pageData } = await supabaseClient
+            .from('tasks')
+            .select('project_number, customer_name, project_details, machine, unit, is_detailed, task_type, owner')
+            .neq('is_archived', true)
+            .range(from, from + PAGE_SIZE - 1);
+        if (!pageData || pageData.length === 0) break;
+        allData = allData.concat(pageData);
+        if (pageData.length < PAGE_SIZE) break;
+        from += PAGE_SIZE;
+    }
+    const data = allData;
+    if (!data || data.length === 0) return;
 
     // 工事番号ごとの情報をマップに格納
     projectMap = new Map();
