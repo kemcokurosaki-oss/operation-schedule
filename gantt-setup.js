@@ -84,7 +84,7 @@ gantt.config.editor_types.number = {
 };
 
 // 担当者プルダウン用インラインエディタ
-const OWNER_OPTIONS = ["堀尾", "三浦", "黒見", "大西(元)", "大西(優)", "木本", "前田", "本郷", "大重"];
+const OWNER_OPTIONS = ["堀尾", "黒見", "大西(元)", "大西(優)", "木本", "前田", "本郷", "大重"];
 gantt.config.editor_types.owner_select = {
     show: function(id, column, config, placeholder) {
         const opts = OWNER_OPTIONS.map(n =>
