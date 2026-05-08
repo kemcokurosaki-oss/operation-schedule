@@ -596,6 +596,7 @@ function _colSetName(filterType) {
     if (filterType === 'long_lead_item') return 'longterm';
     if (filterType === 'business_trip')  return 'trip';
     if (filterType === 'planning')        return 'trip';
+    if (filterType === 'drawing')         return 'drawing';
     return 'default';
 }
 
