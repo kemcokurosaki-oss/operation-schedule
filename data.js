@@ -30,7 +30,8 @@ async function loadData() {
         .select('*')
         .neq('is_archived', true)
         .order('project_number', { ascending: true })
-        .order('id', { ascending: true });
+        .order('id', { ascending: true })
+        .range(0, 9999);
 
     if (error) {
         console.error("Supabase error:", error);
