@@ -142,7 +142,11 @@ function _isDetailedTaskRow(row) {
 function _taskPassesCommonFilters(task) {
     if (!_isDetailedTaskRow(task)) return false;
     if (currentProjectFilter.length > 0 && !currentProjectFilter.includes(String(task.project_number))) return false;
-    if (currentTaskTypeFilter && String(task.task_type) !== currentTaskTypeFilter) return false;
+    if (currentTaskTypeFilter === 'drawing') {
+        if (String(task.major_item || '') !== '操業') return false;
+    } else if (currentTaskTypeFilter) {
+        if (String(task.task_type) !== currentTaskTypeFilter) return false;
+    }
     return true;
 }
 
