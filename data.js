@@ -656,7 +656,8 @@ async function initProjectSelect(projectParam) {
     const { data } = await supabaseClient
         .from('tasks')
         .select('project_number, customer_name, project_details, machine, unit, is_detailed, task_type, owner')
-        .neq('is_archived', true);
+        .neq('is_archived', true)
+        .range(0, 9999);
     if (!data) return;
 
     // 工事番号ごとの情報をマップに格納
