@@ -140,11 +140,14 @@ function _isDetailedTaskRow(row) {
 }
 
 function _taskPassesCommonFilters(task) {
-    if (!_isDetailedTaskRow(task)) return false;
     if (currentProjectFilter.length > 0 && !currentProjectFilter.includes(String(task.project_number))) return false;
     if (currentTaskTypeFilter === 'drawing') {
+        // 試運転モード: is_detailed に関わらず major_item='操業' のタスクをすべて表示
         if (String(task.major_item || '') !== '操業') return false;
-    } else if (currentTaskTypeFilter) {
+        return true;
+    }
+    if (!_isDetailedTaskRow(task)) return false;
+    if (currentTaskTypeFilter) {
         if (String(task.task_type) !== currentTaskTypeFilter) return false;
     }
     return true;
