@@ -632,11 +632,13 @@ function _syncCalendarHeaderScroll(left) {
 function _enterResourceFullscreen() {
     isResourceFullscreen = true;
     isResourceView = true;
-    // 担当者・機械フィルターをリセット
+    // 担当者・機械・ユニットフィルターをリセット
     currentOwnerFilter = [];
     _updateOwnerFilterBtn();
     currentMachineFilter = [];
     _updateMachineFilterBtn();
+    if (typeof currentUnitFilter !== 'undefined') currentUnitFilter = [];
+    if (typeof _updateUnitFilterBtn === 'function') _updateUnitFilterBtn();
     _rebuildOwnerFilterOptionsFromGantt();
     _rebuildMachineFilterOptionsFromGantt();
     const panel = document.getElementById("resource_panel");
