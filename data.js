@@ -25,18 +25,24 @@ function _parseSupabaseDate(str) {
 
 // データ読み込み
 async function loadData() {
-    const { data, error } = await supabaseClient
-        .from('tasks')
-        .select('*')
-        .neq('is_archived', true)
-        .order('project_number', { ascending: true })
-        .order('id', { ascending: true })
-        .range(0, 9999);
-
-    if (error) {
-        console.error("Supabase error:", error);
-        return;
+    const PAGE_SIZE = 500;
+    let allData = [];
+    let from = 0;
+    while (true) {
+        const { data, error } = await supabaseClient
+            .from('tasks')
+            .select('*')
+            .neq('is_archived', true)
+            .order('project_number', { ascending: true })
+            .order('id', { ascending: true })
+            .range(from, from + PAGE_SIZE - 1);
+        if (error) { console.error("Supabase error:", error); return; }
+        if (!data || data.length === 0) break;
+        allData = allData.concat(data);
+        if (data.length < PAGE_SIZE) break;
+        from += PAGE_SIZE;
     }
+    const data = allData;
 
     const today = new Date().toISOString().split('T')[0];
 
