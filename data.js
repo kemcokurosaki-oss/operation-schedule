@@ -62,7 +62,10 @@ async function loadData() {
             ...t,
             start_date: startDate,
             end_date:   endDate,
-            has_no_date: hasNoDate
+            has_no_date: hasNoDate,
+            // DB側の parent には表示グループ名文字列が入っている行があり、
+            // dhtmlxGantt では非存在親として扱われて行が消えるため、表示は常にフラット化する
+            parent: 0
         };
     });
 
@@ -146,17 +149,19 @@ function _isDetailedTaskRow(row) {
     return true;
 }
 
+function _isOperationMajorItem(value) {
+    const mi = String(value ?? '')
+        .replace(/\s+/g, '')
+        .trim();
+    return mi.includes('操業');
+}
+
 function _taskPassesCommonFilters(task) {
-    if (currentProjectFilter.length > 0 && !currentProjectFilter.includes(String(task.project_number))) return false;
     if (currentTaskTypeFilter === 'drawing') {
-        // 試運転モード: major_item='操業' のタスクをすべて表示
-        const mi = String(task.major_item ?? '').trim();
-        const pass = (mi === '操業');
-        if (!pass) {
-            console.log('[試運転フィルター除外]', 'id:', task.id, 'project:', task.project_number, 'major_item:', JSON.stringify(task.major_item), 'task_type:', task.task_type);
-        }
-        return pass;
+        // 試運転モード: major_item='操業' のタスクを全表示（他フィルターは適用しない）
+        return _isOperationMajorItem(task.major_item);
     }
+    if (currentProjectFilter.length > 0 && !currentProjectFilter.includes(String(task.project_number))) return false;
     if (!_isDetailedTaskRow(task)) return false;
     if (currentTaskTypeFilter) {
         if (String(task.task_type) !== currentTaskTypeFilter) return false;
@@ -186,6 +191,7 @@ window._debugDrawingFilter = function() {
  */
 function _taskVisibleIgnoringMachineFilter(task) {
     if (!_taskPassesCommonFilters(task)) return false;
+    if (currentTaskTypeFilter === 'drawing') return true;
     if (currentOwnerFilter.length > 0) {
         const taskOwners = String(task.owner || '').split(/[,、\s]+/).map(o => o.trim());
         if (!currentOwnerFilter.some(f => taskOwners.includes(f))) return false;
@@ -203,6 +209,7 @@ function _taskVisibleIgnoringMachineFilter(task) {
  */
 function _taskVisibleIgnoringOwnerFilter(task) {
     if (!_taskPassesCommonFilters(task)) return false;
+    if (currentTaskTypeFilter === 'drawing') return true;
     if (currentMachineFilter.length > 0) {
         const m = String(task.machine || '').trim();
         if (!currentMachineFilter.includes(m)) return false;
@@ -219,6 +226,7 @@ function _taskVisibleIgnoringOwnerFilter(task) {
  */
 function _taskVisibleIgnoringUnitFilter(task) {
     if (!_taskPassesCommonFilters(task)) return false;
+    if (currentTaskTypeFilter === 'drawing') return true;
     if (currentMachineFilter.length > 0) {
         const m = String(task.machine || '').trim();
         if (!currentMachineFilter.includes(m)) return false;
