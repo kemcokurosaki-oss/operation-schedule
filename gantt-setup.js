@@ -1408,7 +1408,7 @@ function _getDrawingColumns() {
     return [
         { name: "project_number", label: "工事<br>番号", width: 60, align: "center", editor: { type: "text", map_to: "project_number" } },
         { name: "machine",        label: "機械",         width: 40, align: "center", editor: { type: "text", map_to: "machine" } },
-        { name: "unit",           label: "ユニット",     width: 45, align: "center", editor: { type: "text", map_to: "unit" } },
+        { name: "unit",           label: "ユニ",         width: 45, align: "center", editor: { type: "text", map_to: "unit" } },
         { name: "text",           label: "タスク",       width: 210, tree: true,     editor: { type: "text", map_to: "text" } },
         { name: "owner",          label: "担当",         width: 60, align: "center", editor: { type: "owner_select", map_to: "owner" } },
         { name: "progress",       label: "進捗",         width: 45, align: "center", template: _progressTemplate },
