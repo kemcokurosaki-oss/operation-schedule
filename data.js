@@ -836,7 +836,7 @@ function setTaskTypeFilter(type) {
 }
 
 function togglePlanFilter()    { setTaskTypeFilter('planning'); }
-function toggleDrawingFilter() { setTaskTypeFilter('drawing'); }
+function toggleDrawingFilter() { setTaskTypeFilter('operation'); }
 function toggleTripFilter()    { setTaskTypeFilter('business_trip'); }
 
 // 工事番号セレクトボックスの表示更新
