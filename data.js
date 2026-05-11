@@ -196,7 +196,7 @@ function _passesDrawingModeTaskTypeForTrialName(task) {
     const tt = task.task_type;
     if (tt == null || tt === '') return true;
     const s = String(tt).trim().toLowerCase();
-    if (s === 'drawing') return true;
+    if (s === 'operation' || s === 'drawing') return true;
     // 明らかに別モード用の種別だけ除外（それ以外は試運転名なら表示に寄せる）
     if (s === 'planning' || s === 'business_trip' || s === 'long_lead_item') return false;
     return true;
