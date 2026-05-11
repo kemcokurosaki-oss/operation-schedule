@@ -347,8 +347,9 @@ function renderResourceTimeline(owners) {
         TASK_TYPE_ROWS.forEach((rowDef, rowIndex) => {
             const rowTasks = allOwnerTasks.filter(t => {
                 if (rowDef.type === 'operation') {
-                    // 'drawing' タイプも後方互換として操業行に表示
-                    return String(t.task_type) === 'operation' || String(t.task_type) === 'drawing';
+                    // null/未設定・'drawing'・'operation' すべて操業行に表示
+                    const tt = t.task_type;
+                    return !tt || tt === 'operation' || tt === 'drawing';
                 }
                 return String(t.task_type) === rowDef.type;
             });
