@@ -1314,7 +1314,7 @@ gantt.attachEvent("onLightboxSave", function(id, task, is_new){
 gantt.attachEvent("onBeforeLightbox", function(id) {
     if (isResourceFullscreen) return false;
     const task = gantt.getTask(id);
-    const taskType = task ? (task.task_type || 'drawing') : 'drawing';
+    const taskType = task ? (task.task_type || 'operation') : 'operation';
     gantt.config.lightbox.sections = _getLightboxSections(taskType);
 
     if (taskType === 'long_lead_item') {
