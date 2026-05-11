@@ -1559,7 +1559,7 @@ gantt.attachEvent("onBeforeTaskDisplay", function(id, task) {
     if (typeof _taskVisibleOnGantt === 'function') {
         return _taskVisibleOnGantt(t);
     }
-    if (currentTaskTypeFilter === 'drawing') {
+    if (currentTaskTypeFilter === 'operation' || currentTaskTypeFilter === 'drawing') {
         if (typeof _passesDrawingModeFilter === 'function') {
             return _passesDrawingModeFilter(t);
         }
