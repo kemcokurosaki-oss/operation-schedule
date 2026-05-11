@@ -736,7 +736,7 @@ async function _finalizePendingNewTaskToDb(id) {
             wish_date: item.wish_date || null,
             is_detailed: false,
             hyphen: item.hyphen ?? null,
-            major_item: (currentTaskTypeFilter === 'drawing') ? '操業' : (item.major_item || null),
+            major_item: (currentTaskTypeFilter === 'operation' || currentTaskTypeFilter === 'drawing') ? '操業' : (item.major_item || null),
             last_updated_by: (typeof window._getCurrentEditorName === 'function' ? window._getCurrentEditorName() : '') || ''
         };
 
