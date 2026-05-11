@@ -985,6 +985,7 @@ gantt.attachEvent("onAfterTaskUpdate", async function(id, item) {
                 duration: item.duration,
                 task_type: item.task_type || currentTaskTypeFilter || "operation",
                 wish_date: item.wish_date || null,
+                is_business_trip: (currentTaskTypeFilter === 'business_trip' || item.is_business_trip === true || String(item.is_business_trip).toUpperCase() === 'TRUE') ? true : false,
                 last_updated_by: (typeof window._getCurrentEditorName === 'function' ? window._getCurrentEditorName() : '') || ''
             })
             .eq('id', id);
