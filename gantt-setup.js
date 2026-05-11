@@ -432,8 +432,8 @@ function _buildMultiEditFieldDefs() {
     const cols = Array.isArray(gantt.config.columns) ? gantt.config.columns : [];
     const defs = [];
     const used = new Set();
-    const mode = String(gantt.config._columnFilterType || currentTaskTypeFilter || "drawing");
-    const isDrawingMode = (mode === "drawing");
+    const mode = String(gantt.config._columnFilterType || currentTaskTypeFilter || "operation");
+    const isDrawingMode = (mode === "operation" || mode === "drawing");
     const isLongLeadMode = (mode === "long_lead_item" || mode === "longterm");
 
     cols.forEach(function(col) {
