@@ -799,7 +799,9 @@ function _isTaskDisplayed(task) {
     const isDetailed = (task.is_detailed === true || String(task.is_detailed).toUpperCase() === 'TRUE');
     if (isDetailed) return false;
     if (currentProjectFilter.length > 0 && !currentProjectFilter.includes(String(task.project_number))) return false;
-    if (String(task.task_type) === 'business_trip' && currentTaskTypeFilter !== 'business_trip') return false;
+    const _isTripFb = String(task.task_type) === 'business_trip' || task.is_business_trip === true || String(task.is_business_trip).toUpperCase() === 'TRUE';
+    if (_isTripFb && currentTaskTypeFilter !== 'business_trip') return false;
+    if (currentTaskTypeFilter === 'business_trip') return _isTripFb;
     if (currentTaskTypeFilter && String(task.task_type) !== currentTaskTypeFilter) return false;
     if (currentOwnerFilter.length > 0) {
         const taskOwners = String(task.owner || '').split(/[,、\s]+/).map(o => o.trim());
