@@ -737,6 +737,7 @@ async function _finalizePendingNewTaskToDb(id) {
             is_detailed: false,
             hyphen: item.hyphen ?? null,
             major_item: (currentTaskTypeFilter === 'operation' || currentTaskTypeFilter === 'drawing') ? '操業' : (item.major_item || null),
+            is_business_trip: currentTaskTypeFilter === 'business_trip' ? true : (item.is_business_trip === true || String(item.is_business_trip).toUpperCase() === 'TRUE'),
             last_updated_by: (typeof window._getCurrentEditorName === 'function' ? window._getCurrentEditorName() : '') || ''
         };
 
