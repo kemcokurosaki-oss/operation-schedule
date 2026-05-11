@@ -202,9 +202,18 @@ function _passesDrawingModeTaskTypeForTrialName(task) {
     return true;
 }
 
+/** task_type または is_business_trip フラグで出張タスクか判定（全体工程表と同じ基準） */
+function _isTripTask(task) {
+    return String(task.task_type) === 'business_trip'
+        || task.is_business_trip === true
+        || String(task.is_business_trip).toUpperCase() === 'TRUE';
+}
+
 /** 試運転モード（drawing）でガントに出す行。設計工程表の is_detailed は除外 */
 function _passesDrawingModeFilter(task) {
     if (!_isDetailedTaskRow(task)) return false;
+    // 出張タスクは試運転モードでも非表示（全体工程表の出張予定シートと同じ扱い）
+    if (_isTripTask(task)) return false;
     if (_isOperationMajorItem(task.major_item)) return true;
     // task_type === 'operation' のタスクは操業工程表専用タイプとして表示
     const tt = String(task.task_type || '').trim().toLowerCase();
@@ -221,8 +230,10 @@ function _taskPassesCommonFilters(task) {
     }
     if (currentProjectFilter.length > 0 && !currentProjectFilter.includes(String(task.project_number))) return false;
     if (!_isDetailedTaskRow(task)) return false;
-    // 出張タスクは出張モード以外では非表示（全体工程表の出張予定シートと同じ扱い）
-    if (String(task.task_type) === 'business_trip' && currentTaskTypeFilter !== 'business_trip') return false;
+    // 出張タスク（task_type='business_trip' または is_business_trip=TRUE）は出張モード以外では非表示
+    if (_isTripTask(task) && currentTaskTypeFilter !== 'business_trip') return false;
+    // 出張モード時は出張タスクのみ表示
+    if (currentTaskTypeFilter === 'business_trip') return _isTripTask(task);
     if (currentTaskTypeFilter) {
         if (String(task.task_type) !== currentTaskTypeFilter) return false;
     }
