@@ -11,17 +11,13 @@ async function openArchiveManager() {
     const { data, error } = await supabaseClient
         .from('tasks')
         .select('project_number, customer_name, project_details, is_detailed')
-        .neq('is_archived', true);
+        .or('is_archived.eq.false,is_archived.is.null');
     if (error) { alert('読み込みエラー: ' + error.message); return; }
 
-    // is_detailed=trueが存在する工事番号のセット
-    const detailedProjects = new Set();
-    (data || []).forEach(t => { if (t.project_number && t.is_detailed) detailedProjects.add(t.project_number); });
-
-    // 全タスクから顧客名・工事概要を収集（is_detailedのある工事番号のみ）
+    // 全タスクから顧客名・工事概要を収集（工事番号単位）
     const map = new Map();
     (data || []).forEach(t => {
-        if (t.project_number && detailedProjects.has(t.project_number)) {
+        if (t.project_number) {
             const existing = map.get(t.project_number);
             const customer = t.customer_name || (existing ? existing.customer : '');
             const details = t.project_details || (existing ? existing.details : '');
@@ -57,8 +53,7 @@ async function archiveProject(projectNumber) {
     const { error } = await supabaseClient
         .from('tasks')
         .update({ is_archived: true, archived_at: today })
-        .eq('project_number', projectNumber)
-        .eq('is_detailed', true);
+        .eq('project_number', projectNumber);
     if (error) { alert('エラー: ' + error.message); return; }
     closeArchiveManager();
     await loadData();
@@ -76,12 +71,9 @@ async function openArchiveList() {
         .eq('is_archived', true);
     if (error) { alert('読み込みエラー: ' + error.message); return; }
 
-    const detailedProjects = new Set();
-    (data || []).forEach(t => { if (t.project_number && t.is_detailed) detailedProjects.add(t.project_number); });
-
     const map = new Map();
     (data || []).forEach(t => {
-        if (t.project_number && detailedProjects.has(t.project_number)) {
+        if (t.project_number) {
             const existing = map.get(t.project_number);
             const customer = t.customer_name || (existing ? existing.customer : '');
             const details = t.project_details || (existing ? existing.details : '');
@@ -146,7 +138,6 @@ async function _loadArchiveDetailTable() {
         .select('*')
         .eq('project_number', _archiveDetailProjectNumber)
         .eq('is_archived', true)
-        .eq('is_detailed', true)
         .eq('task_type', typeFilter)
         .order('sort_order', { ascending: true });
     if (error) { alert('読み込みエラー: ' + error.message); return; }
@@ -186,8 +177,7 @@ async function restoreProject(projectNumber) {
     const { error } = await supabaseClient
         .from('tasks')
         .update({ is_archived: false, archived_at: null })
-        .eq('project_number', projectNumber)
-        .eq('is_detailed', true);
+        .eq('project_number', projectNumber);
     if (error) { alert('エラー: ' + error.message); return; }
     closeArchiveList();
     await loadData();
@@ -216,7 +206,6 @@ async function executeArchiveCopy() {
         .select('*')
         .eq('project_number', _archiveCopySrc)
         .eq('is_archived', true)
-        .eq('is_detailed', true)
         .eq('task_type', _archiveDetailTaskType);
     if (error || !data || data.length === 0) { alert('コピー元データの取得に失敗しました'); return; }
 
