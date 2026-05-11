@@ -698,7 +698,7 @@ async function _finalizePendingNewTaskToDb(id) {
     _finalizePendingInsertInProgress = true;
     try {
         const item = gantt.getTask(id);
-        const taskTypeResolved = item.task_type || currentTaskTypeFilter || "drawing";
+        const taskTypeResolved = item.task_type || currentTaskTypeFilter || "operation";
         const baseSortOrder = _computeSortOrderForInsert(
             item.project_number,
             item.machine,
