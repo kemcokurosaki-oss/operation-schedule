@@ -1459,7 +1459,7 @@ function _getLongtermColumns() {
 
 // 列設定の初期化（固定初期幅）
 gantt.config.columns = _getDrawingColumns();
-gantt.config._columnFilterType = 'drawing';
+gantt.config._columnFilterType = 'operation';
 
 // 出張列定義
 function _getTripColumns() {
