@@ -454,7 +454,7 @@ function renderOwnerDetailTimeline(ownerName) {
     });
 
     // 開始日順でソート
-    const TASK_TYPE_ORDER = { planning: 0, drawing: 1, long_lead_item: 2, business_trip: 3 };
+    const TASK_TYPE_ORDER = { planning: 0, operation: 1, drawing: 1, long_lead_item: 2, business_trip: 3 };
     ownerTasks.sort((a, b) => {
         const ta = TASK_TYPE_ORDER[a.task_type] ?? 99;
         const tb = TASK_TYPE_ORDER[b.task_type] ?? 99;
