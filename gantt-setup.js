@@ -1377,7 +1377,7 @@ function _progressTemplate(obj) {
     }
     const today = new Date();
     today.setHours(0, 0, 0, 0);
-    const isDrawingComplete = (taskType === "drawing" && progress >= 100);
+    const isDrawingComplete = ((taskType === "operation" || taskType === "drawing") && progress >= 100);
     const isOverdue = (progress === 0 && obj.end_date && obj.end_date < today);
     const fillClass = isDrawingComplete
         ? "progress-fill progress-complete"
