@@ -1253,9 +1253,9 @@ async function initialize() {
                 total_sheets:     _n('total_sheets'),
                 completed_sheets: _n('completed_sheets'),
                 wish_date:        src.wish_date || null,
-                task_type:        currentTaskTypeFilter || src.task_type || "drawing",
+                task_type:        currentTaskTypeFilter || src.task_type || "operation",
                 is_detailed:      false,
-                major_item:       (currentTaskTypeFilter === 'drawing') ? '操業' : (src.major_item || null),
+                major_item:       (currentTaskTypeFilter === 'operation' || currentTaskTypeFilter === 'drawing') ? '操業' : (src.major_item || null),
                 sort_order:       insertSortOrder
             }])
             .select();
