@@ -801,7 +801,12 @@ function _isTaskDisplayed(task) {
     if (currentProjectFilter.length > 0 && !currentProjectFilter.includes(String(task.project_number))) return false;
     const _isTripFb = String(task.task_type) === 'business_trip' || task.is_business_trip === true || String(task.is_business_trip).toUpperCase() === 'TRUE';
     if (_isTripFb && currentTaskTypeFilter !== 'business_trip') return false;
-    if (currentTaskTypeFilter === 'business_trip') return _isTripFb;
+    if (currentTaskTypeFilter === 'business_trip') {
+        const _isOpMajor = typeof _isOperationMajorItem === 'function'
+            ? _isOperationMajorItem(task.major_item)
+            : String(task.major_item || '').replace(/\s+/g, '').includes('操業');
+        return _isTripFb && _isOpMajor;
+    }
     if (currentTaskTypeFilter && String(task.task_type) !== currentTaskTypeFilter) return false;
     if (currentOwnerFilter.length > 0) {
         const taskOwners = String(task.owner || '').split(/[,、\s]+/).map(o => o.trim());
