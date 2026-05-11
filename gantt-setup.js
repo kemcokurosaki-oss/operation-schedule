@@ -1529,33 +1529,57 @@ gantt.templates.scale_cell_class = function(date) {
     return '';
 };
 
+// 描画パイプラインから渡る task がスナップショットで欠けることがあるため、常に getTask(id) を優先する
+function _taskForBeforeDisplayEvent(id, task) {
+    if (id == null) return task;
+    if (typeof gantt === 'undefined' || !gantt.getTask) return task;
+    let t = null;
+    try { t = gantt.getTask(id); } catch (e) { /* noop */ }
+    if (!t) {
+        const n = Number(id);
+        if (!Number.isNaN(n)) {
+            try { t = gantt.getTask(n); } catch (e) { /* noop */ }
+        }
+    }
+    if (!t) {
+        try { t = gantt.getTask(String(id)); } catch (e) { /* noop */ }
+    }
+    if (t) return t;
+    return task;
+}
+
 // フィルタリング（is_detailedのみ表示、かつ各種フィルタ）— data.js の _taskVisibleOnGantt と同期
 gantt.attachEvent("onBeforeTaskDisplay", function(id, task) {
+    const t = _taskForBeforeDisplayEvent(id, task);
+    if (!t) return true;
     if (typeof _taskVisibleOnGantt === 'function') {
-        return _taskVisibleOnGantt(task);
+        return _taskVisibleOnGantt(t);
     }
     if (currentTaskTypeFilter === 'drawing') {
-        if (typeof _isOperationMajorItem === 'function') {
-            return _isOperationMajorItem(task.major_item);
+        if (typeof _passesDrawingModeFilter === 'function') {
+            return _passesDrawingModeFilter(t);
         }
-        const mi = String(task.major_item ?? '').replace(/\s+/g, '').trim();
+        if (typeof _isOperationMajorItem === 'function') {
+            return _isOperationMajorItem(t.major_item);
+        }
+        const mi = String(t.major_item ?? '').replace(/\s+/g, '').trim();
         return mi.includes('操業');
     }
     // 非試運転モードのみ通常フィルターを適用
-    const isDetailed = (task.is_detailed === true || String(task.is_detailed).toUpperCase() === 'TRUE');
+    const isDetailed = (t.is_detailed === true || String(t.is_detailed).toUpperCase() === 'TRUE');
     if (isDetailed) return false;
-    if (currentProjectFilter.length > 0 && !currentProjectFilter.includes(String(task.project_number))) return false;
-    if (currentTaskTypeFilter && String(task.task_type) !== currentTaskTypeFilter) return false;
+    if (currentProjectFilter.length > 0 && !currentProjectFilter.includes(String(t.project_number))) return false;
+    if (currentTaskTypeFilter && String(t.task_type) !== currentTaskTypeFilter) return false;
     if (currentOwnerFilter.length > 0) {
-        const taskOwners = String(task.owner || '').split(/[,、\s]+/).map(o => o.trim());
+        const taskOwners = String(t.owner || '').split(/[,、\s]+/).map(o => o.trim());
         if (!currentOwnerFilter.some(f => taskOwners.includes(f))) return false;
     }
     if (currentMachineFilter.length > 0) {
-        const m = String(task.machine || '').trim();
+        const m = String(t.machine || '').trim();
         if (!currentMachineFilter.includes(m)) return false;
     }
     if (currentUnitFilter.length > 0) {
-        const u = String(task.unit || '').trim();
+        const u = String(t.unit || '').trim();
         if (!currentUnitFilter.includes(u)) return false;
     }
     return true;

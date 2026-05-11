@@ -29,10 +29,12 @@ async function loadData() {
     let allData = [];
     let from = 0;
     while (true) {
+        // is_archived が NULL の行は .neq(true) だと PostgREST で除外されるため、
+        // 「アーカイブでない = false または null」で明示的に含める
         const { data, error } = await supabaseClient
             .from('tasks')
             .select('*')
-            .neq('is_archived', true)
+            .or('is_archived.eq.false,is_archived.is.null')
             .order('project_number', { ascending: true })
             .order('id', { ascending: true })
             .range(from, from + PAGE_SIZE - 1);
@@ -156,10 +158,63 @@ function _isOperationMajorItem(value) {
     return mi.includes('操業');
 }
 
+/** タスク名から表示用の平文（HTMLタグ除去・空白圧縮・互換文字の正規化） */
+function _plainTaskTextForFilter(task) {
+    let s = String(task && task.text != null ? task.text : '')
+        .replace(/<[^>]*>/g, '')
+        .replace(/\s+/g, '');
+    try {
+        s = s.normalize('NFKC');
+    } catch (e) { /* IE 等 */ }
+    return s;
+}
+
+/** 試運転キーワード判定用に、タスク名＋型式・機種なども連結（列に分散している場合） */
+function _trialKeywordBlob(task) {
+    const parts = [
+        _plainTaskTextForFilter(task),
+        String(task && task.part_number != null ? task.part_number : '').replace(/\s+/g, ''),
+        String(task && task.model_type != null ? task.model_type : '').replace(/\s+/g, '')
+    ];
+    let blob = parts.join('|');
+    try {
+        blob = blob.normalize('NFKC');
+    } catch (e) { /* noop */ }
+    return blob;
+}
+
+function _textContainsTrialRunKeyword(blob) {
+    if (!blob) return false;
+    return blob.includes('試運転') || blob.includes('試験運転');
+}
+
+/**
+ * 試運転モードで「タスク名の試運転」ルートに使う task_type 判定。
+ * DB 由来で null / 空 / 大文字小文字ゆれがあり、厳密に !== 'drawing' だと行が消える。
+ */
+function _passesDrawingModeTaskTypeForTrialName(task) {
+    const tt = task.task_type;
+    if (tt == null || tt === '') return true;
+    const s = String(tt).trim().toLowerCase();
+    if (s === 'drawing') return true;
+    // 明らかに別モード用の種別だけ除外（それ以外は試運転名なら表示に寄せる）
+    if (s === 'planning' || s === 'business_trip' || s === 'long_lead_item') return false;
+    return true;
+}
+
+/** 試運転モード（drawing）でガントに出す行。設計工程表の is_detailed は除外 */
+function _passesDrawingModeFilter(task) {
+    if (!_isDetailedTaskRow(task)) return false;
+    if (_isOperationMajorItem(task.major_item)) return true;
+    // major_item 未設定などで「操業」が付いていない試運転行も表示
+    if (!_passesDrawingModeTaskTypeForTrialName(task)) return false;
+    return _textContainsTrialRunKeyword(_trialKeywordBlob(task));
+}
+
 function _taskPassesCommonFilters(task) {
     if (currentTaskTypeFilter === 'drawing') {
-        // 試運転モード: major_item='操業' のタスクを全表示（他フィルターは適用しない）
-        return _isOperationMajorItem(task.major_item);
+        // 試運転モード: 操業 major_item、または試運転タスク名の drawing 行（他フィルターは適用しない）
+        return _passesDrawingModeFilter(task);
     }
     if (currentProjectFilter.length > 0 && !currentProjectFilter.includes(String(task.project_number))) return false;
     if (!_isDetailedTaskRow(task)) return false;
@@ -169,20 +224,133 @@ function _taskPassesCommonFilters(task) {
     return true;
 }
 
-// ブラウザコンソールから呼べるデバッグ関数
+/** dhtmlx の task id は数値／文字列どちらでも格納され得る */
+function _getGanttTaskIfExists(rawId) {
+    if (typeof gantt === 'undefined' || !gantt.isTaskExists) return null;
+    if (gantt.isTaskExists(rawId)) return gantt.getTask(rawId);
+    const n = Number(rawId);
+    if (!Number.isNaN(n) && String(n) === String(rawId).trim() && gantt.isTaskExists(n)) return gantt.getTask(n);
+    const s = String(rawId);
+    if (gantt.isTaskExists(s)) return gantt.getTask(s);
+    return null;
+}
+
+window._debugTaskIdsInGantt = function(ids) {
+    if (!Array.isArray(ids)) ids = [ids];
+    if (typeof gantt === 'undefined' || !gantt.isTaskExists) {
+        console.warn('gantt not ready');
+        return;
+    }
+    const ctf = (typeof currentTaskTypeFilter !== 'undefined' ? currentTaskTypeFilter : '(undefined)');
+    console.log('currentTaskTypeFilter:', ctf);
+    console.log('_debugTaskIdsInGantt requested:', ids);
+    ids.forEach(function(id) {
+        const t = _getGanttTaskIfExists(id);
+        if (!t) {
+            console.warn('[id ' + id + '] NOT in gantt store (not loaded from DB or wrong id)');
+            return;
+        }
+        const sid = String(t.id);
+        const passCommon = (typeof _taskPassesCommonFilters === 'function') ? _taskPassesCommonFilters(t) : null;
+        const passDraw = (typeof _passesDrawingModeFilter === 'function') ? _passesDrawingModeFilter(t) : null;
+        const vis = (typeof _taskVisibleOnGantt === 'function') ? _taskVisibleOnGantt(t) : null;
+        const blob = (typeof _trialKeywordBlob === 'function') ? _trialKeywordBlob(t) : '';
+        const line = {
+            id: t.id,
+            project_number: t.project_number,
+            text_head: String(t.text || '').slice(0, 80),
+            part_number: t.part_number,
+            model_type: t.model_type,
+            major_item: t.major_item,
+            task_type: t.task_type,
+            is_detailed: t.is_detailed,
+            trialKeywordBlob_head: String(blob).slice(0, 120),
+            _taskPassesCommonFilters: passCommon,
+            _passesDrawingModeFilter: passDraw,
+            _taskVisibleOnGantt: vis
+        };
+        console.log('[id ' + sid + '] ' + JSON.stringify(line));
+        if (vis === false) {
+            console.warn('[id ' + sid + '] 行はデータにあるが onBeforeTaskDisplay で非表示 (_taskVisibleOnGantt=false)');
+        }
+    });
+};
+
+/** showTask 後にグリッド行 DOM を探してスクロール（描画遅延で showTask だけでは足りない場合） */
+function _scrollGanttRowIntoView(taskId) {
+    const tid = String(taskId);
+    const sel = '#gantt_here .gantt_grid_data .gantt_row[task_id="' + tid + '"]';
+    const el = document.querySelector(sel);
+    if (el) {
+        try {
+            el.scrollIntoView({ block: 'center', behavior: 'smooth' });
+        } catch (e) {
+            try { el.scrollIntoView(true); } catch (e2) { /* noop */ }
+        }
+    }
+    return !!el;
+}
+
+/** 指定タスクへ縦スクロール（一覧のどこにあるか確認用） */
+window._focusTasksInGantt = function(ids) {
+    if (!Array.isArray(ids)) ids = [ids];
+    console.log('_focusTasksInGantt: 対象', ids);
+    if (typeof gantt === 'undefined' || !gantt.showTask) {
+        console.warn('_focusTasksInGantt: gantt not ready');
+        return;
+    }
+    const ge = document.getElementById('gantt_here');
+    if (!ge) {
+        console.warn('_focusTasksInGantt: #gantt_here がありません');
+        return;
+    }
+    const cs = window.getComputedStyle(ge);
+    if (cs.display === 'none' || cs.visibility === 'hidden' || ge.offsetParent === null) {
+        console.warn('_focusTasksInGantt: ガント領域が非表示です。「試運転」などでガントを表示してから実行してください。');
+    }
+    if (typeof isResourceFullscreen !== 'undefined' && isResourceFullscreen) {
+        console.warn('_focusTasksInGantt: 担当別フルスクリーン中は #gantt_here が隠れていることがあります。先にガント表示に戻してください。');
+    }
+    try {
+        gantt.render();
+    } catch (e) { /* noop */ }
+
+    ids.forEach(function(id) {
+        const t = _getGanttTaskIfExists(id);
+        if (!t) {
+            console.warn('_focusTasksInGantt: ストアに無い id =', id);
+            return;
+        }
+        try {
+            gantt.showTask(t.id);
+            console.log('_focusTasksInGantt: showTask OK id=', t.id, 'project_number=', t.project_number);
+        } catch (e) {
+            console.warn('_focusTasksInGantt: showTask 失敗 id=', t.id, e);
+        }
+        requestAnimationFrame(function() {
+            requestAnimationFrame(function() {
+                const ok = _scrollGanttRowIntoView(t.id);
+                console.log('_focusTasksInGantt: グリッド行 DOM', t.id, ok ? '見つかった（scrollIntoView 済み）' : '見つからない（フィルタで行が描画されていない可能性）');
+            });
+        });
+    });
+};
+
 window._debugDrawingFilter = function() {
     console.log('=== 試運転フィルターデバッグ ===');
     console.log('currentTaskTypeFilter:', currentTaskTypeFilter);
     const all = [], pass = [], fail = [];
     gantt.eachTask(function(t) {
-        const mi = String(t.major_item ?? '').trim();
         all.push(t);
-        if (mi === '操業') pass.push({ id: t.id, project: t.project_number, major_item: t.major_item, task_type: t.task_type });
-        else fail.push({ id: t.id, project: t.project_number, major_item: JSON.stringify(t.major_item), task_type: t.task_type });
+        if (_passesDrawingModeFilter(t)) {
+            pass.push({ id: t.id, project: t.project_number, major_item: t.major_item, task_type: t.task_type, text: (t.text || '').slice(0, 40) });
+        } else {
+            fail.push({ id: t.id, project: t.project_number, major_item: t.major_item, task_type: t.task_type, text: (t.text || '').slice(0, 40) });
+        }
     });
-    console.log('全タスク数:', all.length, '| 操業タスク(通過):', pass.length, '| 非操業(除外):', fail.length);
-    console.log('通過タスク:', pass);
-    console.log('除外タスク(先頭20件):', fail.slice(0, 20));
+    console.log('全タスク数:', all.length, '| 表示対象:', pass.length, '| 除外:', fail.length);
+    console.log('表示対象:', pass);
+    console.log('除外(先頭20件):', fail.slice(0, 20));
 };
 
 /**
@@ -694,7 +862,7 @@ async function initProjectSelect(projectParam) {
         const { data: pageData } = await supabaseClient
             .from('tasks')
             .select('project_number, customer_name, project_details, machine, unit, is_detailed, task_type, owner')
-            .neq('is_archived', true)
+            .or('is_archived.eq.false,is_archived.is.null')
             .range(from, from + PAGE_SIZE - 1);
         if (!pageData || pageData.length === 0) break;
         allData = allData.concat(pageData);

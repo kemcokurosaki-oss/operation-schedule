@@ -778,6 +778,9 @@ function _isTaskDisplayed(task) {
         return _taskVisibleOnGantt(task);
     }
     if (currentTaskTypeFilter === 'drawing') {
+        if (typeof _passesDrawingModeFilter === 'function') {
+            return _passesDrawingModeFilter(task);
+        }
         if (typeof _isOperationMajorItem === 'function') {
             return _isOperationMajorItem(task.major_item);
         }
