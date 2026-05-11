@@ -1393,7 +1393,7 @@ function _progressTemplate(obj) {
 function _isCompletedForDisplay(task) {
     const taskType = String(task.task_type || "");
 
-    if (taskType === "drawing") {
+    if (taskType === "operation" || taskType === "drawing") {
         const total = parseFloat(task.total_sheets) || 0;
         if (total <= 0) return false;
         const completed = parseFloat(task.completed_sheets) || 0;
