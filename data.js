@@ -232,8 +232,8 @@ function _taskPassesCommonFilters(task) {
     if (!_isDetailedTaskRow(task)) return false;
     // 出張タスク（task_type='business_trip' または is_business_trip=TRUE）は出張モード以外では非表示
     if (_isTripTask(task) && currentTaskTypeFilter !== 'business_trip') return false;
-    // 出張モード時は出張タスクのみ表示
-    if (currentTaskTypeFilter === 'business_trip') return _isTripTask(task);
+    // 出張モード時は「操業部の出張タスク」のみ表示
+    if (currentTaskTypeFilter === 'business_trip') return _isTripTask(task) && _isOperationMajorItem(task.major_item);
     if (currentTaskTypeFilter) {
         if (String(task.task_type) !== currentTaskTypeFilter) return false;
     }
