@@ -37,7 +37,8 @@ function getOwnerColorClass(ownerStr) {
 // タスクタイプ別の色定義
 const TASK_TYPE_COLORS = {
     planning:       { bg: '#e3f2fd', color: '#1565c0' },  // 青系（計画）
-    drawing:        { bg: '#e8f5e9', color: '#2e7d32' },  // 緑系（図面）
+    drawing:        { bg: '#e8f5e9', color: '#2e7d32' },  // 緑系（後方互換）
+    operation:      { bg: '#e8f5e9', color: '#2e7d32' },  // 緑系（操業）
     long_lead_item: { bg: '#fff3e0', color: '#e65100' },  // オレンジ系（長納期品）
     business_trip:  { bg: '#f3e5f5', color: '#6a1b9a' },  // 紫系（出張）
 };
