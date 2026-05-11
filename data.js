@@ -221,6 +221,8 @@ function _taskPassesCommonFilters(task) {
     }
     if (currentProjectFilter.length > 0 && !currentProjectFilter.includes(String(task.project_number))) return false;
     if (!_isDetailedTaskRow(task)) return false;
+    // 出張タスクは出張モード以外では非表示（全体工程表の出張予定シートと同じ扱い）
+    if (String(task.task_type) === 'business_trip' && currentTaskTypeFilter !== 'business_trip') return false;
     if (currentTaskTypeFilter) {
         if (String(task.task_type) !== currentTaskTypeFilter) return false;
     }
