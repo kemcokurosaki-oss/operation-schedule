@@ -1347,9 +1347,9 @@ async function initialize() {
                 total_sheets:     Number(src.total_sheets)     || 0,
                 completed_sheets: Number(src.completed_sheets) || 0,
                 wish_date:        src.wish_date        || null,
-                task_type:        currentTaskTypeFilter || src.task_type || "drawing",
+                task_type:        currentTaskTypeFilter || src.task_type || "operation",
                 is_detailed:      false,
-                major_item:       (currentTaskTypeFilter === 'drawing') ? '操業' : (src.major_item || null),
+                major_item:       (currentTaskTypeFilter === 'operation' || currentTaskTypeFilter === 'drawing') ? '操業' : (src.major_item || null),
                 sort_order:       baseSO + (i + 1) * 1000
             };
         });
