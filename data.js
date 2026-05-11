@@ -926,7 +926,7 @@ async function initialize() {
     // 1. Gantt初期化（デフォルトは読み取り専用、ログイン後に解除）
     gantt.config.readonly = true;
     gantt.config.columns = _getDrawingColumns();
-    gantt.config._columnFilterType = 'drawing';
+    gantt.config._columnFilterType = 'operation';
     _setLayout(_getColsSum(gantt.config.columns));
 
     gantt.init("gantt_here");
