@@ -206,7 +206,10 @@ function _passesDrawingModeTaskTypeForTrialName(task) {
 function _passesDrawingModeFilter(task) {
     if (!_isDetailedTaskRow(task)) return false;
     if (_isOperationMajorItem(task.major_item)) return true;
-    // major_item 未設定などで「操業」が付いていない試運転行も表示
+    // task_type === 'operation' のタスクは操業工程表専用タイプとして表示
+    const tt = String(task.task_type || '').trim().toLowerCase();
+    if (tt === 'operation') return true;
+    // major_item 未設定などで「操業」が付いていない試運転行も表示（後方互換）
     if (!_passesDrawingModeTaskTypeForTrialName(task)) return false;
     return _textContainsTrialRunKeyword(_trialKeywordBlob(task));
 }
