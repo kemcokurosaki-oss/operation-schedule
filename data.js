@@ -215,8 +215,8 @@ function _passesDrawingModeFilter(task) {
 }
 
 function _taskPassesCommonFilters(task) {
-    if (currentTaskTypeFilter === 'drawing') {
-        // 試運転モード: 操業 major_item、または試運転タスク名の drawing 行（他フィルターは適用しない）
+    if (currentTaskTypeFilter === 'operation' || currentTaskTypeFilter === 'drawing') {
+        // 試運転/操業モード: 操業 major_item または operation タイプ（他フィルターは適用しない）
         return _passesDrawingModeFilter(task);
     }
     if (currentProjectFilter.length > 0 && !currentProjectFilter.includes(String(task.project_number))) return false;
