@@ -362,7 +362,7 @@ window._debugDrawingFilter = function() {
  */
 function _taskVisibleIgnoringMachineFilter(task) {
     if (!_taskPassesCommonFilters(task)) return false;
-    if (currentTaskTypeFilter === 'drawing') return true;
+    if (currentTaskTypeFilter === 'operation' || currentTaskTypeFilter === 'drawing') return true;
     if (currentOwnerFilter.length > 0) {
         const taskOwners = String(task.owner || '').split(/[,、\s]+/).map(o => o.trim());
         if (!currentOwnerFilter.some(f => taskOwners.includes(f))) return false;
