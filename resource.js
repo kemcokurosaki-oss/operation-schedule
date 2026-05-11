@@ -345,7 +345,13 @@ function renderResourceTimeline(owners) {
 
         // 4行（タスク種別ごと）を描画
         TASK_TYPE_ROWS.forEach((rowDef, rowIndex) => {
-            const rowTasks = allOwnerTasks.filter(t => String(t.task_type) === rowDef.type);
+            const rowTasks = allOwnerTasks.filter(t => {
+                if (rowDef.type === 'operation') {
+                    // 'drawing' タイプも後方互換として操業行に表示
+                    return String(t.task_type) === 'operation' || String(t.task_type) === 'drawing';
+                }
+                return String(t.task_type) === rowDef.type;
+            });
             const isFirstRow = rowIndex === 0;
             const isLastRow  = rowIndex === TASK_TYPE_ROWS.length - 1;
 
