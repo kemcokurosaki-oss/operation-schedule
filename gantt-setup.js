@@ -795,7 +795,9 @@ function _normKey(s) {
  * excludeTaskId: 仮追加行を候補から外す
  */
 function _computeSortOrderForInsert(projectNumber, machine, unit, taskType, excludeTaskId) {
-    const tt = String(taskType || currentTaskTypeFilter || 'drawing');
+    const rawTT = String(taskType || currentTaskTypeFilter || 'operation');
+    // 'drawing' と 'operation' は同じグループとして扱う（後方互換）
+    const tt = rawTT === 'drawing' ? 'operation' : rawTT;
     const pn = String(projectNumber || '').trim();
     const m = _normKey(machine);
     const u = _normKey(unit);
@@ -806,7 +808,9 @@ function _computeSortOrderForInsert(projectNumber, machine, unit, taskType, excl
         const isDetailed = (task.is_detailed === true || String(task.is_detailed).toUpperCase() === 'TRUE');
         if (isDetailed) return;
         if (String(task.project_number || '').trim() !== pn) return;
-        if (String(task.task_type || 'drawing') !== tt) return;
+        const taskTT = String(task.task_type || 'operation');
+        const normalizedTaskTT = taskTT === 'drawing' ? 'operation' : taskTT;
+        if (normalizedTaskTT !== tt) return;
         candidates.push(task);
     });
     candidates.sort((a, b) => _sortOrderValue(a) - _sortOrderValue(b));
