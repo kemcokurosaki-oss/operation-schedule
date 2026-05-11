@@ -471,7 +471,8 @@ function renderOwnerDetailTimeline(ownerName) {
 
     const TASK_TYPE_LABEL = {
         planning:       '計画',
-        drawing:        '図面',
+        drawing:        '操業',  // 後方互換（drawingも操業として表示）
+        operation:      '操業',
         long_lead_item: '長納期品',
         business_trip:  '出張',
     };
