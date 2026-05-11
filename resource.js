@@ -322,7 +322,7 @@ function renderResourceTimeline(owners) {
     // 担当者1人につき4行（計画・図面・長納期品・出張）で表示
     const TASK_TYPE_ROWS = [
         { type: 'planning',       label: '計画' },
-        { type: 'drawing',        label: '図面' },
+        { type: 'operation',      label: '操業' },
         { type: 'long_lead_item', label: '長納期品' },
         { type: 'business_trip',  label: '出張' },
     ];
