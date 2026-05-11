@@ -885,7 +885,7 @@ function createTask(afterTaskId) {
     const today = new Date();
     const startDate = new Date(today);
     startDate.setDate(startDate.getDate() - 13);
-    const taskType = currentTaskTypeFilter || "drawing";
+    const taskType = currentTaskTypeFilter || "operation";
     const initialSortOrder = _computeSortOrderForInsert(
         projectNumber,
         inheritMachine,
