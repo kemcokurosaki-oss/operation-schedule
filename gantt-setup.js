@@ -512,7 +512,7 @@ function _renderMultiEditForm() {
     if (!container) return [];
     const defs = _buildMultiEditFieldDefs();
 
-    const mode = String(gantt.config._columnFilterType || currentTaskTypeFilter || "drawing");
+    const mode = String(gantt.config._columnFilterType || currentTaskTypeFilter || "operation");
     const isLongLeadMode = (mode === "long_lead_item" || mode === "longterm");
     const sections = isLongLeadMode
         ? [
