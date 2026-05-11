@@ -380,7 +380,7 @@ function _taskVisibleIgnoringMachineFilter(task) {
  */
 function _taskVisibleIgnoringOwnerFilter(task) {
     if (!_taskPassesCommonFilters(task)) return false;
-    if (currentTaskTypeFilter === 'drawing') return true;
+    if (currentTaskTypeFilter === 'operation' || currentTaskTypeFilter === 'drawing') return true;
     if (currentMachineFilter.length > 0) {
         const m = String(task.machine || '').trim();
         if (!currentMachineFilter.includes(m)) return false;
