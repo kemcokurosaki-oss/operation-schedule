@@ -319,11 +319,10 @@ function renderResourceTimeline(owners) {
     const todayLineLeft = actualGridWidth + todayPos;
 
     let html = `<div style="width: ${totalWidth}px; position: relative;">`; // 全体の幅を指定するコンテナを追加
-    // 担当者1人につき4行（計画・図面・長納期品・出張）で表示
+    // 担当者1人につき3行（計画・試運転・出張）で表示
     const TASK_TYPE_ROWS = [
         { type: 'planning',       label: '計画' },
-        { type: 'operation',      label: '操業' },
-        { type: 'long_lead_item', label: '長納期品' },
+        { type: 'operation',    label: '試運転' },
         { type: 'business_trip',  label: '出張' },
     ];
 
@@ -343,13 +342,14 @@ function renderResourceTimeline(owners) {
         const colorClass = getOwnerColorClass(ownerName);
         const textColor = (["owner-hongo", "owner-default"].includes(colorClass)) ? "#222" : "#fff";
 
-        // 4行（タスク種別ごと）を描画
+        // 3行（タスク種別ごと）を描画
         TASK_TYPE_ROWS.forEach((rowDef, rowIndex) => {
             const rowTasks = allOwnerTasks.filter(t => {
                 if (rowDef.type === 'operation') {
-                    // null/未設定・'drawing'・'operation' すべて操業行に表示
-                    const tt = t.task_type;
-                    return !tt || tt === 'operation' || tt === 'drawing';
+                    const norm = typeof _normalizeTaskTypeForDb === 'function'
+                        ? _normalizeTaskTypeForDb(t.task_type)
+                        : String(t.task_type || '').trim();
+                    return norm === 'operation';
                 }
                 return String(t.task_type) === rowDef.type;
             });
@@ -455,10 +455,15 @@ function renderOwnerDetailTimeline(ownerName) {
     });
 
     // 開始日順でソート
-    const TASK_TYPE_ORDER = { planning: 0, operation: 1, drawing: 1, long_lead_item: 2, business_trip: 3 };
     ownerTasks.sort((a, b) => {
-        const ta = TASK_TYPE_ORDER[a.task_type] ?? 99;
-        const tb = TASK_TYPE_ORDER[b.task_type] ?? 99;
+        const orderKey = function(tt) {
+            const n = typeof _normalizeTaskTypeForDb === 'function' ? _normalizeTaskTypeForDb(tt) : String(tt || '');
+            if (n === 'planning') return 0;
+            if (n === 'business_trip') return 2;
+            return 1;
+        };
+        const ta = orderKey(a.task_type);
+        const tb = orderKey(b.task_type);
         if (ta !== tb) return ta - tb;
         const pa = String(a.project_number || '');
         const pb = String(b.project_number || '');
@@ -472,9 +477,9 @@ function renderOwnerDetailTimeline(ownerName) {
 
     const TASK_TYPE_LABEL = {
         planning:       '計画',
-        drawing:        '操業',  // 後方互換（drawingも操業として表示）
-        operation:      '操業',
-        long_lead_item: '長納期品',
+        operation:      '試運転',
+        drawing:        '試運転',
+        long_lead_item: '試運転',
         business_trip:  '出張',
     };
 
@@ -487,8 +492,9 @@ function renderOwnerDetailTimeline(ownerName) {
         const left = hasDate ? gantt.posFromDate(t.start_date) : 0;
         const right = hasDate ? gantt.posFromDate(t.end_date) : 0;
         const barWidth = hasDate ? Math.max(2, right - left) : 0;
-        const typeLabel = TASK_TYPE_LABEL[String(t.task_type)] || String(t.task_type || '');
-        const typeClr = TASK_TYPE_COLORS[String(t.task_type)] || { bg: '#e0e0e0', color: '#555' };
+        const ttKey = typeof _normalizeTaskTypeForDb === 'function' ? _normalizeTaskTypeForDb(t.task_type) : String(t.task_type || '');
+        const typeLabel = TASK_TYPE_LABEL[String(t.task_type)] || TASK_TYPE_LABEL[ttKey] || String(t.task_type || '');
+        const typeClr = TASK_TYPE_COLORS[String(t.task_type)] || TASK_TYPE_COLORS[ttKey] || { bg: '#e0e0e0', color: '#555' };
 
         html += `
             <div class="resource-item" style="display: flex; border-bottom: 1px solid #eee; min-height: 30px; height: 30px; align-items: stretch; width: ${totalWidth}px;">
@@ -786,7 +792,7 @@ function _isTaskDisplayed(task) {
     if (typeof _taskVisibleOnGantt === 'function') {
         return _taskVisibleOnGantt(task);
     }
-    if (currentTaskTypeFilter === 'operation' || currentTaskTypeFilter === 'drawing') {
+    if (currentTaskTypeFilter === 'operation') {
         if (typeof _passesDrawingModeFilter === 'function') {
             return _passesDrawingModeFilter(task);
         }
@@ -807,7 +813,7 @@ function _isTaskDisplayed(task) {
             : String(task.major_item || '').replace(/\s+/g, '').includes('操業');
         return _isTripFb && _isOpMajor;
     }
-    if (currentTaskTypeFilter && String(task.task_type) !== currentTaskTypeFilter) return false;
+    if (currentTaskTypeFilter && typeof _taskTypeMatchesCurrentFilter === 'function' && !_taskTypeMatchesCurrentFilter(task)) return false;
     if (currentOwnerFilter.length > 0) {
         const taskOwners = String(task.owner || '').split(/[,、\s]+/).map(o => o.trim());
         if (!currentOwnerFilter.some(f => taskOwners.includes(f))) return false;
@@ -826,7 +832,7 @@ function _renderWishDateMarks() {
     // 計画・出張モードでは▼マークを表示しない
     if (currentTaskTypeFilter === 'planning' || currentTaskTypeFilter === 'business_trip') return;
 
-    const label = currentTaskTypeFilter === 'long_lead_item' ? '手配期日' : '出希望日';
+    const label = '出希望日';
 
     gantt.eachTask(function(task) {
         if (!task.wish_date) return;

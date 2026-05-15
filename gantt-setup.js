@@ -1,6 +1,23 @@
 // Gantt 基本構成
 gantt.config.date_format = "%Y-%m-%d";
 
+/** DB 保存・表示モード用: task_type は planning / operation（試運転）/ business_trip のみ（drawing・long_lead_item は廃止し operation に正規化） */
+function _normalizeTaskTypeForDb(tt) {
+    const sl = String(tt == null ? '' : tt).trim().toLowerCase();
+    if (sl === 'drawing' || sl === 'long_lead_item') return 'operation';
+    if (sl === 'planning') return 'planning';
+    if (sl === 'business_trip') return 'business_trip';
+    return 'operation';
+}
+window._normalizeTaskTypeForDb = _normalizeTaskTypeForDb;
+
+/** 現在のガント種別フィルタと task.task_type が一致するか（DB 上の drawing 等は正規化して比較） */
+function _taskTypeMatchesCurrentFilter(task) {
+    if (!currentTaskTypeFilter) return true;
+    return _normalizeTaskTypeForDb(task.task_type) === _normalizeTaskTypeForDb(currentTaskTypeFilter);
+}
+window._taskTypeMatchesCurrentFilter = _taskTypeMatchesCurrentFilter;
+
 // date入力で値を選択した時点でインライン編集を確定する
 function _commitInlineDateEdit(inputEl) {
     if (!inputEl) return;
@@ -434,8 +451,8 @@ function _buildMultiEditFieldDefs() {
     const defs = [];
     const used = new Set();
     const mode = String(gantt.config._columnFilterType || currentTaskTypeFilter || "operation");
-    const isDrawingMode = (mode === "operation" || mode === "drawing");
-    const isLongLeadMode = (mode === "long_lead_item" || mode === "longterm");
+    const isDrawingMode = (mode === "operation");
+    const isLongLeadMode = false;
 
     cols.forEach(function(col) {
         if (!col || !col.editor || !col.name) return;
@@ -514,7 +531,7 @@ function _renderMultiEditForm() {
     const defs = _buildMultiEditFieldDefs();
 
     const mode = String(gantt.config._columnFilterType || currentTaskTypeFilter || "operation");
-    const isLongLeadMode = (mode === "long_lead_item" || mode === "longterm");
+    const isLongLeadMode = false;
     const sections = isLongLeadMode
         ? [
             { id: "project",  title: "① 工事番号・機械・ユニット" },
@@ -699,7 +716,7 @@ async function _finalizePendingNewTaskToDb(id) {
     _finalizePendingInsertInProgress = true;
     try {
         const item = gantt.getTask(id);
-        const taskTypeResolved = item.task_type || currentTaskTypeFilter || "operation";
+        const taskTypeResolved = _normalizeTaskTypeForDb(item.task_type || currentTaskTypeFilter || "operation");
         const baseSortOrder = _computeSortOrderForInsert(
             item.project_number,
             item.machine,
@@ -737,7 +754,7 @@ async function _finalizePendingNewTaskToDb(id) {
             wish_date: item.wish_date || null,
             is_detailed: false,
             hyphen: item.hyphen ?? null,
-            major_item: (currentTaskTypeFilter === 'operation' || currentTaskTypeFilter === 'drawing' || currentTaskTypeFilter === 'business_trip') ? '操業' : (item.major_item || null),
+            major_item: '操業',
             is_business_trip: currentTaskTypeFilter === 'business_trip' ? true : (item.is_business_trip === true || String(item.is_business_trip).toUpperCase() === 'TRUE'),
             last_updated_by: (typeof window._getCurrentEditorName === 'function' ? window._getCurrentEditorName() : '') || ''
         };
@@ -798,8 +815,7 @@ function _normKey(s) {
  */
 function _computeSortOrderForInsert(projectNumber, machine, unit, taskType, excludeTaskId) {
     const rawTT = String(taskType || currentTaskTypeFilter || 'operation');
-    // 'drawing' と 'operation' は同じグループとして扱う（後方互換）
-    const tt = rawTT === 'drawing' ? 'operation' : rawTT;
+    const tt = _normalizeTaskTypeForDb(rawTT);
     const pn = String(projectNumber || '').trim();
     const m = _normKey(machine);
     const u = _normKey(unit);
@@ -810,8 +826,8 @@ function _computeSortOrderForInsert(projectNumber, machine, unit, taskType, excl
         const isDetailed = (task.is_detailed === true || String(task.is_detailed).toUpperCase() === 'TRUE');
         if (isDetailed) return;
         if (String(task.project_number || '').trim() !== pn) return;
-        const taskTT = String(task.task_type || 'operation');
-        const normalizedTaskTT = taskTT === 'drawing' ? 'operation' : taskTT;
+        const taskTT = _normalizeTaskTypeForDb(task.task_type || 'operation');
+        const normalizedTaskTT = taskTT;
         if (normalizedTaskTT !== tt) return;
         candidates.push(task);
     });
@@ -862,7 +878,7 @@ function createTask(afterTaskId) {
         const isDetailed = (t.is_detailed === true || String(t.is_detailed).toUpperCase() === 'TRUE');
         if (isDetailed) return false;
         if (String(t.project_number) !== pf) return false;
-        if (currentTaskTypeFilter && String(t.task_type) !== currentTaskTypeFilter) return false;
+        if (!_taskTypeMatchesCurrentFilter(t)) return false;
         return true;
     }).sort((a, b) => _sortOrderValue(a) - _sortOrderValue(b));
 
@@ -887,7 +903,7 @@ function createTask(afterTaskId) {
     const today = new Date();
     const startDate = new Date(today);
     startDate.setDate(startDate.getDate() - 13);
-    const taskType = currentTaskTypeFilter || "operation";
+    const taskType = _normalizeTaskTypeForDb(currentTaskTypeFilter || "operation");
     const initialSortOrder = _computeSortOrderForInsert(
         projectNumber,
         inheritMachine,
@@ -984,7 +1000,7 @@ gantt.attachEvent("onAfterTaskUpdate", async function(id, item) {
                 total_sheets: Number(item.total_sheets) || 0,
                 completed_sheets: Number(item.completed_sheets) || 0,
                 duration: item.duration,
-                task_type: item.task_type || currentTaskTypeFilter || "operation",
+                task_type: _normalizeTaskTypeForDb(item.task_type || currentTaskTypeFilter || "operation"),
                 wish_date: item.wish_date || null,
                 is_business_trip: (currentTaskTypeFilter === 'business_trip' || item.is_business_trip === true || String(item.is_business_trip).toUpperCase() === 'TRUE') ? true : false,
                 last_updated_by: (typeof window._getCurrentEditorName === 'function' ? window._getCurrentEditorName() : '') || ''
@@ -1051,21 +1067,8 @@ gantt.attachEvent("onAfterTaskDelete", async function(id, item) {
 
 // 編集画面（ライトボックス）のセクション定義（タスクタイプ別）
 function _getLightboxSections(taskType) {
-    if (taskType === 'long_lead_item') {
-        return [
-            { name: "project_number",   height: 30, map_to: "project_number", type: "textarea" },
-            { name: "machine",          height: 30, map_to: "machine",         type: "textarea" },
-            { name: "unit",             height: 30, map_to: "unit",            type: "textarea" },
-            { name: "description",      height: 30, map_to: "text",            type: "textarea_full" },
-            { name: "part_number",      height: 30, map_to: "part_number",     type: "textarea" },
-            { name: "quantity",         height: 30, map_to: "quantity",        type: "textarea" },
-            { name: "manufacturer",            height: 30, map_to: "manufacturer",           type: "textarea" },
-            { name: "owner",            height: 30, map_to: "owner",           type: "owner_select_lb" },
-            { name: "end_date",         height: 30, map_to: "end_date",        type: "template" },
-            { name: "wish_date_lb",     height: 30, map_to: "wish_date",       type: "wish_date_lb" },
-            { name: "add_row_count",    height: 30, map_to: "add_row_count",   type: "add_row_count_lb" },
-        ];
-    } else if (taskType === 'planning' || taskType === 'business_trip') {
+    const tt = _normalizeTaskTypeForDb(taskType);
+    if (tt === 'planning' || tt === 'business_trip') {
         return [
             { name: "project_number",  height: 30, map_to: "project_number",  type: "textarea" },
             { name: "customer_name",   height: 30, map_to: "customer_name",   type: "textarea" },
@@ -1076,7 +1079,7 @@ function _getLightboxSections(taskType) {
             { name: "add_row_count",   height: 30, map_to: "add_row_count",   type: "add_row_count_lb" },
         ];
     } else {
-        // drawing（デフォルト）
+        // 試運転（operation）デフォルト
         return [
             { name: "project_number",   height: 30, map_to: "project_number",  type: "textarea" },
             { name: "machine",          height: 30, map_to: "machine",          type: "textarea" },
@@ -1095,7 +1098,7 @@ function _getLightboxSections(taskType) {
     }
 }
 
-gantt.config.lightbox.sections = _getLightboxSections('drawing');
+gantt.config.lightbox.sections = _getLightboxSections('operation');
 
 gantt.locale.labels.section_project_number   = "工事番号";
 gantt.locale.labels.section_machine          = "機械";
@@ -1317,13 +1320,10 @@ gantt.attachEvent("onLightboxSave", function(id, task, is_new){
 gantt.attachEvent("onBeforeLightbox", function(id) {
     if (isResourceFullscreen) return false;
     const task = gantt.getTask(id);
-    const taskType = task ? (task.task_type || 'operation') : 'operation';
+    const taskType = task ? _normalizeTaskTypeForDb(task.task_type || 'operation') : 'operation';
     gantt.config.lightbox.sections = _getLightboxSections(taskType);
 
-    if (taskType === 'long_lead_item') {
-        gantt.locale.labels.section_description  = "品名";
-        gantt.locale.labels.section_wish_date_lb = "手配期日";
-    } else if (taskType === 'planning' || taskType === 'business_trip') {
+    if (taskType === 'planning' || taskType === 'business_trip') {
         gantt.locale.labels.section_description  = "タスク";
     } else {
         gantt.locale.labels.section_description  = "組立図面名";
@@ -1373,14 +1373,15 @@ function _fmtDate(obj) {
 function _progressTemplate(obj) {
     const total = parseFloat(obj.total_sheets) || 0;
     const completed = parseFloat(obj.completed_sheets) || 0;
-    const taskType = String(obj.task_type || "");
+    const rawType = String(obj.task_type || "");
+    const taskTypeNorm = _normalizeTaskTypeForDb(rawType);
     let progress = 0;
     if (total > 0) {
         progress = Math.min(100, Math.round((completed / total) * 100));
     }
     const today = new Date();
     today.setHours(0, 0, 0, 0);
-    const isDrawingComplete = ((taskType === "operation" || taskType === "drawing") && progress >= 100);
+    const isDrawingComplete = (taskTypeNorm === "operation" && rawType !== "long_lead_item" && progress >= 100);
     const isOverdue = (progress === 0 && obj.end_date && obj.end_date < today);
     const fillClass = isDrawingComplete
         ? "progress-fill progress-complete"
@@ -1394,20 +1395,18 @@ function _progressTemplate(obj) {
 }
 
 function _isCompletedForDisplay(task) {
-    const taskType = String(task.task_type || "");
-
-    if (taskType === "operation" || taskType === "drawing") {
+    const raw = String(task.task_type || "");
+    if (raw === "long_lead_item") {
+        return String(task.status || "").trim() === "完了";
+    }
+    const taskTypeNorm = _normalizeTaskTypeForDb(raw);
+    if (taskTypeNorm === "operation") {
         const total = parseFloat(task.total_sheets) || 0;
         if (total <= 0) return false;
         const completed = parseFloat(task.completed_sheets) || 0;
         const progress = Math.min(100, Math.round((completed / total) * 100));
         return progress >= 100;
     }
-
-    if (taskType === "long_lead_item") {
-        return String(task.status || "").trim() === "完了";
-    }
-
     return false;
 }
 
@@ -1488,17 +1487,10 @@ function _getTripColumns() {
 }
 // 計画/出張列合計: 60+35+35+245+35+65+65+25 = 565px
 
-function _colSetKeyFromFilter(filterType) {
-    if (filterType === 'long_lead_item') return 'longterm';
-    if (filterType === 'business_trip' || filterType === 'planning') return 'trip';
-    return 'default';
-}
-
-// 列セット切り替え
+// 列セット切り替え（試運転・計画・出張の3モード）
 function switchColumns(filterType) {
     var baseCols;
-    if (filterType === 'long_lead_item') baseCols = _getLongtermColumns();
-    else if (filterType === 'business_trip' || filterType === 'planning') baseCols = _getTripColumns();
+    if (filterType === 'business_trip' || filterType === 'planning') baseCols = _getTripColumns();
     else baseCols = _getDrawingColumns();
     gantt.config.columns = baseCols;
     gantt.config._columnFilterType = filterType;
@@ -1562,7 +1554,7 @@ gantt.attachEvent("onBeforeTaskDisplay", function(id, task) {
     if (typeof _taskVisibleOnGantt === 'function') {
         return _taskVisibleOnGantt(t);
     }
-    if (currentTaskTypeFilter === 'operation' || currentTaskTypeFilter === 'drawing') {
+    if (currentTaskTypeFilter === 'operation') {
         if (typeof _passesDrawingModeFilter === 'function') {
             return _passesDrawingModeFilter(t);
         }
@@ -1576,7 +1568,7 @@ gantt.attachEvent("onBeforeTaskDisplay", function(id, task) {
     const isDetailed = (t.is_detailed === true || String(t.is_detailed).toUpperCase() === 'TRUE');
     if (isDetailed) return false;
     if (currentProjectFilter.length > 0 && !currentProjectFilter.includes(String(t.project_number))) return false;
-    if (currentTaskTypeFilter && String(t.task_type) !== currentTaskTypeFilter) return false;
+    if (currentTaskTypeFilter && !_taskTypeMatchesCurrentFilter(t)) return false;
     if (currentOwnerFilter.length > 0) {
         const taskOwners = String(t.owner || '').split(/[,、\s]+/).map(o => o.trim());
         if (!currentOwnerFilter.some(f => taskOwners.includes(f))) return false;
