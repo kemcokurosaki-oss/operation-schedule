@@ -23,8 +23,28 @@ function _parseSupabaseDate(str) {
     return new Date(s);
 }
 
+/** 全体工程表で「完了済み」に移した工事番号（completed_projects）。ガントでは非表示・完了工事一覧では参照可能 */
+let _completedProjectNumbers = new Set();
+
+async function _refreshCompletedProjectNumbers() {
+    const { data, error } = await supabaseClient.from('completed_projects').select('project_number');
+    if (error) {
+        console.error('completed_projects 読み込みエラー:', error);
+        _completedProjectNumbers = new Set();
+        return;
+    }
+    _completedProjectNumbers = new Set(
+        (data || []).map(r => String(r.project_number || '').trim()).filter(Boolean)
+    );
+}
+
+function _isProjectCompletedOnMasterSchedule(projectNumber) {
+    return _completedProjectNumbers.has(String(projectNumber || '').trim());
+}
+
 // データ読み込み
 async function loadData() {
+    await _refreshCompletedProjectNumbers();
     const PAGE_SIZE = 500;
     let allData = [];
     let from = 0;
@@ -44,7 +64,7 @@ async function loadData() {
         if (data.length < PAGE_SIZE) break;
         from += PAGE_SIZE;
     }
-    const data = allData;
+    const data = allData.filter(t => !_isProjectCompletedOnMasterSchedule(t.project_number));
 
     const today = new Date().toISOString().split('T')[0];
 
@@ -221,6 +241,49 @@ function _passesDrawingModeFilter(task) {
     // major_item 未設定などで「操業」が付いていない試運転行も表示（後方互換）
     if (!_passesDrawingModeTaskTypeForTrialName(task)) return false;
     return _textContainsTrialRunKeyword(_trialKeywordBlob(task));
+}
+
+/** 完了工事一覧に工事番号を載せる条件：その番号に操業工程表の対象タスクが1件でもあること */
+function _taskCountsAsOperationForCompletedList(row) {
+    if (!_isDetailedTaskRow(row)) return false;
+    if (_isTripTask(row)) return _isOperationMajorItem(row.major_item);
+    const tt = String(row.task_type || '').trim().toLowerCase();
+    if (tt === 'planning' || tt === 'long_lead_item') return true;
+    return _passesDrawingModeFilter(row);
+}
+
+/** 完了詳細モーダル「操業」タブ：組立工程表の「組立」タブに相当（出張以外の操業系） */
+function _isOperationArchiveMainTabTask(row) {
+    if (!_isDetailedTaskRow(row)) return false;
+    if (_isTripTask(row)) return false;
+    const tt = String(row.task_type || '').trim().toLowerCase();
+    if (tt === 'planning' || tt === 'long_lead_item') return true;
+    return _passesDrawingModeFilter(row);
+}
+
+/**
+ * 工事番号のうち、操業タスクが1件以上あるものだけを返す（完了一覧用）
+ */
+async function _filterProjectNumbersWithOperationTasks(projectNumbers) {
+    const nums = [...new Set((projectNumbers || []).map(p => String(p || '').trim()).filter(Boolean))];
+    const ok = new Set();
+    if (nums.length === 0) return ok;
+    const CHUNK = 80;
+    for (let i = 0; i < nums.length; i += CHUNK) {
+        const chunk = nums.slice(i, i + CHUNK);
+        const { data, error } = await supabaseClient
+            .from('tasks')
+            .select('project_number,is_detailed,major_item,task_type,is_business_trip,text,part_number,model_type')
+            .in('project_number', chunk);
+        if (error) {
+            console.warn('_filterProjectNumbersWithOperationTasks:', error);
+            continue;
+        }
+        (data || []).forEach(row => {
+            if (_taskCountsAsOperationForCompletedList(row)) ok.add(String(row.project_number || '').trim());
+        });
+    }
+    return ok;
 }
 
 function _taskPassesCommonFilters(task) {
@@ -871,6 +934,7 @@ function updateDisplay() {
 
 // 工事番号フィルターの初期化
 async function initProjectSelect(projectParam) {
+    await _refreshCompletedProjectNumbers();
     const PAGE_SIZE = 500;
     let allData = [];
     let from = 0;
@@ -885,7 +949,7 @@ async function initProjectSelect(projectParam) {
         if (pageData.length < PAGE_SIZE) break;
         from += PAGE_SIZE;
     }
-    const data = allData;
+    const data = allData.filter(t => !_isProjectCompletedOnMasterSchedule(t.project_number));
     if (!data || data.length === 0) return;
 
     // 工事番号ごとの情報をマップに格納

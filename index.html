@@ -85,11 +85,7 @@
                 <div class="action-controls">
                     <button class="btn" id="multi_delete_btn" onclick="deleteSelectedTasks()" style="display:none;">選択削除 (<span id="multi_delete_count">0</span>件)</button>
                     <div style="position:relative;display:none;" id="archive_btn_wrap">
-                        <button class="btn" onclick="toggleArchiveMenu(event)">アーカイブ ▼</button>
-                        <div id="archive_dropdown_menu">
-                            <div onclick="openArchiveManager()">アーカイブ管理</div>
-                            <div onclick="openArchiveList()">アーカイブ一覧</div>
-                        </div>
+                        <button type="button" class="btn" id="done_work_list_btn" onclick="openArchiveList()">完了工事一覧</button>
                     </div>
                 </div>
             </div>
@@ -122,21 +118,10 @@
     </div>
 
 
-    <!-- アーカイブ管理モーダル -->
-    <div class="archive-overlay" id="archive_manager_overlay">
-        <div class="archive-dialog">
-            <h3>アーカイブ管理</h3>
-            <div class="archive-table" id="archive_manager_table"></div>
-            <div class="archive-dialog-footer">
-                <button class="btn" onclick="closeArchiveManager()">閉じる</button>
-            </div>
-        </div>
-    </div>
-
-    <!-- アーカイブ一覧モーダル -->
+    <!-- 完了工事一覧モーダル -->
     <div class="archive-overlay" id="archive_list_overlay">
         <div class="archive-dialog">
-            <h3 id="archive_list_title">アーカイブ一覧</h3>
+            <h3 id="archive_list_title">完了工事一覧</h3>
             <div class="archive-table" id="archive_list_table"></div>
             <div class="archive-dialog-footer">
                 <button class="btn" onclick="closeArchiveList()">閉じる</button>
@@ -149,33 +134,12 @@
         <div id="archive_detail_dialog">
             <h3 id="archive_detail_title">タスク一覧</h3>
             <div class="archive-tabs">
-                <button class="archive-tab-btn" id="dtab_drawing"        onclick="switchArchiveDetailTab('drawing')">図面</button>
-                <button class="archive-tab-btn" id="dtab_long_lead_item" onclick="switchArchiveDetailTab('long_lead_item')">長納期品</button>
+                <button class="archive-tab-btn" id="dtab_operation"      onclick="switchArchiveDetailTab('operation')">操業</button>
                 <button class="archive-tab-btn" id="dtab_business_trip"  onclick="switchArchiveDetailTab('business_trip')">出張</button>
-                <button class="archive-tab-btn" id="dtab_planning"       onclick="switchArchiveDetailTab('planning')">計画</button>
             </div>
             <div class="archive-table" id="archive_detail_table"></div>
             <div class="archive-dialog-footer">
-                <button class="btn btn-info" onclick="openArchiveCopyFromDetail()">このモードをコピー</button>
                 <button class="btn" onclick="closeArchiveDetail()">閉じる</button>
-            </div>
-        </div>
-    </div>
-
-    <!-- コピー先工事番号入力ダイアログ -->
-    <div class="archive-overlay" id="archive_copy_overlay">
-        <div class="archive-dialog" style="width:340px; max-height:none;">
-            <h3>工事番号を入力してコピー</h3>
-            <div style="margin-bottom:8px; font-size:12px; color:#555;">
-                コピー元: <span id="archive_copy_src"></span>
-            </div>
-            <div style="margin-bottom:14px;">
-                <label style="font-size:12px; display:block; margin-bottom:4px;">新しい工事番号</label>
-                <input type="text" id="archive_copy_input" style="width:100%; box-sizing:border-box; padding:6px 8px; font-size:13px; border:1px solid #ccc; border-radius:3px; font-family:'メイリオ',Meiryo,sans-serif;">
-            </div>
-            <div class="archive-dialog-footer">
-                <button class="btn" onclick="closeArchiveCopy()">キャンセル</button>
-                <button class="btn btn-primary" onclick="executeArchiveCopy()">コピーして追加</button>
             </div>
         </div>
     </div>
