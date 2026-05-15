@@ -1089,20 +1089,15 @@ function _getLightboxSections(taskType) {
             { name: "add_row_count",   height: 30, map_to: "add_row_count",   type: "add_row_count_lb" },
         ];
     } else {
-        // 試運転（operation）デフォルト
+        // 試運転（operation）— グリッド列と同じ項目構成
         return [
             { name: "project_number",   height: 30, map_to: "project_number",  type: "textarea" },
             { name: "machine",          height: 30, map_to: "machine",          type: "textarea" },
             { name: "unit",             height: 30, map_to: "unit",             type: "textarea" },
             { name: "description",      height: 30, map_to: "text",             type: "textarea_full" },
-            { name: "model_type",       height: 30, map_to: "model_type",       type: "textarea" },
-            { name: "unit2",            height: 30, map_to: "unit2",            type: "textarea" },
-            { name: "characteristic",   height: 30, map_to: "characteristic",   type: "textarea" },
-            { name: "derivation",       height: 30, map_to: "derivation",       type: "textarea" },
             { name: "owner",            height: 30, map_to: "owner",            type: "owner_select_lb" },
             { name: "sheets_pair",      height: 30, map_to: "total_sheets",     type: "sheets_pair" },
             { name: "date_range",       height: 30, map_to: "start_date",       type: "date_range" },
-            { name: "wish_date_lb",     height: 30, map_to: "wish_date",        type: "wish_date_lb" },
             { name: "add_row_count",    height: 30, map_to: "add_row_count",    type: "add_row_count_lb" },
         ];
     }
@@ -1285,11 +1280,16 @@ gantt.form_blocks["date_range"] = {
         return `<div class='gantt_cal_ltext' style='display:flex;gap:6px;align-items:center;'>
             <span style='font-size:11px;white-space:nowrap;color:#555;'>開始日</span>
             <input type='date' id='cal_start_date' style='width:110px;height:26px;border:1px solid #ccc;border-radius:4px;padding:0 4px;font-size:12px;'>
-            <span style='font-size:11px;white-space:nowrap;color:#555;'>完了予定日</span>
+            <span id='cal_end_date_label' style='font-size:11px;white-space:nowrap;color:#555;'>完了予定日</span>
             <input type='date' id='cal_end_date' style='width:110px;height:26px;border:1px solid #ccc;border-radius:4px;padding:0 4px;font-size:12px;'>
         </div>`;
     },
     set_value: function(node, value, task, sns) {
+        const endLabelEl = document.getElementById('cal_end_date_label');
+        if (endLabelEl) {
+            const tt = _normalizeTaskTypeForDb(task.task_type || (typeof currentTaskTypeFilter !== 'undefined' ? currentTaskTypeFilter : '') || 'operation');
+            endLabelEl.textContent = (tt === 'operation') ? '終了日' : '完了予定日';
+        }
         const startInput = document.getElementById('cal_start_date');
         const endInput   = document.getElementById('cal_end_date');
         if (task.start_date) {
@@ -1358,9 +1358,12 @@ gantt.attachEvent("onBeforeLightbox", function(id) {
 
     if (taskType === 'planning' || taskType === 'business_trip') {
         gantt.locale.labels.section_description  = "タスク";
+        gantt.locale.labels.section_unit         = "ユニット";
+        gantt.locale.labels.section_sheets_pair  = "枚数";
     } else {
-        gantt.locale.labels.section_description  = "組立図面名";
-        gantt.locale.labels.section_wish_date_lb = "出図希望日";
+        gantt.locale.labels.section_description  = "タスク";
+        gantt.locale.labels.section_unit         = "ユニ";
+        gantt.locale.labels.section_sheets_pair  = "進捗";
     }
 
     return true;
