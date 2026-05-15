@@ -18,6 +18,23 @@ function _taskTypeMatchesCurrentFilter(task) {
 }
 window._taskTypeMatchesCurrentFilter = _taskTypeMatchesCurrentFilter;
 
+// select で値を選択した時点でインライン編集を確定する
+function _commitInlineSelectEdit(selectEl) {
+    if (!selectEl) return;
+    setTimeout(function() {
+        try {
+            if (gantt.ext && gantt.ext.inlineEditors && gantt.ext.inlineEditors.save) {
+                gantt.ext.inlineEditors.save();
+            }
+        } catch (e) {}
+        try {
+            if (gantt.ext && gantt.ext.inlineEditors && gantt.ext.inlineEditors.hide) {
+                gantt.ext.inlineEditors.hide();
+            }
+        } catch (e) {}
+    }, 0);
+}
+
 // date入力で値を選択した時点でインライン編集を確定する
 function _commitInlineDateEdit(inputEl) {
     if (!inputEl) return;
@@ -123,6 +140,39 @@ gantt.config.editor_types.owner_select = {
     save: function() {},
     focus: function(node) {
         var sel = node.querySelector('select');
+        if (sel) sel.focus();
+    }
+};
+
+// 試運転モード進捗プルダウン（空白 / 作業中 / 完了）
+const OPERATION_PROGRESS_OPTIONS = ["", "作業中", "完了"];
+gantt.config.editor_types.operation_progress_select = {
+    show: function(id, column, config, placeholder) {
+        const opts = OPERATION_PROGRESS_OPTIONS.map(function(v) {
+            return `<option value="${v}">${v}</option>`;
+        }).join("");
+        placeholder.innerHTML = `<select ${_gridInputAttrs('name="grid_inline_operation_progress"')} style="width:100%;height:100%;border:1px solid #7986cb;font-family:メイリオ,sans-serif;font-size:12px;box-sizing:border-box;">${opts}</select>`;
+        const sel = placeholder.querySelector("select");
+        if (sel) {
+            sel.addEventListener("change", function() {
+                _commitInlineSelectEdit(sel);
+            });
+        }
+    },
+    hide: function() {},
+    set_value: function(value, id, column, node) {
+        node.querySelector("select").value = _normalizeOperationProgressStatus({ status: value }) || "";
+    },
+    get_value: function(id, column, node) {
+        return node.querySelector("select").value;
+    },
+    is_changed: function(value, id, column, node) {
+        return value !== this.get_value(id, column, node);
+    },
+    is_valid: function() { return true; },
+    save: function() {},
+    focus: function(node) {
+        var sel = node.querySelector("select");
         if (sel) sel.focus();
     }
 };
@@ -456,7 +506,7 @@ function _buildMultiEditFieldDefs() {
 
     cols.forEach(function(col) {
         if (!col || !col.editor || !col.name) return;
-        if (col.name === "add_btn" || col.name === "progress") return;
+        if (col.name === "add_btn") return;
         const mapTo = col.editor.map_to || col.name;
         if (!mapTo || used.has(mapTo)) return;
         used.add(mapTo);
@@ -472,10 +522,10 @@ function _buildMultiEditFieldDefs() {
             options = ["", ...OWNER_OPTIONS];
         } else if (mapTo === "status") {
             inputType = "select";
-            options = ["", "未", "完了"];
+            options = isDrawingMode ? [...OPERATION_PROGRESS_OPTIONS] : ["", "未", "完了"];
         }
 
-        let group = _getMultiEditGroup(mapTo);
+        let group = _getMultiEditGroup(mapTo, isDrawingMode);
         if (isLongLeadMode && mapTo === "status") {
             // 長納期品モードでは「状態」を進捗グループに表示する
             group = "progress";
@@ -516,11 +566,12 @@ function _buildMultiEditFieldDefs() {
     return defs;
 }
 
-function _getMultiEditGroup(key) {
+function _getMultiEditGroup(key, isDrawingMode) {
     if (["project_number", "machine", "unit"].includes(key)) return "project";
     if (key === "text") return "task_name";
     if (key === "owner") return "owner";
     if (["start_date", "end_date", "wish_date"].includes(key)) return "dates";
+    if (isDrawingMode && key === "status") return "progress";
     if (["total_sheets", "completed_sheets"].includes(key)) return "progress";
     return "details";
 }
@@ -964,6 +1015,11 @@ gantt.attachEvent("onAfterTaskAdd", async function(id, item) {
     // createTask() は gantt.addTask で仮行を作り、保存時に onAfterTaskUpdate で INSERT する
 });
 
+gantt.attachEvent("onAfterTaskUpdate", function(id) {
+    if (typeof gantt.refreshTask === "function") gantt.refreshTask(id);
+    return true;
+});
+
 gantt.attachEvent("onAfterTaskUpdate", async function(id, item) {
     try {
         // 新規（createTask の仮行）の DB 反映は onAfterLightbox 経由の _finalizePendingNewTaskToDb で行う
@@ -1096,7 +1152,7 @@ function _getLightboxSections(taskType) {
             { name: "unit",             height: 30, map_to: "unit",             type: "textarea" },
             { name: "description",      height: 30, map_to: "text",             type: "textarea_full" },
             { name: "owner",            height: 30, map_to: "owner",            type: "owner_select_lb" },
-            { name: "sheets_pair",      height: 30, map_to: "total_sheets",     type: "sheets_pair" },
+            { name: "operation_progress", height: 30, map_to: "status",         type: "operation_progress_lb" },
             { name: "date_range",       height: 30, map_to: "start_date",       type: "date_range" },
             { name: "add_row_count",    height: 30, map_to: "add_row_count",    type: "add_row_count_lb" },
         ];
@@ -1117,6 +1173,7 @@ gantt.locale.labels.section_owner            = "担当";
 gantt.locale.labels.section_total_sheets     = "総枚数";
 gantt.locale.labels.section_completed_sheets = "完了枚数";
 gantt.locale.labels.section_sheets_pair      = "枚数";
+gantt.locale.labels.section_operation_progress = "進捗";
 gantt.locale.labels.section_start_date       = "開始日";
 gantt.locale.labels.section_end_date         = "完了予定日";
 gantt.locale.labels.section_date_range       = "期間";
@@ -1246,6 +1303,25 @@ gantt.form_blocks["template"] = {
     },
     focus: function(node) {
         node.querySelector("input").focus();
+    }
+};
+
+// 試運転モード進捗（ライトボックス用）
+gantt.form_blocks["operation_progress_lb"] = {
+    render: function(sns) {
+        const opts = OPERATION_PROGRESS_OPTIONS.map(function(v) {
+            return `<option value="${v}">${v || "（空白）"}</option>`;
+        }).join("");
+        return `<div class='gantt_cal_ltext'><select style='width:100%;height:30px;border:1px solid #ccc;border-radius:4px;padding:0 5px;font-size:12px;'>${opts}</select></div>`;
+    },
+    set_value: function(node, value, task, sns) {
+        node.querySelector("select").value = _normalizeOperationProgressStatus(task) || "";
+    },
+    get_value: function(node, task, sns) {
+        return node.querySelector("select").value;
+    },
+    focus: function(node) {
+        node.querySelector("select").focus();
     }
 };
 
@@ -1394,40 +1470,55 @@ gantt.attachEvent("onLightboxCancel", function(id) {
     return true;
 });
 
-// 日付フォーマット共通テンプレート
-function _fmtDate(obj) {
-    if (obj.has_no_date || !obj.end_date) return "";
-    // end_dateはdhtmlxGanttの排他的終了（完了日の翌日0時）なので1日引いて完了日を表示
-    const date = new Date(obj.end_date.getTime() - 24 * 60 * 60 * 1000);
-    const y = String(date.getFullYear()).slice(-2);
-    const m = ("0" + (date.getMonth() + 1)).slice(-2);
-    const d = ("0" + date.getDate()).slice(-2);
-    return `${y}/${m}/${d}`;
+function _coerceTaskDate(d) {
+    if (!d) return null;
+    if (d instanceof Date && !isNaN(d.getTime())) return d;
+    const parsed = new Date(d);
+    return isNaN(parsed.getTime()) ? null : parsed;
 }
 
-// 進捗テンプレート
-function _progressTemplate(obj) {
-    const total = parseFloat(obj.total_sheets) || 0;
-    const completed = parseFloat(obj.completed_sheets) || 0;
-    const rawType = String(obj.task_type || "");
-    const taskTypeNorm = _normalizeTaskTypeForDb(rawType);
-    let progress = 0;
-    if (total > 0) {
-        progress = Math.min(100, Math.round((completed / total) * 100));
-    }
-    const today = new Date();
-    today.setHours(0, 0, 0, 0);
-    const isDrawingComplete = (taskTypeNorm === "operation" && rawType !== "long_lead_item" && progress >= 100);
-    const isOverdue = (progress === 0 && obj.end_date && obj.end_date < today);
-    const fillClass = isDrawingComplete
-        ? "progress-fill progress-complete"
-        : (isOverdue ? "progress-fill progress-overdue" : "progress-fill");
-    const textColor = isDrawingComplete ? "#666" : "black";
-    const fillWidth = isOverdue ? "100%" : `${progress}%`;
-    return `<div class="progress-cell-container">
-                <div class="${fillClass}" style="width:${fillWidth};"></div>
-                <span style="position:relative; z-index:2; color:${textColor}; font-weight:normal;">${progress}%</span>
-            </div>`;
+function _fmtGridDateShort(d) {
+    const date = _coerceTaskDate(d);
+    if (!date) return "";
+    const y = String(date.getFullYear()).slice(-2);
+    const m = String(date.getMonth() + 1).padStart(2, "0");
+    const day = String(date.getDate()).padStart(2, "0");
+    return y + "/" + m + "/" + day;
+}
+
+// 日付フォーマット共通テンプレート（終了日＝排他的 end_date の1日前を表示）
+function _fmtDate(obj) {
+    if (obj.has_no_date || !obj.end_date) return "";
+    const end = _coerceTaskDate(obj.end_date);
+    if (!end) return "";
+    return _fmtGridDateShort(new Date(end.getTime() - 24 * 60 * 60 * 1000));
+}
+
+function _fmtStartDateCell(task) {
+    if (task.has_no_date || !task.start_date) return "";
+    return _fmtGridDateShort(task.start_date);
+}
+
+/** 試運転モードの進捗（status）を正規化。旧データ（枚数ベース）からの推定も行う */
+function _normalizeOperationProgressStatus(task) {
+    const s = String((task && task.status) || "").trim();
+    if (s === "作業中" || s === "完了") return s;
+    const total = parseFloat(task && task.total_sheets) || 0;
+    const completed = parseFloat(task && task.completed_sheets) || 0;
+    if (total > 0 && completed >= total) return "完了";
+    if (total > 0 && completed > 0) return "作業中";
+    return "";
+}
+
+function _operationProgressCellClass(status) {
+    if (status === "作業中") return "op-progress-in-progress";
+    return "";
+}
+
+function _operationProgressTemplate(obj) {
+    const status = _normalizeOperationProgressStatus(obj) || "";
+    const cellClass = _operationProgressCellClass(status);
+    return `<div class="op-progress-cell ${cellClass}"><span class="op-progress-label">${status}</span></div>`;
 }
 
 function _isCompletedForDisplay(task) {
@@ -1437,11 +1528,7 @@ function _isCompletedForDisplay(task) {
     }
     const taskTypeNorm = _normalizeTaskTypeForDb(raw);
     if (taskTypeNorm === "operation") {
-        const total = parseFloat(task.total_sheets) || 0;
-        if (total <= 0) return false;
-        const completed = parseFloat(task.completed_sheets) || 0;
-        const progress = Math.min(100, Math.round((completed / total) * 100));
-        return progress >= 100;
+        return _normalizeOperationProgressStatus(task) === "完了";
     }
     return false;
 }
@@ -1453,17 +1540,12 @@ function _getDrawingColumns() {
         { name: "machine",        label: "機械",         width: 40, align: "center", editor: { type: "text", map_to: "machine" } },
         { name: "unit",           label: "ユニ",         width: 45, align: "center", editor: { type: "text", map_to: "unit" } },
         { name: "text",           label: "タスク",       width: 210, tree: true,     editor: { type: "text", map_to: "text" } },
-        { name: "owner",          label: "担当",         width: 60, align: "center", editor: { type: "owner_select", map_to: "owner" } },
-        { name: "progress",       label: "進捗",         width: 45, align: "center", template: _progressTemplate },
+        { name: "owner",          label: "担当",         width: 78, align: "center", editor: { type: "owner_select", map_to: "owner" } },
+        { name: "status",         label: "進捗",         width: 70, align: "center",
+          template: _operationProgressTemplate,
+          editor: { type: "operation_progress_select", map_to: "status" } },
         { name: "start_date",     label: "開始日",       width: 65, align: "center",
-          template: function(task) {
-            if (!task.start_date) return "";
-            const d = task.start_date;
-            const yy = String(d.getFullYear()).slice(-2);
-            const mm = String(d.getMonth() + 1).padStart(2, '0');
-            const dd = String(d.getDate()).padStart(2, '0');
-            return yy + '/' + mm + '/' + dd;
-          },
+          template: _fmtStartDateCell,
           editor: { type: "start_date_editor", map_to: "start_date" } },
         { name: "end_date",       label: "終了日",       width: 65, align: "center", template: _fmtDate, editor: { type: "completion_date", map_to: "end_date" } },
         { name: "add_btn",        label: "",             width: 25, align: "center", template: (task) => _isEditor ? `<div class='custom_add_btn' onclick='createTask(${task.id})'>+</div>` : '' }
@@ -1508,14 +1590,7 @@ function _getTripColumns() {
         { name: "text",            label: "タスク",   width: 210, tree: true,      editor: { type: "text", map_to: "text" } },
         { name: "owner",           label: "担当",     width: 60,  align: "center", editor: { type: "owner_select", map_to: "owner" } },
         { name: "start_date",      label: "開始日",   width: 65,  align: "center",
-          template: function(task) {
-            if (!task.start_date) return "";
-            const d = task.start_date;
-            const yy = String(d.getFullYear()).slice(-2);
-            const mm = String(d.getMonth() + 1).padStart(2, '0');
-            const dd = String(d.getDate()).padStart(2, '0');
-            return yy + '/' + mm + '/' + dd;
-          },
+          template: _fmtStartDateCell,
           editor: { type: "start_date_editor", map_to: "start_date" } },
         { name: "end_date",        label: "終了日",   width: 65,  align: "center", template: _fmtDate, editor: { type: "completion_date", map_to: "end_date" } },
         { name: "add_btn",         label: "",         width: 25,  align: "center", template: (task) => _isEditor ? `<div class='custom_add_btn' onclick='createTask(${task.id})'>+</div>` : '' }

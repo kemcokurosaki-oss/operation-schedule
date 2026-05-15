@@ -80,7 +80,7 @@ async function loadData() {
             ? gantt.date.add(_parseSupabaseDate(t.end_date), 1, 'day')
             : gantt.date.add(startDate, 1, 'day');
 
-        return {
+        const row = {
             ...t,
             start_date: startDate,
             end_date:   endDate,
@@ -89,6 +89,12 @@ async function loadData() {
             // dhtmlxGantt では非存在親として扱われて行が消えるため、表示は常にフラット化する
             parent: 0
         };
+        if (typeof _normalizeTaskTypeForDb === 'function' &&
+            _normalizeTaskTypeForDb(t.task_type) === 'operation' &&
+            typeof _normalizeOperationProgressStatus === 'function') {
+            row.status = _normalizeOperationProgressStatus(row);
+        }
+        return row;
     });
 
     // sort_order 順（null の場合は id * 1000 で代替）にソート
@@ -288,11 +294,10 @@ async function _filterProjectNumbersWithOperationTasks(projectNumbers) {
 }
 
 function _taskPassesCommonFilters(task) {
+    if (currentProjectFilter.length > 0 && !currentProjectFilter.includes(String(task.project_number))) return false;
     if (currentTaskTypeFilter === 'operation') {
-        // 試運転モード: 操業 major_item または operation タイプ（他フィルターは適用しない）
         return _passesDrawingModeFilter(task);
     }
-    if (currentProjectFilter.length > 0 && !currentProjectFilter.includes(String(task.project_number))) return false;
     if (!_isDetailedTaskRow(task)) return false;
     // 出張タスク（task_type='business_trip' または is_business_trip=TRUE）は出張モード以外では非表示
     if (_isTripTask(task) && currentTaskTypeFilter !== 'business_trip') return false;
@@ -439,7 +444,6 @@ window._debugDrawingFilter = function() {
  */
 function _taskVisibleIgnoringMachineFilter(task) {
     if (!_taskPassesCommonFilters(task)) return false;
-    if (currentTaskTypeFilter === 'operation') return true;
     if (currentOwnerFilter.length > 0) {
         const taskOwners = String(task.owner || '').split(/[,、\s]+/).map(o => o.trim());
         if (!currentOwnerFilter.some(f => taskOwners.includes(f))) return false;
@@ -457,7 +461,6 @@ function _taskVisibleIgnoringMachineFilter(task) {
  */
 function _taskVisibleIgnoringOwnerFilter(task) {
     if (!_taskPassesCommonFilters(task)) return false;
-    if (currentTaskTypeFilter === 'operation') return true;
     if (currentMachineFilter.length > 0) {
         const m = String(task.machine || '').trim();
         if (!currentMachineFilter.includes(m)) return false;
@@ -474,7 +477,6 @@ function _taskVisibleIgnoringOwnerFilter(task) {
  */
 function _taskVisibleIgnoringUnitFilter(task) {
     if (!_taskPassesCommonFilters(task)) return false;
-    if (currentTaskTypeFilter === 'operation') return true;
     if (currentMachineFilter.length > 0) {
         const m = String(task.machine || '').trim();
         if (!currentMachineFilter.includes(m)) return false;
@@ -688,6 +690,7 @@ function toggleOwnerFilterDropdown() {
 function ownerFilterAllChanged(checkbox) {
     document.querySelectorAll('.owner-chk-item').forEach(chk => { chk.checked = false; });
     currentOwnerFilter = [];
+    gantt.render();
     _updateOwnerFilterBtn();
     _rebuildMachineFilterOptionsFromGantt();
     _rebuildUnitFilterOptionsFromGantt();
@@ -700,6 +703,7 @@ function ownerFilterItemChanged() {
     currentOwnerFilter = selected;
     const allChk = document.getElementById('owner_chk_all');
     if (allChk) allChk.checked = selected.length === 0;
+    gantt.render();
     _updateOwnerFilterBtn();
     _rebuildMachineFilterOptionsFromGantt();
     _rebuildUnitFilterOptionsFromGantt();
