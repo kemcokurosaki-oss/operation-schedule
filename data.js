@@ -210,7 +210,8 @@ function _textContainsTrialRunKeyword(blob) {
 
 /**
  * 試運転モードで「タスク名の試運転」ルートに使う task_type 判定。
- * DB 由来で null / 空 / 大文字小文字ゆれがあり、厳密に !== 'drawing' だと行が消える。
+ * DB 由来で null / 空 / 大文字小文字ゆれがあり、厳密比較だと行が消える。
+ * 旧データの task_type=drawing は試運転（operation）相当として扱う。
  */
 function _passesDrawingModeTaskTypeForTrialName(task) {
     const tt = task.task_type;
@@ -229,7 +230,7 @@ function _isTripTask(task) {
         || String(task.is_business_trip).toUpperCase() === 'TRUE';
 }
 
-/** 試運転モード（drawing）でガントに出す行。設計工程表の is_detailed は除外 */
+/** 試運転モード（task_type=operation）でガントに出す行。設計工程表の is_detailed は除外 */
 function _passesDrawingModeFilter(task) {
     if (!_isDetailedTaskRow(task)) return false;
     // 出張タスクは試運転モードでも非表示（全体工程表の出張予定シートと同じ扱い）
@@ -287,8 +288,8 @@ async function _filterProjectNumbersWithOperationTasks(projectNumbers) {
 }
 
 function _taskPassesCommonFilters(task) {
-    if (currentTaskTypeFilter === 'operation' || currentTaskTypeFilter === 'drawing') {
-        // 試運転/操業モード: 操業 major_item または operation タイプ（他フィルターは適用しない）
+    if (currentTaskTypeFilter === 'operation') {
+        // 試運転モード: 操業 major_item または operation タイプ（他フィルターは適用しない）
         return _passesDrawingModeFilter(task);
     }
     if (currentProjectFilter.length > 0 && !currentProjectFilter.includes(String(task.project_number))) return false;
@@ -298,7 +299,7 @@ function _taskPassesCommonFilters(task) {
     // 出張モード時は「操業部の出張タスク」のみ表示
     if (currentTaskTypeFilter === 'business_trip') return _isTripTask(task) && _isOperationMajorItem(task.major_item);
     if (currentTaskTypeFilter) {
-        if (String(task.task_type) !== currentTaskTypeFilter) return false;
+        if (_normalizeTaskTypeForDb(task.task_type) !== _normalizeTaskTypeForDb(currentTaskTypeFilter)) return false;
     }
     return true;
 }
@@ -438,7 +439,7 @@ window._debugDrawingFilter = function() {
  */
 function _taskVisibleIgnoringMachineFilter(task) {
     if (!_taskPassesCommonFilters(task)) return false;
-    if (currentTaskTypeFilter === 'operation' || currentTaskTypeFilter === 'drawing') return true;
+    if (currentTaskTypeFilter === 'operation') return true;
     if (currentOwnerFilter.length > 0) {
         const taskOwners = String(task.owner || '').split(/[,、\s]+/).map(o => o.trim());
         if (!currentOwnerFilter.some(f => taskOwners.includes(f))) return false;
@@ -456,7 +457,7 @@ function _taskVisibleIgnoringMachineFilter(task) {
  */
 function _taskVisibleIgnoringOwnerFilter(task) {
     if (!_taskPassesCommonFilters(task)) return false;
-    if (currentTaskTypeFilter === 'operation' || currentTaskTypeFilter === 'drawing') return true;
+    if (currentTaskTypeFilter === 'operation') return true;
     if (currentMachineFilter.length > 0) {
         const m = String(task.machine || '').trim();
         if (!currentMachineFilter.includes(m)) return false;
@@ -473,7 +474,7 @@ function _taskVisibleIgnoringOwnerFilter(task) {
  */
 function _taskVisibleIgnoringUnitFilter(task) {
     if (!_taskPassesCommonFilters(task)) return false;
-    if (currentTaskTypeFilter === 'operation' || currentTaskTypeFilter === 'drawing') return true;
+    if (currentTaskTypeFilter === 'operation') return true;
     if (currentMachineFilter.length > 0) {
         const m = String(task.machine || '').trim();
         if (!currentMachineFilter.includes(m)) return false;
@@ -829,7 +830,7 @@ document.addEventListener('click', function(e) {
 function updateFilterButtons() {
     document.getElementById('resource_home_btn').classList.toggle('active', isResourceFullscreen);
     document.getElementById('plan_filter_btn').classList.toggle('active', currentTaskTypeFilter === 'planning');
-    document.getElementById('drawing_filter_btn').classList.toggle('active', currentTaskTypeFilter === 'operation' || currentTaskTypeFilter === 'drawing');
+    document.getElementById('drawing_filter_btn').classList.toggle('active', currentTaskTypeFilter === 'operation');
     document.getElementById('trip_filter_btn').classList.toggle('active', currentTaskTypeFilter === 'business_trip');
     // 担当別モード中はボタン行の上下余白を均等にして行を調整
     const filterBtnRow = document.getElementById('filter_btn_row');
@@ -874,10 +875,9 @@ function returnToResourceView() {
 }
 
 function _colSetName(filterType) {
-    if (filterType === 'long_lead_item') return 'longterm';
     if (filterType === 'business_trip')  return 'trip';
     if (filterType === 'planning')        return 'trip';
-    if (filterType === 'operation' || filterType === 'drawing') return 'drawing';
+    if (filterType === 'operation')      return 'trial';
     return 'default';
 }
 
@@ -1261,13 +1261,13 @@ async function initialize() {
     function _calcInsertAfterSortOrder(sourceId) {
         const src = gantt.getTask(sourceId);
         const projectNumber = src.project_number;
-        const taskType = src.task_type;
+        const taskTypeNorm = typeof _normalizeTaskTypeForDb === 'function' ? _normalizeTaskTypeForDb(src.task_type) : src.task_type;
         const _getSO = t => (t.sort_order != null) ? t.sort_order : t.id * 1000;
     const allTasks = gantt.getTaskByTime().filter(t => {
         const isDetailed = (t.is_detailed === true || String(t.is_detailed).toUpperCase() === 'TRUE');
         if (isDetailed) return false;
         if (String(t.project_number) !== String(projectNumber)) return false;
-            if (taskType && String(t.task_type) !== String(taskType)) return false;
+            if (taskTypeNorm && typeof _normalizeTaskTypeForDb === 'function' && _normalizeTaskTypeForDb(t.task_type) !== taskTypeNorm) return false;
             return true;
         }).sort((a, b) => _getSO(a) - _getSO(b));
         const idx = allTasks.findIndex(t => String(t.id) === String(sourceId));
@@ -1330,9 +1330,10 @@ async function initialize() {
                 total_sheets:     _n('total_sheets'),
                 completed_sheets: _n('completed_sheets'),
                 wish_date:        src.wish_date || null,
-                task_type:        currentTaskTypeFilter || src.task_type || "operation",
+                task_type:        _normalizeTaskTypeForDb(currentTaskTypeFilter || src.task_type || "operation"),
                 is_detailed:      false,
-                major_item:       (currentTaskTypeFilter === 'operation' || currentTaskTypeFilter === 'drawing') ? '操業' : (src.major_item || null),
+                major_item:       '操業',
+                is_business_trip: currentTaskTypeFilter === 'business_trip' ? true : false,
                 sort_order:       insertSortOrder
             }])
             .select();
@@ -1387,7 +1388,7 @@ async function initialize() {
             const isDetailed = (t.is_detailed === true || String(t.is_detailed).toUpperCase() === 'TRUE');
             if (isDetailed) return false;
             if (String(t.project_number) !== String(destProject)) return false;
-            if (currentTaskTypeFilter && String(t.task_type) !== currentTaskTypeFilter) return false;
+            if (currentTaskTypeFilter && typeof _normalizeTaskTypeForDb === 'function' && _normalizeTaskTypeForDb(t.task_type) !== _normalizeTaskTypeForDb(currentTaskTypeFilter)) return false;
             return true;
         }).sort((a, b) => _getSO(a) - _getSO(b));
 
@@ -1424,9 +1425,10 @@ async function initialize() {
                 total_sheets:     Number(src.total_sheets)     || 0,
                 completed_sheets: Number(src.completed_sheets) || 0,
                 wish_date:        src.wish_date        || null,
-                task_type:        currentTaskTypeFilter || src.task_type || "operation",
+                task_type:        _normalizeTaskTypeForDb(currentTaskTypeFilter || src.task_type || "operation"),
                 is_detailed:      false,
-                major_item:       (currentTaskTypeFilter === 'operation' || currentTaskTypeFilter === 'drawing') ? '操業' : (src.major_item || null),
+                major_item:       '操業',
+                is_business_trip: currentTaskTypeFilter === 'business_trip' ? true : false,
                 sort_order:       baseSO + (i + 1) * 1000
             };
         });
@@ -1492,11 +1494,12 @@ async function initialize() {
     gantt.showDate(new Date());
 
     // 7. 初期表示モードを設定
-    // task_type パラメータがある場合（全体工程表から遷移）はガントモードで起動
-    //   - task_type=long_lead_item → 長納期品モード
-    //   - task_type=drawing        → 図面モード
-    // task_type パラメータがない場合（直接アクセス）は担当別モードで起動
-    const taskTypeParam = urlParams.get('task_type');
+    // task_type クエリがある場合はガントで起動（planning / operation / business_trip のみ。drawing・long_lead_item は試運転に正規化）
+    // パラメータがない場合は担当別モードで起動
+    const rawTaskTypeParam = urlParams.get('task_type');
+    const taskTypeParam = (rawTaskTypeParam != null && String(rawTaskTypeParam).trim() !== '')
+        ? _normalizeTaskTypeForDb(rawTaskTypeParam)
+        : null;
     requestAnimationFrame(() => {
         if (taskTypeParam) {
             // 全体工程表からの遷移：指定モードのガントビューで起動
