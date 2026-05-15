@@ -1068,11 +1068,21 @@ gantt.attachEvent("onAfterTaskDelete", async function(id, item) {
 // 編集画面（ライトボックス）のセクション定義（タスクタイプ別）
 function _getLightboxSections(taskType) {
     const tt = _normalizeTaskTypeForDb(taskType);
-    if (tt === 'planning' || tt === 'business_trip') {
+    if (tt === 'business_trip') {
         return [
             { name: "project_number",  height: 30, map_to: "project_number",  type: "textarea" },
-            { name: "customer_name",   height: 30, map_to: "customer_name",   type: "textarea" },
-            { name: "project_details", height: 30, map_to: "project_details", type: "textarea" },
+            { name: "machine",         height: 30, map_to: "machine",          type: "textarea" },
+            { name: "unit",            height: 30, map_to: "unit",             type: "textarea" },
+            { name: "description",     height: 30, map_to: "text",            type: "task_select_lb" },
+            { name: "owner",           height: 30, map_to: "owner",           type: "owner_select_lb" },
+            { name: "date_range",      height: 30, map_to: "start_date",      type: "date_range" },
+            { name: "add_row_count",   height: 30, map_to: "add_row_count",   type: "add_row_count_lb" },
+        ];
+    } else if (tt === 'planning') {
+        return [
+            { name: "project_number",  height: 30, map_to: "project_number",  type: "textarea" },
+            { name: "machine",         height: 30, map_to: "machine",          type: "textarea" },
+            { name: "unit",            height: 30, map_to: "unit",             type: "textarea" },
             { name: "description",     height: 30, map_to: "text",            type: "textarea_full" },
             { name: "owner",           height: 30, map_to: "owner",           type: "owner_select_lb" },
             { name: "date_range",      height: 30, map_to: "start_date",      type: "date_range" },
@@ -1149,6 +1159,29 @@ gantt.form_blocks["owner_select_lb"] = {
     },
     set_value: function(node, value, task, sns) {
         node.querySelector("select").value = value || '';
+    },
+    get_value: function(node, task, sns) {
+        return node.querySelector("select").value;
+    },
+    focus: function(node) {
+        node.querySelector("select").focus();
+    }
+};
+
+// 出張タスク用プルダウン（現地試運転 / 現地SV / 調査）
+gantt.form_blocks["task_select_lb"] = {
+    render: function(sns) {
+        const opts = ['現地試運転', '現地SV', '調査'].map(v =>
+            `<option value="${v}">${v}</option>`).join('');
+        return `<div class='gantt_cal_ltext'><select style='width:100%;height:30px;border:1px solid #ccc;border-radius:4px;padding:0 5px;font-size:12px;'>${opts}</select></div>`;
+    },
+    set_value: function(node, value, task, sns) {
+        const sel = node.querySelector("select");
+        if (value && ['現地試運転', '現地SV', '調査'].includes(value)) {
+            sel.value = value;
+        } else {
+            sel.value = '現地試運転';
+        }
     },
     get_value: function(node, task, sns) {
         return node.querySelector("select").value;
