@@ -517,6 +517,10 @@ html, body { margin: 0; padding: 0; height: 100%; overflow: hidden; font-family:
     background: #eeeeee;
     border-radius: 2px;
 }
+.gantt_row.grid-row-selected .op-progress-complete .op-progress-label,
+.gantt_row.gantt_selected .op-progress-complete .op-progress-label {
+    background: transparent;
+}
 /* 試運転モード：進捗列のインライン編集数値入力 */
 .gantt_grid_editor_placeholder input[name="grid_inline_operation_progress"] {
     width: 100%;
