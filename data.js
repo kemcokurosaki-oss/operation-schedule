@@ -299,6 +299,8 @@ function _taskPassesCommonFilters(task) {
         return _passesDrawingModeFilter(task);
     }
     if (!_isDetailedTaskRow(task)) return false;
+    // 現地試運転モード: 出張タスクのうち text が「現地試運転」のものだけ
+    if (currentTaskTypeFilter === 'field_trip') return _isTripTask(task) && _isOperationMajorItem(task.major_item) && String(task.text || '').trim() === '現地試運転';
     // 出張タスク（task_type='business_trip' または is_business_trip=TRUE）は出張モード以外では非表示
     if (_isTripTask(task) && currentTaskTypeFilter !== 'business_trip') return false;
     // 出張モード時は「操業部の出張タスク」のみ表示
