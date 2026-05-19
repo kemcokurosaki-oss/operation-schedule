@@ -1185,6 +1185,40 @@ gantt.locale.labels.section_project_details  = "工事名";
 gantt.locale.labels.section_wish_date_lb     = "出図希望日 / 手配期日";
 gantt.locale.labels.section_add_row_count    = "追加行数";
 
+// showLightbox をオーバーライド：DHTMLX がDOMをビルドする前にセクションをリセット
+(function() {
+    var _origShow = gantt.showLightbox.bind(gantt);
+    gantt.showLightbox = function(id) {
+        try {
+            if (gantt.isTaskExists(id)) {
+                var task = gantt.getTask(id);
+                var isBT = _normalizeTaskTypeForDb(task.task_type) === 'business_trip'
+                           || task.is_business_trip === true
+                           || String(task.is_business_trip).toUpperCase() === 'TRUE';
+                var tt = isBT ? 'business_trip' : _normalizeTaskTypeForDb(task.task_type || 'operation');
+                gantt.config.lightbox.sections = _getLightboxSections(tt);
+                if (typeof gantt.resetLightbox === 'function') gantt.resetLightbox();
+                if (isBT) setTimeout(_wireTripAutoFill, 30);
+            }
+        } catch(e) {}
+        _origShow(id);
+    };
+})();
+
+// 出張モード: 工事番号テキストエリアに入力されたとき客先・工事名を自動反映
+function _wireTripAutoFill() {
+    var pnEl = document.querySelector('#section_project_number textarea');
+    if (!pnEl) return;
+    pnEl.oninput = function() {
+        var pn = pnEl.value.trim();
+        var info = (pn && typeof projectMap !== 'undefined') ? (projectMap.get(pn) || null) : null;
+        var cnEl = document.querySelector('#section_customer_name textarea');
+        var pdEl = document.querySelector('#section_project_details textarea');
+        if (cnEl) cnEl.value = info ? (info.customer || '') : '';
+        if (pdEl) pdEl.value = info ? (info.details || '') : '';
+    };
+}
+
 // カスタムテンプレート（input type="date"）
 // 全幅テキストエリア（組立図面名・品名など）
 gantt.form_blocks["textarea_full"] = {
