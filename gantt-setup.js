@@ -1646,20 +1646,9 @@ function _getLongtermColumns() {
 gantt.config.columns = _getDrawingColumns();
 gantt.config._columnFilterType = 'operation';
 
-// プログラム作成列定義（客先・工事名なし）
+// プログラム作成列定義（社内試運転と同構成）
 function _getPlanningColumns() {
-    return [
-        { name: "project_number",  label: "工番",   width: 60,  align: "center", editor: { type: "text", map_to: "project_number" } },
-        { name: "machine",         label: "機械",   width: 40,  align: "center", editor: { type: "text", map_to: "machine" } },
-        { name: "unit",            label: "ユニ",   width: 45,  align: "center", editor: { type: "text", map_to: "unit" } },
-        { name: "text",            label: "タスク", width: 200, tree: true,      editor: { type: "text", map_to: "text" } },
-        { name: "owner",           label: "担当",   width: 60,  align: "center", editor: { type: "owner_select", map_to: "owner" } },
-        { name: "start_date",      label: "開始日", width: 65,  align: "center",
-          template: _fmtStartDateCell,
-          editor: { type: "start_date_editor", map_to: "start_date" } },
-        { name: "end_date",        label: "終了日", width: 65,  align: "center", template: _fmtDate, editor: { type: "completion_date", map_to: "end_date" } },
-        { name: "add_btn",         label: "",       width: 25,  align: "center", template: (task) => _isEditor ? `<div class='custom_add_btn' onclick='createTask(${task.id})'>+</div>` : '' }
-    ];
+    return _getDrawingColumns();
 }
 
 // 出張・現地試運転列定義
