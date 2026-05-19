@@ -1241,7 +1241,7 @@ gantt.form_blocks["trip_project_number_lb"] = {
 gantt.form_blocks["trip_auto_lb"] = {
     render: function(sns) {
         const fieldId = 'lb_trip_' + sns.name;
-        return `<div class='gantt_cal_ltext'><input type='text' id='${fieldId}' style='width:100%;height:26px;border:1px solid #ccc;border-radius:4px;padding:0 4px;font-size:12px;box-sizing:border-box;background:#f5f9ff;' placeholder='工事番号入力で自動反映'></div>`;
+        return `<div class='gantt_cal_ltext'><input type='text' id='${fieldId}' style='width:100%;height:26px;border:1px solid #ccc;border-radius:4px;padding:0 4px;font-size:12px;box-sizing:border-box;background:#f5f9ff;' placeholder='工番入力で自動反映'></div>`;
     },
     set_value: function(node, value, task, sns) {
         node.querySelector("input").value = value || '';
