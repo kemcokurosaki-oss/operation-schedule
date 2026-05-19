@@ -1204,18 +1204,42 @@ gantt.locale.labels.section_add_row_count    = "追加行数";
     };
 })();
 
-// 出張モード: 工事番号テキストエリアに入力されたとき客先・工事名を自動反映
-function _wireTripAutoFill() {
-    var pnEl = document.querySelector('#section_project_number textarea');
-    if (!pnEl) return;
-    pnEl.oninput = function() {
-        var pn = pnEl.value.trim();
-        var info = (pn && typeof projectMap !== 'undefined') ? (projectMap.get(pn) || null) : null;
-        var cnEl = document.querySelector('#section_customer_name textarea');
-        var pdEl = document.querySelector('#section_project_details textarea');
-        if (cnEl) cnEl.value = info ? (info.customer || '') : '';
-        if (pdEl) pdEl.value = info ? (info.details || '') : '';
-    };
+// 出張モード: 工事番号フィールド（oninput で客先・工事名を自動反映）
+gantt.form_blocks["trip_pn_lb"] = {
+    render: function(sns) {
+        return "<div class='gantt_cal_ltext'><input type='text' id='trip_lb_pn' style='width:100%;height:26px;border:1px solid #ccc;border-radius:4px;padding:0 6px;font-size:12px;box-sizing:border-box;' oninput='_tripLbAutoFill(this.value)'></div>";
+    },
+    set_value: function(node, value, task, sns) {
+        node.querySelector("input").value = value || '';
+    },
+    get_value: function(node, task, sns) {
+        return node.querySelector("input").value;
+    },
+    focus: function(node) { node.querySelector("input").focus(); }
+};
+
+// 出張モード: 客先・工事名（自動反映先、手動編集も可）
+gantt.form_blocks["trip_text_lb"] = {
+    render: function(sns) {
+        return "<div class='gantt_cal_ltext'><input type='text' id='trip_lb_" + sns.name + "' style='width:100%;height:26px;border:1px solid #ccc;border-radius:4px;padding:0 6px;font-size:12px;box-sizing:border-box;'></div>";
+    },
+    set_value: function(node, value, task, sns) {
+        node.querySelector("input").value = value || '';
+    },
+    get_value: function(node, task, sns) {
+        return node.querySelector("input").value;
+    },
+    focus: function(node) {}
+};
+
+// 工事番号入力時に projectMap を検索して客先・工事名を自動反映
+function _tripLbAutoFill(pn) {
+    var info = (pn && pn.trim() && typeof projectMap !== 'undefined')
+        ? (projectMap.get(pn.trim()) || null) : null;
+    var cnEl = document.getElementById('trip_lb_customer_name');
+    var pdEl = document.getElementById('trip_lb_project_details');
+    if (cnEl) cnEl.value = info ? (info.customer || '') : '';
+    if (pdEl) pdEl.value = info ? (info.details || '') : '';
 }
 
 // カスタムテンプレート（input type="date"）
