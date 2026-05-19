@@ -515,8 +515,12 @@ function _buildMultiEditFieldDefs() {
             inputType = "select";
             options = ["", ...OWNER_OPTIONS];
         } else if (mapTo === "status") {
-            inputType = "select";
-            options = isDrawingMode ? [...OPERATION_PROGRESS_OPTIONS] : ["", "未", "完了"];
+            if (isDrawingMode) {
+                inputType = "number";
+            } else {
+                inputType = "select";
+                options = ["", "未", "完了"];
+            }
         }
 
         let group = _getMultiEditGroup(mapTo, isDrawingMode);
