@@ -1221,6 +1221,46 @@ gantt.form_blocks["owner_select_lb"] = {
 };
 
 // 出張タスク用プルダウン（現地試運転 / 現地SV / 調査）
+// 出張モード: 工事番号入力（入力時に客先・工事名を自動反映）
+gantt.form_blocks["trip_project_number_lb"] = {
+    render: function(sns) {
+        return "<div class='gantt_cal_ltext'><input type='text' id='lb_trip_project_number' style='width:100%;height:26px;border:1px solid #ccc;border-radius:4px;padding:0 4px;font-size:12px;box-sizing:border-box;' oninput='_onTripProjectNumberLookup(this.value)'></div>";
+    },
+    set_value: function(node, value, task, sns) {
+        node.querySelector("input").value = value || '';
+    },
+    get_value: function(node, task, sns) {
+        return node.querySelector("input").value;
+    },
+    focus: function(node) {
+        node.querySelector("input").focus();
+    }
+};
+
+// 出張モード: 自動入力フィールド（工事番号から自動反映、手動編集も可）
+gantt.form_blocks["trip_auto_lb"] = {
+    render: function(sns) {
+        const fieldId = 'lb_trip_' + sns.name;
+        return `<div class='gantt_cal_ltext'><input type='text' id='${fieldId}' style='width:100%;height:26px;border:1px solid #ccc;border-radius:4px;padding:0 4px;font-size:12px;box-sizing:border-box;background:#f5f9ff;' placeholder='工事番号入力で自動反映'></div>`;
+    },
+    set_value: function(node, value, task, sns) {
+        node.querySelector("input").value = value || '';
+    },
+    get_value: function(node, task, sns) {
+        return node.querySelector("input").value;
+    },
+    focus: function(node) {}
+};
+
+function _onTripProjectNumberLookup(projectNumber) {
+    const pn = projectNumber.trim();
+    const info = pn ? (projectMap.get(pn) || null) : null;
+    const custEl = document.getElementById('lb_trip_customer_name');
+    const detailEl = document.getElementById('lb_trip_project_details');
+    if (custEl) custEl.value = info ? (info.customer || '') : '';
+    if (detailEl) detailEl.value = info ? (info.details || '') : '';
+}
+
 gantt.form_blocks["task_select_lb"] = {
     render: function(sns) {
         const opts = ['現地試運転', '現地SV', '調査'].map(v =>
