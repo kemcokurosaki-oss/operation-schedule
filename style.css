@@ -514,9 +514,9 @@ html, body { margin: 0; padding: 0; height: 100%; overflow: hidden; font-family:
     border-radius: 2px;
 }
 .op-progress-complete .op-progress-label {
-    background: #bdbdbd;
+    background: #eeeeee;
     border-radius: 2px;
-    color: #fff;
+    color: #666;
     font-weight: bold;
 }
 /* 試運転モード：進捗列のインライン編集数値入力 */
