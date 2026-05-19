@@ -1596,7 +1596,7 @@ function _getDrawingColumns() {
 // 長納期品列定義
 function _getLongtermColumns() {
     return [
-        { name: "project_number", label: "工事<br>番号", width: 35,  align: "center", editor: { type: "text",   map_to: "project_number" } },
+        { name: "project_number", label: "工番",          width: 35,  align: "center", editor: { type: "text",   map_to: "project_number" } },
         { name: "machine",    label: "機械",           width: 32,  align: "center", editor: { type: "text",   map_to: "machine" } },
         { name: "unit",       label: "ユニ",           width: 40,  align: "center", editor: { type: "text",   map_to: "unit" } },
         { name: "text",       label: "品名",           width: 173, tree: true,      editor: { type: "text",   map_to: "text" } },
