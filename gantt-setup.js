@@ -1464,9 +1464,15 @@ gantt.attachEvent("onLightboxSave", function(id, task, is_new){
 gantt.attachEvent("onBeforeLightbox", function(id) {
     if (isResourceFullscreen) return false;
     const task = gantt.getTask(id);
-    const taskType = task ? _normalizeTaskTypeForDb(task.task_type || 'operation') : 'operation';
+    const isBT = task && (
+        _normalizeTaskTypeForDb(task.task_type) === 'business_trip' ||
+        task.is_business_trip === true ||
+        String(task.is_business_trip).toUpperCase() === 'TRUE'
+    );
+    const taskType = isBT ? 'business_trip'
+        : (task ? _normalizeTaskTypeForDb(task.task_type || 'operation') : 'operation');
     gantt.config.lightbox.sections = _getLightboxSections(taskType);
-    gantt.resetLightbox();
+    if (typeof gantt.resetLightbox === 'function') gantt.resetLightbox();
 
     if (taskType === 'planning' || taskType === 'business_trip') {
         gantt.locale.labels.section_description  = "タスク";
