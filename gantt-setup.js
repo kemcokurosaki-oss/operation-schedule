@@ -144,27 +144,21 @@ gantt.config.editor_types.owner_select = {
     }
 };
 
-// 試運転モード進捗プルダウン（空白 / 作業中 / 完了）
-const OPERATION_PROGRESS_OPTIONS = ["", "作業中", "完了"];
+// 試運転モード進捗インライン入力（0〜100の数値を自由入力）
 gantt.config.editor_types.operation_progress_select = {
     show: function(id, column, config, placeholder) {
-        const opts = OPERATION_PROGRESS_OPTIONS.map(function(v) {
-            return `<option value="${v}">${v}</option>`;
-        }).join("");
-        placeholder.innerHTML = `<select ${_gridInputAttrs('name="grid_inline_operation_progress"')} style="width:100%;height:100%;border:1px solid #7986cb;font-family:メイリオ,sans-serif;font-size:12px;box-sizing:border-box;">${opts}</select>`;
-        const sel = placeholder.querySelector("select");
-        if (sel) {
-            sel.addEventListener("change", function() {
-                _commitInlineSelectEdit(sel);
-            });
-        }
+        placeholder.innerHTML = `<input type="number" min="0" max="100" step="1" ${_gridInputAttrs('name="grid_inline_operation_progress"')} style="width:100%;height:100%;border:1px solid #7986cb;font-family:メイリオ,sans-serif;font-size:12px;box-sizing:border-box;text-align:center;">`;
     },
     hide: function() {},
     set_value: function(value, id, column, node) {
-        node.querySelector("select").value = _normalizeOperationProgressStatus({ status: value }) || "";
+        node.querySelector("input").value = _normalizeOperationProgressStatus({ status: value });
     },
     get_value: function(id, column, node) {
-        return node.querySelector("select").value;
+        const v = node.querySelector("input").value;
+        if (v === "" || v === null || v === undefined) return "";
+        const n = parseFloat(v);
+        if (isNaN(n)) return "";
+        return String(Math.min(100, Math.max(0, Math.round(n))));
     },
     is_changed: function(value, id, column, node) {
         return value !== this.get_value(id, column, node);
@@ -172,8 +166,8 @@ gantt.config.editor_types.operation_progress_select = {
     is_valid: function() { return true; },
     save: function() {},
     focus: function(node) {
-        var sel = node.querySelector("select");
-        if (sel) sel.focus();
+        var inp = node.querySelector("input");
+        if (inp) { inp.focus(); inp.select(); }
     }
 };
 
