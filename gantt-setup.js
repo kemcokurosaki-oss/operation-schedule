@@ -1471,6 +1471,7 @@ gantt.attachEvent("onBeforeLightbox", function(id) {
     const task = gantt.getTask(id);
     const taskType = task ? _normalizeTaskTypeForDb(task.task_type || 'operation') : 'operation';
     gantt.config.lightbox.sections = _getLightboxSections(taskType);
+    gantt.resetLightbox();
 
     if (taskType === 'planning' || taskType === 'business_trip') {
         gantt.locale.labels.section_description  = "タスク";
