@@ -1126,9 +1126,9 @@ function _getLightboxSections(taskType) {
     const tt = _normalizeTaskTypeForDb(taskType);
     if (tt === 'business_trip') {
         return [
-            { name: "project_number",  height: 30, map_to: "project_number",  type: "textarea" },
-            { name: "machine",         height: 30, map_to: "machine",          type: "textarea" },
-            { name: "unit",            height: 30, map_to: "unit",             type: "textarea" },
+            { name: "project_number",  height: 30, map_to: "project_number",  type: "trip_project_number_lb" },
+            { name: "customer_name",   height: 30, map_to: "customer_name",   type: "trip_auto_lb" },
+            { name: "project_details", height: 30, map_to: "project_details", type: "trip_auto_lb" },
             { name: "description",     height: 30, map_to: "text",            type: "task_select_lb" },
             { name: "owner",           height: 30, map_to: "owner",           type: "owner_select_lb" },
             { name: "date_range",      height: 30, map_to: "start_date",      type: "date_range" },
