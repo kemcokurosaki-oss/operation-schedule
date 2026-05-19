@@ -1365,19 +1365,24 @@ gantt.form_blocks["template"] = {
 // 試運転モード進捗（ライトボックス用）
 gantt.form_blocks["operation_progress_lb"] = {
     render: function(sns) {
-        const opts = OPERATION_PROGRESS_OPTIONS.map(function(v) {
-            return `<option value="${v}">${v || "（空白）"}</option>`;
-        }).join("");
-        return `<div class='gantt_cal_ltext'><select style='width:100%;height:30px;border:1px solid #ccc;border-radius:4px;padding:0 5px;font-size:12px;'>${opts}</select></div>`;
+        return `<div class='gantt_cal_ltext' style='display:flex;align-items:center;gap:6px;'>
+            <input type='number' min='0' max='100' step='1' placeholder='0〜100' style='width:80px;height:30px;border:1px solid #ccc;border-radius:4px;padding:0 8px;font-size:14px;text-align:center;'>
+            <span style='font-size:13px;color:#555;'>%</span>
+        </div>`;
     },
     set_value: function(node, value, task, sns) {
-        node.querySelector("select").value = _normalizeOperationProgressStatus(task) || "";
+        node.querySelector("input").value = _normalizeOperationProgressStatus(task);
     },
     get_value: function(node, task, sns) {
-        return node.querySelector("select").value;
+        const v = node.querySelector("input").value;
+        if (v === "" || v === null || v === undefined) return "";
+        const n = parseFloat(v);
+        if (isNaN(n)) return "";
+        return String(Math.min(100, Math.max(0, Math.round(n))));
     },
     focus: function(node) {
-        node.querySelector("select").focus();
+        const inp = node.querySelector("input");
+        if (inp) { inp.focus(); inp.select(); }
     }
 };
 
