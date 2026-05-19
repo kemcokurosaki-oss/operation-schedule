@@ -1605,14 +1605,14 @@ function _getDrawingColumns() {
         { name: "machine",        label: "機械",  width: 40, align: "center", editor: { type: "text", map_to: "machine" } },
         { name: "unit",           label: "ユニ",         width: 45, align: "center", editor: { type: "text", map_to: "unit" } },
         { name: "text",           label: "タスク",       width: 150, tree: true,     editor: { type: "text", map_to: "text" } },
-        { name: "owner",          label: "担当",         width: 138, align: "center", editor: { type: "owner_select", map_to: "owner" } },
+        { name: "owner",          label: "担当",         width: 100, align: "center", editor: { type: "owner_select", map_to: "owner" } },
         { name: "status",         label: "進捗",         width: 70, align: "center",
           template: _operationProgressTemplate,
           editor: { type: "operation_progress_select", map_to: "status" } },
-        { name: "start_date",     label: "開始日",       width: 65, align: "center",
+        { name: "start_date",     label: "開始日",       width: 84, align: "center",
           template: _fmtStartDateCell,
           editor: { type: "start_date_editor", map_to: "start_date" } },
-        { name: "end_date",       label: "終了日",       width: 65, align: "center", template: _fmtDate, editor: { type: "completion_date", map_to: "end_date" } },
+        { name: "end_date",       label: "終了日",       width: 84, align: "center", template: _fmtDate, editor: { type: "completion_date", map_to: "end_date" } },
         { name: "add_btn",        label: "",             width: 25, align: "center", template: (task) => _isEditor ? `<div class='custom_add_btn' onclick='createTask(${task.id})'>+</div>` : '' }
     ];
 }
