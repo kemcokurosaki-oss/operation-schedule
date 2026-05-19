@@ -879,7 +879,7 @@ function returnToResourceView() {
 }
 
 function _colSetName(filterType) {
-    if (filterType === 'business_trip')  return 'trip';
+    if (filterType === 'business_trip' || filterType === 'field_trip') return 'trip';
     if (filterType === 'planning')        return 'trip';
     if (filterType === 'operation')      return 'trial';
     return 'default';
