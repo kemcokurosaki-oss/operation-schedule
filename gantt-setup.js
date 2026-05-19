@@ -1567,26 +1567,35 @@ function _fmtStartDateCell(task) {
     return _fmtGridDateShort(task.start_date);
 }
 
-/** 試運転モードの進捗（status）を正規化。旧データ（枚数ベース）からの推定も行う */
+/** 試運転モードの進捗（status）を0〜100の数値文字列に正規化。旧データも変換 */
 function _normalizeOperationProgressStatus(task) {
     const s = String((task && task.status) || "").trim();
-    if (s === "作業中" || s === "完了") return s;
+    if (s === "完了") return "100";
+    if (s === "作業中") return "50";
+    const n = parseFloat(s);
+    if (!isNaN(n) && s !== "") {
+        return String(Math.min(100, Math.max(0, Math.round(n))));
+    }
+    // 枚数ベースの旧データ
     const total = parseFloat(task && task.total_sheets) || 0;
     const completed = parseFloat(task && task.completed_sheets) || 0;
-    if (total > 0 && completed >= total) return "完了";
-    if (total > 0 && completed > 0) return "作業中";
+    if (total > 0) return String(Math.min(100, Math.round(completed / total * 100)));
     return "";
 }
 
-function _operationProgressCellClass(status) {
-    if (status === "作業中") return "op-progress-in-progress";
+function _operationProgressCellClass(pct) {
+    if (pct === "") return "";
+    const n = parseFloat(pct);
+    if (n >= 100) return "op-progress-complete";
+    if (n > 0) return "op-progress-in-progress";
     return "";
 }
 
 function _operationProgressTemplate(obj) {
-    const status = _normalizeOperationProgressStatus(obj) || "";
-    const cellClass = _operationProgressCellClass(status);
-    return `<div class="op-progress-cell ${cellClass}"><span class="op-progress-label">${status}</span></div>`;
+    const pct = _normalizeOperationProgressStatus(obj);
+    const cellClass = _operationProgressCellClass(pct);
+    const label = pct !== "" ? `${pct}%` : "";
+    return `<div class="op-progress-cell ${cellClass}"><span class="op-progress-label">${label}</span></div>`;
 }
 
 function _isCompletedForDisplay(task) {
