@@ -514,7 +514,7 @@ html, body { margin: 0; padding: 0; height: 100%; overflow: hidden; font-family:
     border-radius: 2px;
 }
 .op-progress-complete .op-progress-label {
-    background: #42a5f5;
+    background: #bdbdbd;
     border-radius: 2px;
     color: #fff;
     font-weight: bold;
