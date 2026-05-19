@@ -1198,7 +1198,6 @@ gantt.locale.labels.section_add_row_count    = "追加行数";
                 var tt = isBT ? 'business_trip' : _normalizeTaskTypeForDb(task.task_type || 'operation');
                 gantt.config.lightbox.sections = _getLightboxSections(tt);
                 if (typeof gantt.resetLightbox === 'function') gantt.resetLightbox();
-                if (isBT) setTimeout(_wireTripAutoFill, 30);
             }
         } catch(e) {}
         _origShow(id);
