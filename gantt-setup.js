@@ -1605,7 +1605,7 @@ function _isCompletedForDisplay(task) {
     }
     const taskTypeNorm = _normalizeTaskTypeForDb(raw);
     if (taskTypeNorm === "operation") {
-        return _normalizeOperationProgressStatus(task) === "完了";
+        return _normalizeOperationProgressStatus(task) === "100";
     }
     return false;
 }
