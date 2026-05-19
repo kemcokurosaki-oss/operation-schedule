@@ -32,11 +32,17 @@ const EDITORS = [
     'm2-kusakabe@kusakabe.com', // 常務
     'e-kurosaki@kusakabe.com',  // 工程管理者
     's-morimura@kusakabe.com',  // 工程管理者
+    'k-horio@kusakabe.com',     // 堀尾
+    'm-hongou@kusakabe.com',    // 本郷
+    't-kuromi@kusakabe.com',    // 黒見
 ];
 const EDITOR_NAMES = {
     'm2-kusakabe@kusakabe.com': '常務',
     'e-kurosaki@kusakabe.com':  '黒崎',
     's-morimura@kusakabe.com':  '森村',
+    'k-horio@kusakabe.com':     '堀尾',
+    'm-hongou@kusakabe.com':    '本郷',
+    't-kuromi@kusakabe.com':    '黒見',
 };
 let _isEditor = false;
 let _currentEditorEmail = '';
