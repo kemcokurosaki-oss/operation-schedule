@@ -513,12 +513,19 @@ html, body { margin: 0; padding: 0; height: 100%; overflow: hidden; font-family:
     background: #9ccc65;
     border-radius: 2px;
 }
-/* 試運転モード：進捗列のインライン編集プルダウン */
-.gantt_grid_editor_placeholder select[name="grid_inline_operation_progress"] {
+.op-progress-complete .op-progress-label {
+    background: #42a5f5;
+    border-radius: 2px;
+    color: #fff;
+    font-weight: bold;
+}
+/* 試運転モード：進捗列のインライン編集数値入力 */
+.gantt_grid_editor_placeholder input[name="grid_inline_operation_progress"] {
     width: 100%;
     height: 100%;
-    font-size: 11px;
+    font-size: 12px;
     padding: 0 2px;
+    text-align: center;
 }
 
 /* 進捗列の背景色（グラデーションによる進捗表示） */
