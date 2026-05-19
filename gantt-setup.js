@@ -1601,7 +1601,7 @@ function _getTripColumns() {
 // 列セット切り替え（試運転・計画・出張の3モード）
 function switchColumns(filterType) {
     var baseCols;
-    if (filterType === 'business_trip' || filterType === 'planning') baseCols = _getTripColumns();
+    if (filterType === 'business_trip' || filterType === 'planning' || filterType === 'field_trip') baseCols = _getTripColumns();
     else baseCols = _getDrawingColumns();
     gantt.config.columns = baseCols;
     gantt.config._columnFilterType = filterType;
