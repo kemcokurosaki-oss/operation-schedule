@@ -6,7 +6,7 @@ function _normalizeTaskTypeForDb(tt) {
     const sl = String(tt == null ? '' : tt).trim().toLowerCase();
     if (sl === 'drawing' || sl === 'long_lead_item') return 'operation';
     if (sl === 'planning') return 'planning';
-    if (sl === 'business_trip') return 'business_trip';
+    if (sl === 'business_trip' || sl === 'field_trip') return 'business_trip';
     return 'operation';
 }
 window._normalizeTaskTypeForDb = _normalizeTaskTypeForDb;
