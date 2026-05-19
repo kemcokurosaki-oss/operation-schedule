@@ -921,9 +921,10 @@ function setTaskTypeFilter(type) {
     }
 }
 
-function togglePlanFilter()    { setTaskTypeFilter('planning'); }
-function toggleDrawingFilter() { setTaskTypeFilter('operation'); }
-function toggleTripFilter()    { setTaskTypeFilter('business_trip'); }
+function togglePlanFilter()      { setTaskTypeFilter('planning'); }
+function toggleDrawingFilter()   { setTaskTypeFilter('operation'); }
+function toggleFieldTripFilter() { setTaskTypeFilter('field_trip'); }
+function toggleTripFilter()      { setTaskTypeFilter('business_trip'); }
 
 // 工事番号セレクトボックスの表示更新
 function updateDisplay() {
