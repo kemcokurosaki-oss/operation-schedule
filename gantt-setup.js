@@ -1599,7 +1599,7 @@ function _operationProgressTemplate(obj) {
     if (pct !== "") {
         const n = parseFloat(pct);
         if (n > 0 && n < 100) {
-            style = ` style="background: linear-gradient(to right, #ffeb3b ${n}%, transparent ${n}%)"`;
+            style = ` style="background: linear-gradient(to right, #ffd54f ${n}%, transparent ${n}%)"`;
         }
     }
     return `<div class="op-progress-cell ${cellClass}"${style}><span class="op-progress-label">${label}</span></div>`;
