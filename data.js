@@ -241,6 +241,9 @@ function _passesDrawingModeFilter(task) {
     if (!_isDetailedTaskRow(task)) return false;
     // 出張タスクは試運転モードでも非表示（全体工程表の出張予定シートと同じ扱い）
     if (_isTripTask(task)) return false;
+    // planning・long_lead_item は他モード専用タスクなので試運転モードでは非表示
+    const tt = String(task.task_type || '').trim().toLowerCase();
+    if (tt === 'planning' || tt === 'long_lead_item') return false;
     if (_isOperationMajorItem(task.major_item)) return true;
     // task_type === 'operation' のタスクは操業工程表専用タイプとして表示
     const tt = String(task.task_type || '').trim().toLowerCase();
