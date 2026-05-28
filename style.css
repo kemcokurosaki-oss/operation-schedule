@@ -510,8 +510,7 @@ html, body { margin: 0; padding: 0; height: 100%; overflow: hidden; font-family:
     text-overflow: ellipsis;
 }
 .op-progress-in-progress .op-progress-label {
-    background: #9ccc65;
-    border-radius: 2px;
+    /* background は外側 div の linear-gradient で表示 */
 }
 .op-progress-complete .op-progress-label {
     background: #eeeeee;
