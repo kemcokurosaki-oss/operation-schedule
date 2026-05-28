@@ -566,16 +566,28 @@ function _rebuildOwnerFilterFromRows(rows) {
     if (!list) return;
     const names = _collectOwnerFilterOptions(rows);
     const prev = new Set(currentOwnerFilter);
-    currentOwnerFilter = [...prev].filter(n => names.includes(n));
+    if (currentOwnerFilter.length > 0 && currentOwnerFilter[0] !== FILTER_NONE) {
+        currentOwnerFilter = [...prev].filter(n => names.includes(n));
+    }
+    const allSelected = currentOwnerFilter.length === 0;
     const esc = _escapeHtmlAttr;
     list.innerHTML = names.map(n => {
-        const checked = currentOwnerFilter.includes(n) ? ' checked' : '';
+        const checked = (allSelected || currentOwnerFilter.includes(n)) ? ' checked' : '';
         const ev = esc(n);
         return `<label style="display:block; padding:4px 10px; cursor:pointer; white-space:nowrap; font-size:13px; font-family:'メイリオ',Meiryo,sans-serif;">
             <input type="checkbox" class="owner-chk-item" value="${ev}" onchange="ownerFilterItemChanged()"${checked}> ${ev}</label>`;
     }).join('');
     const allChk = document.getElementById('owner_chk_all');
-    if (allChk) allChk.checked = currentOwnerFilter.length === 0;
+    if (allChk) {
+        if (allSelected) {
+            allChk.checked = true;
+            allChk.indeterminate = false;
+        } else {
+            const visibleCount = currentOwnerFilter.filter(v => v !== FILTER_NONE).length;
+            allChk.checked = visibleCount >= names.length;
+            allChk.indeterminate = visibleCount > 0 && visibleCount < names.length;
+        }
+    }
     _updateOwnerFilterBtn();
 }
 
