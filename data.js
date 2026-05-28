@@ -492,10 +492,12 @@ function _taskVisibleIgnoringOwnerFilter(task) {
 function _taskVisibleIgnoringUnitFilter(task) {
     if (!_taskPassesCommonFilters(task)) return false;
     if (currentMachineFilter.length > 0) {
+        if (currentMachineFilter[0] === FILTER_NONE) return false;
         const m = String(task.machine || '').trim();
         if (!currentMachineFilter.includes(m)) return false;
     }
     if (currentOwnerFilter.length > 0) {
+        if (currentOwnerFilter[0] === FILTER_NONE) return false;
         const taskOwners = String(task.owner || '').split(/[,、\s]+/).map(o => o.trim());
         if (!currentOwnerFilter.some(f => taskOwners.includes(f))) return false;
     }
