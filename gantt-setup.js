@@ -1595,7 +1595,14 @@ function _operationProgressTemplate(obj) {
     const pct = _normalizeOperationProgressStatus(obj);
     const cellClass = _operationProgressCellClass(pct);
     const label = pct !== "" ? `${pct}%` : "";
-    return `<div class="op-progress-cell ${cellClass}"><span class="op-progress-label">${label}</span></div>`;
+    let style = "";
+    if (pct !== "") {
+        const n = parseFloat(pct);
+        if (n > 0 && n < 100) {
+            style = ` style="background: linear-gradient(to right, #ffeb3b ${n}%, transparent ${n}%)"`;
+        }
+    }
+    return `<div class="op-progress-cell ${cellClass}"${style}><span class="op-progress-label">${label}</span></div>`;
 }
 
 function _isCompletedForDisplay(task) {
