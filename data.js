@@ -299,7 +299,10 @@ async function _filterProjectNumbersWithOperationTasks(projectNumbers) {
 }
 
 function _taskPassesCommonFilters(task) {
-    if (currentProjectFilter.length > 0 && !currentProjectFilter.includes(String(task.project_number))) return false;
+    if (currentProjectFilter.length > 0) {
+        if (currentProjectFilter[0] === FILTER_NONE) return false;
+        if (!currentProjectFilter.includes(String(task.project_number))) return false;
+    }
     if (currentTaskTypeFilter === 'operation') {
         return _passesDrawingModeFilter(task);
     }
