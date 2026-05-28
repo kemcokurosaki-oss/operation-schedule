@@ -455,10 +455,12 @@ window._debugDrawingFilter = function() {
 function _taskVisibleIgnoringMachineFilter(task) {
     if (!_taskPassesCommonFilters(task)) return false;
     if (currentOwnerFilter.length > 0) {
+        if (currentOwnerFilter[0] === FILTER_NONE) return false;
         const taskOwners = String(task.owner || '').split(/[,、\s]+/).map(o => o.trim());
         if (!currentOwnerFilter.some(f => taskOwners.includes(f))) return false;
     }
     if (currentUnitFilter.length > 0) {
+        if (currentUnitFilter[0] === FILTER_NONE) return false;
         const u = String(task.unit || '').trim();
         if (!currentUnitFilter.includes(u)) return false;
     }
