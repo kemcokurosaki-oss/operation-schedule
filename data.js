@@ -1169,9 +1169,10 @@ async function initialize() {
             isMultiDelete ? `選択した ${_gridSelection.size} 件を削除` : "このタスクを削除";
         document.getElementById("gantt_ctx_edit_multi").textContent =
             isMultiEdit ? `選択した ${_gridSelection.size} 件を編集` : "このタスクを編集";
-        // コピーは常に有効（貼り付け時に工事番号1件チェックを行う）
-        document.getElementById("gantt_ctx_copy").classList.remove('disabled');
-        document.getElementById("gantt_ctx_copy_multi").classList.remove('disabled');
+        // コピーの有効/無効（工事番号が1つ選択されていない場合は不可）
+        const _copyDisabled = currentProjectFilter.length !== 1;
+        document.getElementById("gantt_ctx_copy").classList.toggle('disabled', _copyDisabled);
+        document.getElementById("gantt_ctx_copy_multi").classList.toggle('disabled', _copyDisabled);
         // 貼り付けの有効/無効
         document.getElementById("gantt_ctx_paste").classList.toggle('disabled', _copiedTasks.length === 0);
         _ctxMenu.style.display = 'block';
