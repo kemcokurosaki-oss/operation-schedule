@@ -474,10 +474,12 @@ function _taskVisibleIgnoringMachineFilter(task) {
 function _taskVisibleIgnoringOwnerFilter(task) {
     if (!_taskPassesCommonFilters(task)) return false;
     if (currentMachineFilter.length > 0) {
+        if (currentMachineFilter[0] === FILTER_NONE) return false;
         const m = String(task.machine || '').trim();
         if (!currentMachineFilter.includes(m)) return false;
     }
     if (currentUnitFilter.length > 0) {
+        if (currentUnitFilter[0] === FILTER_NONE) return false;
         const u = String(task.unit || '').trim();
         if (!currentUnitFilter.includes(u)) return false;
     }
