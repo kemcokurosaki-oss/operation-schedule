@@ -604,16 +604,28 @@ function _rebuildUnitFilterFromRows(rows) {
     if (!list) return;
     const units = _collectUnitValues(rows);
     const prev = new Set(currentUnitFilter);
-    currentUnitFilter = [...prev].filter(u => units.includes(u));
+    if (currentUnitFilter.length > 0 && currentUnitFilter[0] !== FILTER_NONE) {
+        currentUnitFilter = [...prev].filter(u => units.includes(u));
+    }
+    const allSelected = currentUnitFilter.length === 0;
     const esc = _escapeHtmlAttr;
     list.innerHTML = units.map(u => {
-        const checked = currentUnitFilter.includes(u) ? ' checked' : '';
+        const checked = (allSelected || currentUnitFilter.includes(u)) ? ' checked' : '';
         const ev = esc(u);
         return `<label style="display:block; padding:4px 10px; cursor:pointer; white-space:nowrap; font-size:13px; font-family:'メイリオ',Meiryo,sans-serif;">
             <input type="checkbox" class="unit-chk-item" value="${ev}" onchange="unitFilterItemChanged()"${checked}> ${ev}</label>`;
     }).join('');
     const allChk = document.getElementById('unit_chk_all');
-    if (allChk) allChk.checked = currentUnitFilter.length === 0;
+    if (allChk) {
+        if (allSelected) {
+            allChk.checked = true;
+            allChk.indeterminate = false;
+        } else {
+            const visibleCount = currentUnitFilter.filter(v => v !== FILTER_NONE).length;
+            allChk.checked = visibleCount >= units.length;
+            allChk.indeterminate = visibleCount > 0 && visibleCount < units.length;
+        }
+    }
     _updateUnitFilterBtn();
 }
 
