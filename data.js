@@ -110,6 +110,7 @@ async function loadData() {
     _gridSelection.clear();
     _lastGridClickId = null;
 
+    _lastParsedTasks = parsedTasks;
     gantt.clearAll();
     gantt.parse({
         data: parsedTasks
