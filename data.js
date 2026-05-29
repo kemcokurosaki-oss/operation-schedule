@@ -743,6 +743,8 @@ function _updateProjectFilterBtn() {
     if (!btn) return;
     if (currentProjectFilter.length === 0) {
         btn.textContent = '工事番号: 全表示';
+    } else if (currentProjectFilter[0] === FILTER_NONE) {
+        btn.textContent = '工事番号: ---';
     } else if (currentProjectFilter.length === 1) {
         btn.textContent = currentProjectFilter[0];
     } else {
