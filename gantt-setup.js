@@ -1292,22 +1292,24 @@ gantt.form_blocks["textarea_full"] = {
     }
 };
 
-// 担当プルダウン（ライトボックス用）
+// 担当プルダウン（ライトボックス用、複数選択対応）
 gantt.form_blocks["owner_select_lb"] = {
     render: function(sns) {
-        const opts = ['', ...OWNER_OPTIONS].map(n =>
-            `<option value="${n}">${n || '-- 未選択 --'}</option>`).join('');
-        return `<div class='gantt_cal_ltext'><select style='width:100%;height:30px;border:1px solid #ccc;border-radius:4px;padding:0 5px;'>${opts}</select></div>`;
+        const chks = OWNER_OPTIONS.map(function(n) {
+            return `<label style="display:inline-flex;align-items:center;gap:4px;padding:3px 10px;cursor:pointer;white-space:nowrap;font-size:13px;font-family:メイリオ,Meiryo,sans-serif;"><input type="checkbox" class="owner-lb-chk" value="${n}"> ${n}</label>`;
+        }).join('');
+        return `<div class='gantt_cal_ltext'><div style='display:flex;flex-wrap:wrap;border:1px solid #ccc;border-radius:4px;padding:4px;background:#fff;min-height:34px;align-items:center;'>${chks}</div></div>`;
     },
     set_value: function(node, value, task, sns) {
-        node.querySelector("select").value = value || '';
+        const selected = value ? String(value).split(',').map(function(s) { return s.trim(); }).filter(Boolean) : [];
+        node.querySelectorAll('.owner-lb-chk').forEach(function(chk) {
+            chk.checked = selected.includes(chk.value);
+        });
     },
     get_value: function(node, task, sns) {
-        return node.querySelector("select").value;
+        return Array.from(node.querySelectorAll('.owner-lb-chk:checked')).map(function(c) { return c.value; }).join(',');
     },
-    focus: function(node) {
-        node.querySelector("select").focus();
-    }
+    focus: function(node) {}
 };
 
 // 出張タスク用プルダウン（現地試運転 / 現地SV / 調査）
