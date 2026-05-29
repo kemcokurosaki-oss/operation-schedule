@@ -1770,17 +1770,23 @@ gantt.attachEvent("onBeforeTaskDisplay", function(id, task) {
     // 非試運転モードのみ通常フィルターを適用
     const isDetailed = (t.is_detailed === true || String(t.is_detailed).toUpperCase() === 'TRUE');
     if (isDetailed) return false;
-    if (currentProjectFilter.length > 0 && !currentProjectFilter.includes(String(t.project_number))) return false;
+    if (currentProjectFilter.length > 0) {
+        if (typeof FILTER_NONE !== 'undefined' && currentProjectFilter[0] === FILTER_NONE) return false;
+        if (!currentProjectFilter.includes(String(t.project_number))) return false;
+    }
     if (currentTaskTypeFilter && !_taskTypeMatchesCurrentFilter(t)) return false;
     if (currentOwnerFilter.length > 0) {
+        if (typeof FILTER_NONE !== 'undefined' && currentOwnerFilter[0] === FILTER_NONE) return false;
         const taskOwners = String(t.owner || '').split(/[,、\s]+/).map(o => o.trim());
         if (!currentOwnerFilter.some(f => taskOwners.includes(f))) return false;
     }
     if (currentMachineFilter.length > 0) {
+        if (typeof FILTER_NONE !== 'undefined' && currentMachineFilter[0] === FILTER_NONE) return false;
         const m = String(t.machine || '').trim();
         if (!currentMachineFilter.includes(m)) return false;
     }
     if (currentUnitFilter.length > 0) {
+        if (typeof FILTER_NONE !== 'undefined' && currentUnitFilter[0] === FILTER_NONE) return false;
         const u = String(t.unit || '').trim();
         if (!currentUnitFilter.includes(u)) return false;
     }
