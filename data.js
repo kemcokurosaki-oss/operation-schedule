@@ -758,9 +758,14 @@ function toggleOwnerFilterDropdown() {
 }
 
 function ownerFilterAllChanged(checkbox) {
-    document.querySelectorAll('.owner-chk-item').forEach(chk => { chk.checked = false; });
-    currentOwnerFilter = [];
-    gantt.render();
+    checkbox.indeterminate = false;
+    if (checkbox.checked) {
+        document.querySelectorAll('.owner-chk-item').forEach(chk => { chk.checked = true; });
+        currentOwnerFilter = [];
+    } else {
+        document.querySelectorAll('.owner-chk-item').forEach(chk => { chk.checked = false; });
+        currentOwnerFilter = [FILTER_NONE];
+    }
     _updateOwnerFilterBtn();
     _rebuildMachineFilterOptionsFromGantt();
     _rebuildUnitFilterOptionsFromGantt();
@@ -768,12 +773,21 @@ function ownerFilterAllChanged(checkbox) {
 }
 
 function ownerFilterItemChanged() {
-    const selected = [];
-    document.querySelectorAll('.owner-chk-item:checked').forEach(chk => selected.push(chk.value));
-    currentOwnerFilter = selected;
+    const allItems = document.querySelectorAll('.owner-chk-item');
+    const checked = [...allItems].filter(c => c.checked).map(c => c.value);
+    const total = allItems.length;
+    if (checked.length === total) {
+        currentOwnerFilter = [];
+    } else if (checked.length === 0) {
+        currentOwnerFilter = [FILTER_NONE];
+    } else {
+        currentOwnerFilter = checked;
+    }
     const allChk = document.getElementById('owner_chk_all');
-    if (allChk) allChk.checked = selected.length === 0;
-    gantt.render();
+    if (allChk) {
+        allChk.checked = checked.length === total;
+        allChk.indeterminate = checked.length > 0 && checked.length < total;
+    }
     _updateOwnerFilterBtn();
     _rebuildMachineFilterOptionsFromGantt();
     _rebuildUnitFilterOptionsFromGantt();
