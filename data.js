@@ -915,6 +915,8 @@ function _updateUnitFilterBtn() {
     if (!btn) return;
     if (currentUnitFilter.length === 0) {
         btn.textContent = 'ユニット: すべて';
+    } else if (currentUnitFilter[0] === FILTER_NONE) {
+        btn.textContent = 'ユニット: ---';
     } else if (currentUnitFilter.length === 1) {
         btn.textContent = currentUnitFilter[0];
     } else {
