@@ -1882,6 +1882,12 @@ function switchColumns(filterType) {
     gantt.config.columns = baseCols;
     gantt.config._columnFilterType = filterType;
     _setLayout(_getColsSum(baseCols));
+    // gantt.render() だけでは列数・列幅の DOM 変更が反映されないため init で再構築し、
+    // 直前の loadData() データを再 parse して表示を復元する
+    gantt.init("gantt_here");
+    if (typeof _lastParsedTasks !== 'undefined' && _lastParsedTasks.length > 0) {
+        gantt.parse({ data: _lastParsedTasks });
+    }
     gantt.render();
 }
 
