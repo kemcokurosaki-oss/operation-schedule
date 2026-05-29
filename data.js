@@ -799,6 +799,8 @@ function _updateOwnerFilterBtn() {
     if (!btn) return;
     if (currentOwnerFilter.length === 0) {
         btn.textContent = '担当者: 全員';
+    } else if (currentOwnerFilter[0] === FILTER_NONE) {
+        btn.textContent = '担当者: ---';
     } else if (currentOwnerFilter.length === 1) {
         btn.textContent = currentOwnerFilter[0];
     } else {
