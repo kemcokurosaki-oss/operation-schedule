@@ -546,8 +546,8 @@ function _buildMultiEditFieldDefs() {
         } else if (col.editor.type === "number") {
             inputType = "number";
         } else if (mapTo === "owner") {
-            inputType = "select";
-            options = ["", ...OWNER_OPTIONS];
+            inputType = "owner_multi";
+            options = null;
         } else if (mapTo === "status") {
             if (isDrawingMode) {
                 inputType = "number";
