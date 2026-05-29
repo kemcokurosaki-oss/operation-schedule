@@ -132,6 +132,7 @@ async function loadData() {
 let projectMap = new Map();
 let currentTaskTypeFilter = null; // null = 全表示
 let currentProjectFilter = [];    // 空配列 = 全工事番号
+let _lastParsedTasks = [];        // 直前の loadData() で取得したタスクデータ（switchColumns 用）
 
 // 休日セット（"YYYY-MM-DD" 形式で保持）
 let HOLIDAYS = new Set();
