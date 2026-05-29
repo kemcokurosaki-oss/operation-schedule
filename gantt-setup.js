@@ -1363,24 +1363,98 @@ gantt.form_blocks["textarea_full"] = {
     }
 };
 
-// 担当プルダウン（ライトボックス用、複数選択対応）
+// 担当プルダウン（ライトボックス用、複数選択・クリック展開式）
 gantt.form_blocks["owner_select_lb"] = {
     render: function(sns) {
-        const chks = OWNER_OPTIONS.map(function(n) {
-            return `<label style="display:inline-flex;align-items:center;gap:4px;padding:3px 10px;cursor:pointer;white-space:nowrap;font-size:13px;font-family:メイリオ,Meiryo,sans-serif;"><input type="checkbox" class="owner-lb-chk" value="${n}"> ${n}</label>`;
-        }).join('');
-        return `<div class='gantt_cal_ltext'><div style='display:flex;flex-wrap:wrap;border:1px solid #ccc;border-radius:4px;padding:4px;background:#fff;min-height:34px;align-items:center;'>${chks}</div></div>`;
+        return `<div class='gantt_cal_ltext owner-lb-wrap' style='position:relative;'>
+            <div class='owner-lb-display' tabindex="0" style='width:100%;height:30px;border:1px solid #ccc;border-radius:4px;padding:0 28px 0 8px;box-sizing:border-box;display:flex;align-items:center;overflow:hidden;white-space:nowrap;text-overflow:ellipsis;cursor:pointer;background:#fff;position:relative;'>
+                -- 未選択 --
+                <span style='position:absolute;right:8px;top:50%;transform:translateY(-50%);font-size:10px;color:#666;'>▼</span>
+            </div>
+        </div>`;
     },
     set_value: function(node, value, task, sns) {
-        const selected = value ? String(value).split(',').map(function(s) { return s.trim(); }).filter(Boolean) : [];
-        node.querySelectorAll('.owner-lb-chk').forEach(function(chk) {
-            chk.checked = selected.includes(chk.value);
-        });
+        if (node._ownerLbBodyPopup) {
+            node._ownerLbBodyPopup.remove();
+            node._ownerLbBodyPopup = null;
+        }
+        if (node._ownerLbOutsideClickHandler) {
+            document.removeEventListener('click', node._ownerLbOutsideClickHandler, true);
+            node._ownerLbOutsideClickHandler = null;
+        }
+
+        const display = node.querySelector('.owner-lb-display');
+        const knownSet = new Set(OWNER_OPTIONS);
+        const allNames = value ? String(value).split(',').map(function(s) { return s.trim(); }).filter(Boolean) : [];
+        const known = allNames.filter(function(n) { return knownSet.has(n); });
+        const custom = allNames.filter(function(n) { return !knownSet.has(n); });
+
+        const popup = document.createElement('div');
+        popup.style.cssText = 'display:none;position:fixed;z-index:99999;min-width:180px;max-height:280px;overflow-y:auto;background:#fff;border:1px solid #aaa;border-radius:4px;box-shadow:0 3px 10px rgba(0,0,0,0.25);padding:4px 0;';
+        popup.innerHTML = `<div style="padding:6px 10px 4px;border-bottom:1px solid #eee;">
+                <input type="text" class="owner-lb-free-input" placeholder="自由入力（カンマ区切り）" value="${custom.join(',')}" style="width:100%;height:28px;border:1px solid #ccc;border-radius:4px;padding:0 6px;box-sizing:border-box;font-size:12px;font-family:'メイリオ',Meiryo,sans-serif;">
+            </div>` +
+            OWNER_OPTIONS.map(function(name) {
+                return `<label style="display:flex;align-items:center;padding:5px 10px;cursor:pointer;font-size:13px;font-family:'メイリオ',Meiryo,sans-serif;white-space:nowrap;">
+                    <input type="checkbox" value="${name}" ${known.includes(name) ? 'checked' : ''} style="margin-right:7px;cursor:pointer;">
+                    ${name}
+                </label>`;
+            }).join('');
+
+        document.body.appendChild(popup);
+        node._ownerLbBodyPopup = popup;
+
+        function updateDisplay() {
+            const checked = Array.from(popup.querySelectorAll('input[type=checkbox]:checked')).map(function(cb) { return cb.value; });
+            const freeInput = popup.querySelector('.owner-lb-free-input');
+            const extra = freeInput ? freeInput.value.split(',').map(function(s) { return s.trim(); }).filter(Boolean) : [];
+            const merged = Array.from(new Set(checked.concat(extra)));
+            display.firstChild.textContent = merged.length ? merged.join(', ') : '-- 未選択 --';
+        }
+        updateDisplay();
+
+        popup.querySelectorAll('input[type=checkbox]').forEach(function(cb) { cb.addEventListener('change', updateDisplay); });
+        const freeInput = popup.querySelector('.owner-lb-free-input');
+        if (freeInput) freeInput.addEventListener('input', updateDisplay);
+
+        function togglePopup(e) {
+            e.preventDefault();
+            e.stopPropagation();
+            if (popup.style.display === 'none') {
+                const rect = display.getBoundingClientRect();
+                popup.style.left = rect.left + 'px';
+                popup.style.top = (rect.bottom + 2) + 'px';
+                popup.style.display = 'block';
+            } else {
+                popup.style.display = 'none';
+            }
+        }
+        display.onclick = togglePopup;
+        display.onkeydown = function(e) {
+            if (e.key === 'Enter' || e.key === ' ') togglePopup(e);
+            if (e.key === 'Escape') popup.style.display = 'none';
+        };
+        popup.onclick = function(e) { e.stopPropagation(); };
+        popup.onmousedown = function(e) { e.stopPropagation(); };
+
+        const outsideHandler = function(e) {
+            if (!node.contains(e.target) && !popup.contains(e.target)) popup.style.display = 'none';
+        };
+        document.addEventListener('click', outsideHandler, true);
+        node._ownerLbOutsideClickHandler = outsideHandler;
     },
     get_value: function(node, task, sns) {
-        return Array.from(node.querySelectorAll('.owner-lb-chk:checked')).map(function(c) { return c.value; }).join(',');
+        const popup = node._ownerLbBodyPopup;
+        if (!popup) return '';
+        const checked = Array.from(popup.querySelectorAll('input[type=checkbox]:checked')).map(function(cb) { return cb.value; });
+        const freeInput = popup.querySelector('.owner-lb-free-input');
+        const extra = freeInput ? freeInput.value.split(',').map(function(s) { return s.trim(); }).filter(Boolean) : [];
+        return Array.from(new Set(checked.concat(extra))).join(',');
     },
-    focus: function(node) {}
+    focus: function(node) {
+        const display = node.querySelector('.owner-lb-display');
+        if (display) display.focus();
+    }
 };
 
 // 出張タスク用プルダウン（現地試運転 / 現地SV / 調査）
