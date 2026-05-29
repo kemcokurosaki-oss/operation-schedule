@@ -1093,19 +1093,29 @@ async function initProjectSelect(projectParam) {
 
     const nums = Array.from(projectMap.keys()).sort();
     const list = document.getElementById('project_chk_list');
-    list.innerHTML = nums.map(n => `
-        <label style="display:block; padding:4px 10px; cursor:pointer; white-space:nowrap; font-size:13px; font-family:'メイリオ',Meiryo,sans-serif;">
-            <input type="checkbox" class="project-chk-item" value="${n}" onchange="projectFilterItemChanged()"> ${n}
-        </label>`).join('');
 
-    // URLパラメータで初期選択
+    // URLパラメータで初期選択（リスト構築前にフィルター状態を確定）
     if (projectParam) {
-        const chk = list.querySelector(`.project-chk-item[value="${projectParam}"]`);
-        if (chk) {
-            chk.checked = true;
-            currentProjectFilter = [String(projectParam)];
-            const allChk = document.getElementById('project_chk_all');
-            if (allChk) allChk.checked = false;
+        currentProjectFilter = [String(projectParam)];
+    }
+
+    list.innerHTML = nums.map(n => {
+        const isChecked = currentProjectFilter.length === 0 || currentProjectFilter.includes(n);
+        return `<label style="display:block; padding:4px 10px; cursor:pointer; white-space:nowrap; font-size:13px; font-family:'メイリオ',Meiryo,sans-serif;">
+            <input type="checkbox" class="project-chk-item" value="${n}" onchange="projectFilterItemChanged()"${isChecked ? ' checked' : ''}> ${n}
+        </label>`;
+    }).join('');
+
+    const allChk = document.getElementById('project_chk_all');
+    if (allChk) {
+        if (currentProjectFilter.length === 0) {
+            allChk.checked = true;
+            allChk.indeterminate = false;
+        } else {
+            const total = nums.length;
+            const visCount = currentProjectFilter.filter(v => v !== FILTER_NONE).length;
+            allChk.checked = visCount >= total;
+            allChk.indeterminate = visCount > 0 && visCount < total;
         }
     }
 
