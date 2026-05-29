@@ -634,6 +634,15 @@ function _renderMultiEditForm() {
         ];
 
     function renderField(def) {
+        if (def.inputType === "owner_multi") {
+            const chks = OWNER_OPTIONS.map(function(n) {
+                return `<label style="display:inline-flex;align-items:center;gap:3px;padding:2px 7px;cursor:pointer;white-space:nowrap;font-size:12px;"><input type="checkbox" class="owner-me-chk" value="${n}"> ${n}</label>`;
+            }).join('');
+            return `<label>${def.label}<div style="display:flex;flex-wrap:wrap;border:1px solid #ccc;border-radius:3px;padding:3px;background:#fff;" data-me-owner-wrap>
+                ${chks}
+                <input type="hidden" data-me-key="${def.key}" data-me-type="owner_multi" value="">
+            </div></label>`;
+        }
         if (def.inputType === "select") {
             const opts = (def.options || []).map(function(v) {
                 const txt = v || "変更しない";
@@ -653,6 +662,19 @@ function _renderMultiEditForm() {
             ${fields.map(renderField).join("")}
         </div>`;
     }).join("");
+
+    // 担当者チェックボックスの変更を hidden input に反映
+    container.querySelectorAll('.owner-me-chk').forEach(function(chk) {
+        const wrap = chk.closest('[data-me-owner-wrap]');
+        if (!wrap) return;
+        chk.addEventListener('change', function() {
+            const hidden = wrap.querySelector('[data-me-key]');
+            if (!hidden) return;
+            const checked = Array.from(wrap.querySelectorAll('.owner-me-chk:checked')).map(function(c) { return c.value; });
+            hidden.value = checked.join(',');
+        });
+    });
+
     return defs;
 }
 
