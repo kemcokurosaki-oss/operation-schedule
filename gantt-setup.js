@@ -122,32 +122,72 @@ const OWNER_OPTIONS = ["堀尾", "黒見", "大西(元)", "大西(優)", "木本
 gantt.config.editor_types.owner_select = (function() {
     let _dropdown = null;
     let _cachedValue = '';
+    const knownSet = new Set(OWNER_OPTIONS);
+
+    function _parseAll(v) {
+        return (v || '').split(',').map(function(s) { return s.trim(); }).filter(Boolean);
+    }
+    function _splitKnownCustom(names) {
+        const known = [], custom = [];
+        names.forEach(function(n) { (knownSet.has(n) ? known : custom).push(n); });
+        return { known: known, custom: custom };
+    }
+    function _merge(checked, freeVal) {
+        const extra = (freeVal || '').split(',').map(function(s) { return s.trim(); }).filter(Boolean);
+        return Array.from(new Set(checked.concat(extra)));
+    }
+
     return {
         show: function(id, column, config, placeholder) {
             const task = gantt.getTask(id);
             const currentVal = task ? (task.owner || '') : '';
-            const selected = currentVal ? currentVal.split(',').map(function(s) { return s.trim(); }).filter(Boolean) : [];
-            _cachedValue = selected.join(',');
+            const allNames = _parseAll(currentVal);
+            const split = _splitKnownCustom(allNames);
+            _cachedValue = allNames.join(',');
 
-            placeholder.innerHTML = `<div class="owner-inline-display" style="width:100%;height:100%;border:1px solid #7986cb;font-family:メイリオ,sans-serif;font-size:12px;box-sizing:border-box;cursor:pointer;padding:0 6px;display:flex;align-items:center;background:#fff;overflow:hidden;white-space:nowrap;">${selected.join(', ') || '(未選択)'}</div>`;
+            placeholder.innerHTML = `<div class="owner-inline-display" style="width:100%;height:100%;border:1px solid #7986cb;font-family:メイリオ,sans-serif;font-size:12px;box-sizing:border-box;cursor:pointer;padding:0 6px;display:flex;align-items:center;background:#fff;overflow:hidden;white-space:nowrap;">${allNames.join(', ') || '(未選択)'}</div>`;
 
             const dropdown = document.createElement('div');
-            dropdown.style.cssText = 'position:fixed;background:#fff;border:1px solid #7986cb;border-radius:3px;z-index:99999;padding:4px 0;min-width:130px;box-shadow:0 4px 12px rgba(0,0,0,0.2);font-family:メイリオ,Meiryo,sans-serif;';
-            dropdown.innerHTML = OWNER_OPTIONS.map(function(n) {
-                return `<label style="display:block;padding:4px 10px;cursor:pointer;white-space:nowrap;font-size:13px;"><input type="checkbox" class="owner-inline-chk" value="${n}" ${selected.includes(n) ? 'checked' : ''}> ${n}</label>`;
-            }).join('');
+            dropdown.style.cssText = 'position:fixed;background:#fff;border:1px solid #7986cb;border-radius:3px;z-index:99999;min-width:160px;box-shadow:0 4px 12px rgba(0,0,0,0.2);font-family:メイリオ,Meiryo,sans-serif;';
+
+            const freeWrap = document.createElement('div');
+            freeWrap.style.cssText = 'padding:6px 10px 4px;border-bottom:1px solid #eee;';
+            const freeInput = document.createElement('input');
+            freeInput.type = 'text';
+            freeInput.placeholder = '自由入力（カンマ区切り）';
+            freeInput.value = split.custom.join(',');
+            freeInput.style.cssText = 'width:100%;height:26px;border:1px solid #ccc;border-radius:3px;padding:0 6px;box-sizing:border-box;font-size:12px;font-family:メイリオ,Meiryo,sans-serif;';
+            freeWrap.appendChild(freeInput);
+            dropdown.appendChild(freeWrap);
+
+            const chkWrap = document.createElement('div');
+            chkWrap.style.cssText = 'padding:4px 0;';
+            OWNER_OPTIONS.forEach(function(n) {
+                const label = document.createElement('label');
+                label.style.cssText = 'display:block;padding:4px 10px;cursor:pointer;white-space:nowrap;font-size:13px;';
+                label.innerHTML = `<input type="checkbox" class="owner-inline-chk" value="${n}" ${split.known.includes(n) ? 'checked' : ''}> ${n}`;
+                chkWrap.appendChild(label);
+            });
+            dropdown.appendChild(chkWrap);
+
+            function updateDisplay() {
+                const checked = Array.from(dropdown.querySelectorAll('.owner-inline-chk:checked')).map(function(c) { return c.value; });
+                const merged = _merge(checked, freeInput.value);
+                _cachedValue = merged.join(',');
+                const disp = placeholder.querySelector('.owner-inline-display');
+                if (disp) disp.textContent = merged.join(', ') || '(未選択)';
+            }
+
+            // テキスト入力時はフォーカスを奪わない（自由入力で文字が打てるよう）
+            dropdown.addEventListener('mousedown', function(e) {
+                if (!(e.target instanceof HTMLInputElement && e.target.type === 'text')) e.stopPropagation();
+            });
+            freeInput.addEventListener('input', updateDisplay);
+            chkWrap.addEventListener('change', updateDisplay);
 
             const rect = placeholder.getBoundingClientRect();
             dropdown.style.top = rect.bottom + 'px';
             dropdown.style.left = rect.left + 'px';
-
-            dropdown.addEventListener('mousedown', function(e) { e.stopPropagation(); });
-            dropdown.addEventListener('change', function() {
-                const checked = Array.from(dropdown.querySelectorAll('.owner-inline-chk:checked')).map(function(c) { return c.value; });
-                _cachedValue = checked.join(',');
-                const display = placeholder.querySelector('.owner-inline-display');
-                if (display) display.textContent = checked.join(', ') || '(未選択)';
-            });
 
             document.body.appendChild(dropdown);
             _dropdown = dropdown;
@@ -156,24 +196,29 @@ gantt.config.editor_types.owner_select = (function() {
             if (_dropdown) { _dropdown.remove(); _dropdown = null; }
         },
         set_value: function(value, id, column, node) {
-            const selected = value ? String(value).split(',').map(function(s) { return s.trim(); }).filter(Boolean) : [];
-            _cachedValue = selected.join(',');
+            const allNames = _parseAll(value);
+            const split = _splitKnownCustom(allNames);
+            _cachedValue = allNames.join(',');
             const display = node.querySelector('.owner-inline-display');
-            if (display) display.textContent = selected.join(', ') || '(未選択)';
+            if (display) display.textContent = allNames.join(', ') || '(未選択)';
             if (_dropdown) {
                 _dropdown.querySelectorAll('.owner-inline-chk').forEach(function(chk) {
-                    chk.checked = selected.includes(chk.value);
+                    chk.checked = split.known.includes(chk.value);
                 });
+                const fi = _dropdown.querySelector('input[type=text]');
+                if (fi) fi.value = split.custom.join(',');
             }
         },
         get_value: function(id, column, node) {
             if (_dropdown) {
-                return Array.from(_dropdown.querySelectorAll('.owner-inline-chk:checked')).map(function(c) { return c.value; }).join(',');
+                const checked = Array.from(_dropdown.querySelectorAll('.owner-inline-chk:checked')).map(function(c) { return c.value; });
+                const fi = _dropdown.querySelector('input[type=text]');
+                return _merge(checked, fi ? fi.value : '').join(',');
             }
             return _cachedValue;
         },
         is_changed: function(value, id, column, node) {
-            const norm = function(v) { return (v || '').split(',').map(function(s) { return s.trim(); }).filter(Boolean).join(','); };
+            const norm = function(v) { return _parseAll(v).join(','); };
             return norm(value) !== norm(this.get_value(id, column, node));
         },
         is_valid: function() { return true; },
