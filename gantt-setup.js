@@ -117,32 +117,66 @@ gantt.config.editor_types.number = {
     }
 };
 
-// 担当者プルダウン用インラインエディタ
+// 担当者プルダウン用インラインエディタ（複数選択対応）
 const OWNER_OPTIONS = ["堀尾", "黒見", "大西(元)", "大西(優)", "木本", "前田", "本郷", "大重"];
-gantt.config.editor_types.owner_select = {
-    show: function(id, column, config, placeholder) {
-        const opts = OWNER_OPTIONS.map(n =>
-            `<option value="${n}">${n}</option>`
-        ).join('');
-        placeholder.innerHTML = `<select ${_gridInputAttrs('name="grid_inline_owner"')} style="width:100%;height:100%;border:1px solid #7986cb;font-family:メイリオ,sans-serif;font-size:13px;box-sizing:border-box;"><option value=""></option>${opts}</select>`;
-    },
-    hide: function() {},
-    set_value: function(value, id, column, node) {
-        node.querySelector('select').value = value || '';
-    },
-    get_value: function(id, column, node) {
-        return node.querySelector('select').value;
-    },
-    is_changed: function(value, id, column, node) {
-        return value !== this.get_value(id, column, node);
-    },
-    is_valid: function() { return true; },
-    save: function() {},
-    focus: function(node) {
-        var sel = node.querySelector('select');
-        if (sel) sel.focus();
-    }
-};
+gantt.config.editor_types.owner_select = (function() {
+    let _dropdown = null;
+    return {
+        show: function(id, column, config, placeholder) {
+            const task = gantt.getTask(id);
+            const currentVal = task ? (task.owner || '') : '';
+            const selected = currentVal ? currentVal.split(',').map(function(s) { return s.trim(); }).filter(Boolean) : [];
+
+            placeholder.innerHTML = `<div class="owner-inline-display" style="width:100%;height:100%;border:1px solid #7986cb;font-family:メイリオ,sans-serif;font-size:12px;box-sizing:border-box;cursor:pointer;padding:0 6px;display:flex;align-items:center;background:#fff;overflow:hidden;white-space:nowrap;">${selected.join(', ') || '(未選択)'}</div>`;
+
+            const dropdown = document.createElement('div');
+            dropdown.style.cssText = 'position:fixed;background:#fff;border:1px solid #7986cb;border-radius:3px;z-index:99999;padding:4px 0;min-width:130px;box-shadow:0 4px 12px rgba(0,0,0,0.2);font-family:メイリオ,Meiryo,sans-serif;';
+            dropdown.innerHTML = OWNER_OPTIONS.map(function(n) {
+                return `<label style="display:block;padding:4px 10px;cursor:pointer;white-space:nowrap;font-size:13px;"><input type="checkbox" class="owner-inline-chk" value="${n}" ${selected.includes(n) ? 'checked' : ''}> ${n}</label>`;
+            }).join('');
+
+            const rect = placeholder.getBoundingClientRect();
+            dropdown.style.top = rect.bottom + 'px';
+            dropdown.style.left = rect.left + 'px';
+
+            dropdown.addEventListener('mousedown', function(e) { e.stopPropagation(); });
+            dropdown.addEventListener('change', function() {
+                const checked = Array.from(dropdown.querySelectorAll('.owner-inline-chk:checked')).map(function(c) { return c.value; });
+                const display = placeholder.querySelector('.owner-inline-display');
+                if (display) display.textContent = checked.join(', ') || '(未選択)';
+            });
+
+            document.body.appendChild(dropdown);
+            _dropdown = dropdown;
+        },
+        hide: function() {
+            if (_dropdown) { _dropdown.remove(); _dropdown = null; }
+        },
+        set_value: function(value, id, column, node) {
+            const selected = value ? String(value).split(',').map(function(s) { return s.trim(); }).filter(Boolean) : [];
+            const display = node.querySelector('.owner-inline-display');
+            if (display) display.textContent = selected.join(', ') || '(未選択)';
+            if (_dropdown) {
+                _dropdown.querySelectorAll('.owner-inline-chk').forEach(function(chk) {
+                    chk.checked = selected.includes(chk.value);
+                });
+            }
+        },
+        get_value: function(id, column, node) {
+            if (_dropdown) {
+                return Array.from(_dropdown.querySelectorAll('.owner-inline-chk:checked')).map(function(c) { return c.value; }).join(',');
+            }
+            return '';
+        },
+        is_changed: function(value, id, column, node) {
+            const norm = function(v) { return (v || '').split(',').map(function(s) { return s.trim(); }).filter(Boolean).join(','); };
+            return norm(value) !== norm(this.get_value(id, column, node));
+        },
+        is_valid: function() { return true; },
+        save: function() {},
+        focus: function(node) {}
+    };
+})();
 
 // 試運転モード進捗インライン入力（0〜100の数値を自由入力）
 gantt.config.editor_types.operation_progress_select = {
