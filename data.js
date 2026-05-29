@@ -666,8 +666,14 @@ function toggleProjectFilterDropdown() {
 }
 
 function projectFilterAllChanged(checkbox) {
-    document.querySelectorAll('.project-chk-item').forEach(chk => { chk.checked = false; });
-    currentProjectFilter = [];
+    checkbox.indeterminate = false;
+    if (checkbox.checked) {
+        document.querySelectorAll('.project-chk-item').forEach(chk => { chk.checked = true; });
+        currentProjectFilter = [];
+    } else {
+        document.querySelectorAll('.project-chk-item').forEach(chk => { chk.checked = false; });
+        currentProjectFilter = [FILTER_NONE];
+    }
     gantt.render();
     _updateProjectFilterBtn();
     _rebuildMachineFilterOptionsFromGantt();
@@ -677,11 +683,21 @@ function projectFilterAllChanged(checkbox) {
 }
 
 function projectFilterItemChanged() {
-    const selected = [];
-    document.querySelectorAll('.project-chk-item:checked').forEach(chk => selected.push(chk.value));
-    currentProjectFilter = selected;
+    const allItems = document.querySelectorAll('.project-chk-item');
+    const checked = [...allItems].filter(c => c.checked).map(c => c.value);
+    const total = allItems.length;
+    if (checked.length === total) {
+        currentProjectFilter = [];
+    } else if (checked.length === 0) {
+        currentProjectFilter = [FILTER_NONE];
+    } else {
+        currentProjectFilter = checked;
+    }
     const allChk = document.getElementById('project_chk_all');
-    if (allChk) allChk.checked = selected.length === 0;
+    if (allChk) {
+        allChk.checked = checked.length === total;
+        allChk.indeterminate = checked.length > 0 && checked.length < total;
+    }
     gantt.render();
     _updateProjectFilterBtn();
     _rebuildMachineFilterOptionsFromGantt();
