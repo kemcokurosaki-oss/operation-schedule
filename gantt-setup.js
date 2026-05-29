@@ -121,11 +121,13 @@ gantt.config.editor_types.number = {
 const OWNER_OPTIONS = ["堀尾", "黒見", "大西(元)", "大西(優)", "木本", "前田", "本郷", "大重"];
 gantt.config.editor_types.owner_select = (function() {
     let _dropdown = null;
+    let _cachedValue = '';
     return {
         show: function(id, column, config, placeholder) {
             const task = gantt.getTask(id);
             const currentVal = task ? (task.owner || '') : '';
             const selected = currentVal ? currentVal.split(',').map(function(s) { return s.trim(); }).filter(Boolean) : [];
+            _cachedValue = selected.join(',');
 
             placeholder.innerHTML = `<div class="owner-inline-display" style="width:100%;height:100%;border:1px solid #7986cb;font-family:メイリオ,sans-serif;font-size:12px;box-sizing:border-box;cursor:pointer;padding:0 6px;display:flex;align-items:center;background:#fff;overflow:hidden;white-space:nowrap;">${selected.join(', ') || '(未選択)'}</div>`;
 
@@ -142,6 +144,7 @@ gantt.config.editor_types.owner_select = (function() {
             dropdown.addEventListener('mousedown', function(e) { e.stopPropagation(); });
             dropdown.addEventListener('change', function() {
                 const checked = Array.from(dropdown.querySelectorAll('.owner-inline-chk:checked')).map(function(c) { return c.value; });
+                _cachedValue = checked.join(',');
                 const display = placeholder.querySelector('.owner-inline-display');
                 if (display) display.textContent = checked.join(', ') || '(未選択)';
             });
@@ -154,6 +157,7 @@ gantt.config.editor_types.owner_select = (function() {
         },
         set_value: function(value, id, column, node) {
             const selected = value ? String(value).split(',').map(function(s) { return s.trim(); }).filter(Boolean) : [];
+            _cachedValue = selected.join(',');
             const display = node.querySelector('.owner-inline-display');
             if (display) display.textContent = selected.join(', ') || '(未選択)';
             if (_dropdown) {
@@ -166,7 +170,7 @@ gantt.config.editor_types.owner_select = (function() {
             if (_dropdown) {
                 return Array.from(_dropdown.querySelectorAll('.owner-inline-chk:checked')).map(function(c) { return c.value; }).join(',');
             }
-            return '';
+            return _cachedValue;
         },
         is_changed: function(value, id, column, node) {
             const norm = function(v) { return (v || '').split(',').map(function(s) { return s.trim(); }).filter(Boolean).join(','); };
