@@ -635,16 +635,28 @@ function _rebuildMachineFilterFromRows(rows) {
     if (!list) return;
     const machines = _collectMachineValues(rows);
     const prev = new Set(currentMachineFilter);
-    currentMachineFilter = [...prev].filter(m => machines.includes(m));
+    if (currentMachineFilter.length > 0 && currentMachineFilter[0] !== FILTER_NONE) {
+        currentMachineFilter = [...prev].filter(m => machines.includes(m));
+    }
+    const allSelected = currentMachineFilter.length === 0;
     const esc = _escapeHtmlAttr;
     list.innerHTML = machines.map(m => {
-        const checked = currentMachineFilter.includes(m) ? ' checked' : '';
+        const checked = (allSelected || currentMachineFilter.includes(m)) ? ' checked' : '';
         const ev = esc(m);
         return `<label style="display:block; padding:4px 10px; cursor:pointer; white-space:nowrap; font-size:13px; font-family:'メイリオ',Meiryo,sans-serif;">
             <input type="checkbox" class="machine-chk-item" value="${ev}" onchange="machineFilterItemChanged()"${checked}> ${ev}</label>`;
     }).join('');
     const allChk = document.getElementById('machine_chk_all');
-    if (allChk) allChk.checked = currentMachineFilter.length === 0;
+    if (allChk) {
+        if (allSelected) {
+            allChk.checked = true;
+            allChk.indeterminate = false;
+        } else {
+            const visibleCount = currentMachineFilter.filter(v => v !== FILTER_NONE).length;
+            allChk.checked = visibleCount >= machines.length;
+            allChk.indeterminate = visibleCount > 0 && visibleCount < machines.length;
+        }
+    }
     _updateMachineFilterBtn();
 }
 
