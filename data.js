@@ -857,6 +857,8 @@ function _updateMachineFilterBtn() {
     if (!btn) return;
     if (currentMachineFilter.length === 0) {
         btn.textContent = '機械: すべて';
+    } else if (currentMachineFilter[0] === FILTER_NONE) {
+        btn.textContent = '機械: ---';
     } else if (currentMachineFilter.length === 1) {
         btn.textContent = currentMachineFilter[0];
     } else {
