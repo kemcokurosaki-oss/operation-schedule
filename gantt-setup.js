@@ -906,7 +906,8 @@ function _computeSortOrderForInsert(projectNumber, machine, unit, taskType, excl
 
 function _getSingleFilterValue(filterValues) {
     if (!Array.isArray(filterValues) || filterValues.length !== 1) return "";
-    return String(filterValues[0] || "").trim();
+    const v = String(filterValues[0] || "").trim();
+    return (typeof FILTER_NONE !== 'undefined' && v === FILTER_NONE) ? "" : v;
 }
 
 // 新規タスク追加：まずライトボックスで入力 → 保存で Supabase に挿入
