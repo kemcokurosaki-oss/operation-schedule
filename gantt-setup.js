@@ -913,7 +913,7 @@ function _getSingleFilterValue(filterValues) {
 // 新規タスク追加：まずライトボックスで入力 → 保存で Supabase に挿入
 // afterTaskId: グリッドの+ボタンから呼ばれた場合はその行の機械・ユニットを初期値に使う
 function createTask(afterTaskId) {
-    if (currentProjectFilter.length !== 1) {
+    if (currentProjectFilter.length !== 1 || (typeof FILTER_NONE !== 'undefined' && currentProjectFilter[0] === FILTER_NONE)) {
         alert("工事番号を選択してからタスクを追加してください。");
         return;
     }
