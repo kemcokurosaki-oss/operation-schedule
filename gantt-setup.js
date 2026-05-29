@@ -1231,6 +1231,8 @@ function _getLightboxSections(taskType) {
     if (tt === 'business_trip') {
         return [
             { name: "project_number",  height: 30, map_to: "project_number",  type: "trip_pn_lb" },
+            { name: "machine",         height: 30, map_to: "machine",          type: "trip_text_lb" },
+            { name: "unit",            height: 30, map_to: "unit",             type: "trip_text_lb" },
             { name: "customer_name",   height: 30, map_to: "customer_name",   type: "trip_text_lb" },
             { name: "project_details", height: 30, map_to: "project_details", type: "trip_text_lb" },
             { name: "description",     height: 30, map_to: "text",            type: "task_select_lb" },
@@ -1245,6 +1247,7 @@ function _getLightboxSections(taskType) {
             { name: "unit",            height: 30, map_to: "unit",             type: "textarea" },
             { name: "description",     height: 30, map_to: "text",            type: "textarea_full" },
             { name: "owner",           height: 30, map_to: "owner",           type: "owner_select_lb" },
+            { name: "operation_progress", height: 30, map_to: "status",       type: "operation_progress_lb" },
             { name: "date_range",      height: 30, map_to: "start_date",      type: "date_range" },
             { name: "add_row_count",   height: 30, map_to: "add_row_count",   type: "add_row_count_lb" },
         ];
