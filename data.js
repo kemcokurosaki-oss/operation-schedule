@@ -64,7 +64,11 @@ async function loadData() {
         if (data.length < PAGE_SIZE) break;
         from += PAGE_SIZE;
     }
-    const data = allData.filter(t => !_isProjectCompletedOnMasterSchedule(t.project_number));
+    // 完了済み工番のタスクを除外。ただし期限内の出張タスク（business_trip）は完了後も表示を維持する
+    const data = allData.filter(t => {
+        if (!_isProjectCompletedOnMasterSchedule(t.project_number)) return true;
+        return _isTripTask(t) && !_isTripTaskExpiredDb(t.end_date);
+    });
 
     const today = new Date().toISOString().split('T')[0];
 
