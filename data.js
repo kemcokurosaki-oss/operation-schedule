@@ -1106,7 +1106,7 @@ async function initProjectSelect(projectParam) {
     while (true) {
         const { data: pageData } = await supabaseClient
             .from('tasks')
-            .select('project_number, customer_name, project_details, machine, unit, is_detailed, task_type, owner')
+            .select('project_number, customer_name, project_details, machine, unit, is_detailed, task_type, is_business_trip, end_date, owner')
             .or('is_archived.eq.false,is_archived.is.null')
             .range(from, from + PAGE_SIZE - 1);
         if (!pageData || pageData.length === 0) break;
@@ -1114,7 +1114,11 @@ async function initProjectSelect(projectParam) {
         if (pageData.length < PAGE_SIZE) break;
         from += PAGE_SIZE;
     }
-    const data = allData.filter(t => !_isProjectCompletedOnMasterSchedule(t.project_number));
+    // 完了済み工番のタスクを除外。ただし期限内の出張タスク（business_trip）は完了後も表示を維持する
+    const data = allData.filter(t => {
+        if (!_isProjectCompletedOnMasterSchedule(t.project_number)) return true;
+        return _isTripTask(t) && !_isTripTaskExpiredDb(t.end_date);
+    });
     if (!data || data.length === 0) return;
 
     // 工事番号ごとの情報をマップに格納
