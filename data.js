@@ -348,8 +348,8 @@ function _taskPassesCommonFilters(task) {
     if (currentTaskTypeFilter === 'field_trip') return _isTripTask(task) && _isOperationMajorItem(task.major_item) && String(task.text || '').trim() === '現地試運転';
     // 出張タスク（task_type='business_trip' または is_business_trip=TRUE）は出張モード以外では非表示
     if (_isTripTask(task) && currentTaskTypeFilter !== 'business_trip') return false;
-    // 出張モード時は「操業部の出張タスク」のみ表示
-    if (currentTaskTypeFilter === 'business_trip') return _isTripTask(task) && _isOperationMajorItem(task.major_item);
+    // 出張モード時は「操業部の出張タスク」のみ表示。期限切れ（終了日+7日経過）は非表示
+    if (currentTaskTypeFilter === 'business_trip') return _isTripTask(task) && _isOperationMajorItem(task.major_item) && !_isTripTaskExpired(task);
     if (currentTaskTypeFilter) {
         if (_normalizeTaskTypeForDb(task.task_type) !== _normalizeTaskTypeForDb(currentTaskTypeFilter)) return false;
     }
