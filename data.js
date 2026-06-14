@@ -1653,12 +1653,14 @@ async function initialize() {
     
     // 3. マーカー追加
     const today = new Date();
-    gantt.addMarker({
-        start_date: today,
-        css: "today-line",
-        text: "今日",
-        title: "今日: " + gantt.templates.date_grid(today)
-    });
+    if (typeof gantt.addMarker === 'function') {
+        gantt.addMarker({
+            start_date: today,
+            css: "today-line",
+            text: "今日",
+            title: "今日: " + gantt.templates.date_grid(today)
+        });
+    }
 
     // 4. データを読み込む
     await loadData();
