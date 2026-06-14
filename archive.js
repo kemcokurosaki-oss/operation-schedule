@@ -192,4 +192,8 @@ function closeArchiveDetail() {
 }
 
 // 実行
-initialize();
+initialize().catch(err => {
+    console.error('[操業工程表] initialize() failed:', err);
+    const overlay = document.getElementById('page_loading_overlay');
+    if (overlay) overlay.remove();
+});
