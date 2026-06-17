@@ -1,12 +1,13 @@
 // Gantt 基本構成
 gantt.config.date_format = "%Y-%m-%d";
 
-/** DB 保存・表示モード用: task_type は planning / operation（試運転）/ business_trip のみ（drawing・long_lead_item は廃止し operation に正規化） */
+/** DB 保存・表示モード用: task_type は planning / operation（試運転）/ business_trip / field_trip のみ（drawing・long_lead_item は廃止し operation に正規化） */
 function _normalizeTaskTypeForDb(tt) {
     const sl = String(tt == null ? '' : tt).trim().toLowerCase();
     if (sl === 'drawing' || sl === 'long_lead_item') return 'operation';
     if (sl === 'planning') return 'planning';
-    if (sl === 'business_trip' || sl === 'field_trip') return 'business_trip';
+    if (sl === 'business_trip') return 'business_trip';
+    if (sl === 'field_trip') return 'field_trip';
     return 'operation';
 }
 window._normalizeTaskTypeForDb = _normalizeTaskTypeForDb;
