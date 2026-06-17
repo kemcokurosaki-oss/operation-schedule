@@ -64,10 +64,10 @@ async function loadData() {
         if (data.length < PAGE_SIZE) break;
         from += PAGE_SIZE;
     }
-    // 完了済み工番のタスクを除外。ただし期限内の出張タスク（business_trip）は完了後も表示を維持する
+    // 完了済み工番のタスクを除外。ただし期限内の出張・現地試運転タスクは完了後も表示を維持する
     const data = allData.filter(t => {
         if (!_isProjectCompletedOnMasterSchedule(t.project_number)) return true;
-        return _isTripTask(t) && !_isTripTaskExpiredDb(t.end_date);
+        return (_isTripTask(t) || String(t.task_type || '') === 'field_trip') && !_isTripTaskExpiredDb(t.end_date);
     });
 
     const today = new Date().toISOString().split('T')[0];
@@ -279,8 +279,8 @@ function _isTripTaskExpiredDb(dbEndDate) {
 /** 試運転モード（task_type=operation）でガントに出す行。設計工程表の is_detailed は除外 */
 function _passesDrawingModeFilter(task) {
     if (!_isDetailedTaskRow(task)) return false;
-    // 出張タスクは試運転モードでも非表示（全体工程表の出張予定シートと同じ扱い）
-    if (_isTripTask(task)) return false;
+    // 出張・現地試運転タスクは試運転モードでも非表示（全体工程表の出張予定シートと同じ扱い）
+    if (_isTripTask(task) || String(task.task_type || '').trim().toLowerCase() === 'field_trip') return false;
     // planning・long_lead_item は他モード専用タスクなので試運転モードでは非表示
     const tt = String(task.task_type || '').trim().toLowerCase();
     if (tt === 'planning' || tt === 'long_lead_item') return false;
@@ -295,7 +295,7 @@ function _passesDrawingModeFilter(task) {
 /** 完了工事一覧に工事番号を載せる条件：その番号に操業工程表の対象タスクが1件でもあること */
 function _taskCountsAsOperationForCompletedList(row) {
     if (!_isDetailedTaskRow(row)) return false;
-    if (_isTripTask(row)) return _isOperationMajorItem(row.major_item);
+    if (_isTripTask(row) || String(row.task_type || '').trim().toLowerCase() === 'field_trip') return _isOperationMajorItem(row.major_item);
     const tt = String(row.task_type || '').trim().toLowerCase();
     if (tt === 'planning' || tt === 'long_lead_item') return true;
     return _passesDrawingModeFilter(row);
@@ -344,9 +344,10 @@ function _taskPassesCommonFilters(task) {
         return _passesDrawingModeFilter(task);
     }
     if (!_isDetailedTaskRow(task)) return false;
-    // 現地試運転モード: 出張タスクのうち text が「現地試運転」のものだけ
-    if (currentTaskTypeFilter === 'field_trip') return _isTripTask(task) && _isOperationMajorItem(task.major_item) && String(task.text || '').trim() === '現地試運転';
-    // 出張タスク（task_type='business_trip' または is_business_trip=TRUE）は出張モード以外では非表示
+    // 現地試運転モード: task_type='field_trip' のタスクだけ
+    if (currentTaskTypeFilter === 'field_trip') return String(task.task_type || '').trim().toLowerCase() === 'field_trip' && _isOperationMajorItem(task.major_item);
+    // 出張・現地試運転タスクはそれぞれ専用モード以外では非表示
+    if (String(task.task_type || '').trim().toLowerCase() === 'field_trip') return false;
     if (_isTripTask(task) && currentTaskTypeFilter !== 'business_trip') return false;
     // 出張モード時は「操業部の出張タスク」のみ表示。期限切れ（終了日+7日経過）は非表示
     if (currentTaskTypeFilter === 'business_trip') return _isTripTask(task) && _isOperationMajorItem(task.major_item) && !_isTripTaskExpired(task);
@@ -1114,10 +1115,10 @@ async function initProjectSelect(projectParam) {
         if (pageData.length < PAGE_SIZE) break;
         from += PAGE_SIZE;
     }
-    // 完了済み工番のタスクを除外。ただし期限内の出張タスク（business_trip）は完了後も表示を維持する
+    // 完了済み工番のタスクを除外。ただし期限内の出張・現地試運転タスクは完了後も表示を維持する
     const data = allData.filter(t => {
         if (!_isProjectCompletedOnMasterSchedule(t.project_number)) return true;
-        return _isTripTask(t) && !_isTripTaskExpiredDb(t.end_date);
+        return (_isTripTask(t) || String(t.task_type || '') === 'field_trip') && !_isTripTaskExpiredDb(t.end_date);
     });
     if (!data || data.length === 0) return;
 
