@@ -344,8 +344,8 @@ function _taskPassesCommonFilters(task) {
         return _passesDrawingModeFilter(task);
     }
     if (!_isDetailedTaskRow(task)) return false;
-    // 現地試運転モード: task_type='field_trip' のタスクだけ
-    if (currentTaskTypeFilter === 'field_trip') return String(task.task_type || '').trim().toLowerCase() === 'field_trip' && _isOperationMajorItem(task.major_item);
+    // 現地試運転モード: task_type='field_trip' のタスクだけ。期限切れ（終了日+7日経過）は非表示
+    if (currentTaskTypeFilter === 'field_trip') return String(task.task_type || '').trim().toLowerCase() === 'field_trip' && _isOperationMajorItem(task.major_item) && !_isTripTaskExpired(task);
     // 出張・現地試運転タスクはそれぞれ専用モード以外では非表示
     if (String(task.task_type || '').trim().toLowerCase() === 'field_trip') return false;
     if (_isTripTask(task) && currentTaskTypeFilter !== 'business_trip') return false;
