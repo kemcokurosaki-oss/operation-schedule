@@ -1161,7 +1161,10 @@ gantt.attachEvent("onAfterTaskUpdate", async function(id, item) {
                 total_sheets: Number(item.total_sheets) || 0,
                 completed_sheets: Number(item.completed_sheets) || 0,
                 duration: item.duration,
-                task_type: _normalizeTaskTypeForDb(item.task_type || currentTaskTypeFilter || "operation"),
+                // 全体工程表側で作成された行（task_type が元々未設定）は、操業工程表で編集しても
+                // task_type を自動入力しない。既存の値がある場合のみ正規化して保持する
+                // （新規追加時のみ _finalizePendingNewTaskToDb で 'operation' 等を自動設定する）
+                task_type: item.task_type ? _normalizeTaskTypeForDb(item.task_type) : null,
                 wish_date: item.wish_date || null,
                 is_business_trip: (currentTaskTypeFilter === 'business_trip' || item.is_business_trip === true || String(item.is_business_trip).toUpperCase() === 'TRUE') ? true : false,
                 last_updated_by: (typeof window._getCurrentEditorName === 'function' ? window._getCurrentEditorName() : '') || ''
