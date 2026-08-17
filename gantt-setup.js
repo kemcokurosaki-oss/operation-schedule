@@ -314,6 +314,9 @@ gantt.config.editor_types.task_select = {
 // 開始日インラインエディタ（計画・出張モード用）
 gantt.config.editor_types.start_date_editor = {
     show: function(id, column, config, placeholder) {
+        var task = gantt.getTask(id);
+        _dateEditField = 'start';
+        _dateEditOriginal = { id: id, start_date: task.start_date, end_date: task.end_date };
         placeholder.innerHTML = `<input type="date" ${_gridInputAttrs('name="grid_inline_start_date"')} style="width:100%;height:100%;border:1px solid #7986cb;font-family:メイリオ,sans-serif;font-size:12px;box-sizing:border-box;">`;
         var inp = placeholder.querySelector('input');
         if (inp) {
@@ -322,7 +325,10 @@ gantt.config.editor_types.start_date_editor = {
             });
         }
     },
-    hide: function() {},
+    hide: function() {
+        _dateEditField = null;
+        _dateEditOriginal = null;
+    },
     set_value: function(value, id, column, node) {
         const inp = node.querySelector('input');
         if (!value) { inp.value = ''; return; }
