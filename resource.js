@@ -319,10 +319,10 @@ function renderResourceTimeline(owners) {
     const todayLineLeft = actualGridWidth + todayPos;
 
     let html = `<div style="width: ${totalWidth}px; position: relative;">`; // 全体の幅を指定するコンテナを追加
-    // 担当者1人につき3行（計画・試運転・出張）で表示
+    // 担当者1人につき3行（計画・社内試運転・出張）で表示
     const TASK_TYPE_ROWS = [
         { type: 'planning',       label: '計画' },
-        { type: 'operation',    label: '試運転' },
+        { type: 'operation',    label: '社内試運転' },
         { type: 'business_trip',  label: '出張' },
     ];
 
