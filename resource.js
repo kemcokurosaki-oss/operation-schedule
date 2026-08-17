@@ -477,9 +477,9 @@ function renderOwnerDetailTimeline(ownerName) {
 
     const TASK_TYPE_LABEL = {
         planning:       '計画',
-        operation:      '試運転',
-        drawing:        '試運転',
-        long_lead_item: '試運転',
+        operation:      '社内試運転',
+        drawing:        '社内試運転',
+        long_lead_item: '社内試運転',
         business_trip:  '出張',
     };
 
