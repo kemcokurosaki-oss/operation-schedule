@@ -64,10 +64,10 @@ async function loadData() {
         if (data.length < PAGE_SIZE) break;
         from += PAGE_SIZE;
     }
-    // 完了済み工番のタスクを除外。ただし期限内の出張・現地試運転タスクは完了後も表示を維持する
+    // 完了済み工番のタスクを除外。ただし期限内の出張タスクは完了後も表示を維持する
     const data = allData.filter(t => {
         if (!_isProjectCompletedOnMasterSchedule(t.project_number)) return true;
-        return (_isTripTask(t) || String(t.task_type || '') === 'field_trip') && !_isTripTaskExpiredDb(t.end_date);
+        return _isTripTask(t) && !_isTripTaskExpiredDb(t.end_date);
     });
 
     const today = new Date().toISOString().split('T')[0];
@@ -1115,10 +1115,10 @@ async function initProjectSelect(projectParam) {
         if (pageData.length < PAGE_SIZE) break;
         from += PAGE_SIZE;
     }
-    // 完了済み工番のタスクを除外。ただし期限内の出張・現地試運転タスクは完了後も表示を維持する
+    // 完了済み工番のタスクを除外。ただし期限内の出張タスクは完了後も表示を維持する
     const data = allData.filter(t => {
         if (!_isProjectCompletedOnMasterSchedule(t.project_number)) return true;
-        return (_isTripTask(t) || String(t.task_type || '') === 'field_trip') && !_isTripTaskExpiredDb(t.end_date);
+        return _isTripTask(t) && !_isTripTaskExpiredDb(t.end_date);
     });
     if (!data || data.length === 0) return;
 
