@@ -1153,6 +1153,21 @@ gantt.attachEvent("onBeforeTaskUpdate", function(id, task) {
         task.has_no_date = true;
         _clearingEndDateId = null;
     }
+
+    // 開始日/終了日インライン編集：編集していない側の日付は変更前の値に固定し、期間だけ再計算する
+    if (_dateEditOriginal && _dateEditOriginal.id === id && !task.has_no_date) {
+        if (_dateEditField === 'start') {
+            task.end_date = _dateEditOriginal.end_date;
+        } else if (_dateEditField === 'end') {
+            task.start_date = _dateEditOriginal.start_date;
+        }
+        if (task.start_date instanceof Date && task.end_date instanceof Date) {
+            task.duration = gantt.calculateDuration(task.start_date, task.end_date);
+        }
+    }
+    _dateEditField = null;
+    _dateEditOriginal = null;
+
     return true;
 });
 
