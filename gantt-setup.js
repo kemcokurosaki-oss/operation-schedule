@@ -357,6 +357,9 @@ gantt.config.editor_types.start_date_editor = {
 // Supabaseには実際の完了日(YYYY-MM-DD)を保存し、gantt内部では+1日した排他的終了日を使う
 gantt.config.editor_types.completion_date = {
     show: function(id, column, config, placeholder) {
+        var task = gantt.getTask(id);
+        _dateEditField = 'end';
+        _dateEditOriginal = { id: id, start_date: task.start_date, end_date: task.end_date };
         placeholder.innerHTML = '<input type="date" ' + _gridInputAttrs('name="grid_inline_end_date"') + '>';
         var inp = placeholder.querySelector('input');
         inp.addEventListener('change', function() {
@@ -367,7 +370,10 @@ gantt.config.editor_types.completion_date = {
             _commitInlineDateEdit(inp);
         });
     },
-    hide: function() {},
+    hide: function() {
+        _dateEditField = null;
+        _dateEditOriginal = null;
+    },
     set_value: function(value, id, column, node) {
         var inp = node.querySelector('input');
         if (!value || gantt.getTask(id).has_no_date) { inp.value = ''; return; }
