@@ -281,6 +281,32 @@ gantt.config.editor_types.status_select = {
     }
 };
 
+// 出張タスク名プルダウン用インラインエディタ（現地試運転・現地SV・調査）
+gantt.config.editor_types.task_select = {
+    show: function(id, column, config, placeholder) {
+        const opts = ['現地試運転', '現地SV', '調査'].map(v =>
+            `<option value="${v}">${v}</option>`).join('');
+        placeholder.innerHTML = `<select ${_gridInputAttrs('name="grid_inline_task"')} style="width:100%;height:100%;border:1px solid #7986cb;font-family:メイリオ,sans-serif;font-size:12px;box-sizing:border-box;">${opts}</select>`;
+    },
+    hide: function() {},
+    set_value: function(value, id, column, node) {
+        const sel = node.querySelector('select');
+        sel.value = (value && ['現地試運転', '現地SV', '調査'].includes(value)) ? value : '現地試運転';
+    },
+    get_value: function(id, column, node) {
+        return node.querySelector('select').value;
+    },
+    is_changed: function(value, id, column, node) {
+        return value !== this.get_value(id, column, node);
+    },
+    is_valid: function() { return true; },
+    save: function() {},
+    focus: function(node) {
+        var sel = node.querySelector('select');
+        if (sel) sel.focus();
+    }
+};
+
 // 開始日インラインエディタ（計画・出張モード用）
 gantt.config.editor_types.start_date_editor = {
     show: function(id, column, config, placeholder) {
