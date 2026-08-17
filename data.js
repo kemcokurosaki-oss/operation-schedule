@@ -295,7 +295,7 @@ function _passesDrawingModeFilter(task) {
 /** 完了工事一覧に工事番号を載せる条件：その番号に操業工程表の対象タスクが1件でもあること */
 function _taskCountsAsOperationForCompletedList(row) {
     if (!_isDetailedTaskRow(row)) return false;
-    if (_isTripTask(row) || String(row.task_type || '').trim().toLowerCase() === 'field_trip') return _isOperationMajorItem(row.major_item);
+    if (_isTripTask(row)) return _isOperationMajorItem(row.major_item);
     const tt = String(row.task_type || '').trim().toLowerCase();
     if (tt === 'planning' || tt === 'long_lead_item') return true;
     return _passesDrawingModeFilter(row);
