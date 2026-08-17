@@ -1880,7 +1880,7 @@ function _getTripColumns() {
 function switchColumns(filterType) {
     var baseCols;
     if (filterType === 'planning') baseCols = _getPlanningColumns();
-    else if (filterType === 'business_trip' || filterType === 'field_trip') baseCols = _getTripColumns();
+    else if (filterType === 'business_trip') baseCols = _getTripColumns();
     else baseCols = _getDrawingColumns();
     gantt.config.columns = baseCols;
     gantt.config._columnFilterType = filterType;
