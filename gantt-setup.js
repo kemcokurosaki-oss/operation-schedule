@@ -1,6 +1,10 @@
 // Gantt 基本構成
 gantt.config.date_format = "%Y-%m-%d";
 
+// 開始日/終了日インライン編集中に、編集していない側の日付が連動して変わらないようにするための一時退避
+var _dateEditField = null;    // 'start' | 'end' | null
+var _dateEditOriginal = null; // { id, start_date, end_date }
+
 /** DB 保存・表示モード用: task_type は planning / operation（試運転）/ business_trip のみ（drawing・long_lead_item・field_trip は廃止し operation・business_trip に正規化） */
 function _normalizeTaskTypeForDb(tt) {
     const sl = String(tt == null ? '' : tt).trim().toLowerCase();
