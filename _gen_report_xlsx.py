@@ -93,14 +93,14 @@ for _, cat, _ in rows:
 
 ws2 = wb.create_sheet("集計")
 ws2["A1"] = "カテゴリ別 件数"
-ws2["A1"].font = Font(size=12, bold=True)
+ws2["A1"].font = Font(name=FONT_NAME, size=12, bold=True)
 ws2["A3"] = "カテゴリ"
 ws2["B3"] = "件数"
-ws2["A3"].font = Font(bold=True)
-ws2["B3"].font = Font(bold=True)
+ws2["A3"].font = Font(name=FONT_NAME, bold=True)
+ws2["B3"].font = Font(name=FONT_NAME, bold=True)
 for i, (k, v) in enumerate(summary.items(), start=4):
-    ws2.cell(row=i, column=1, value=k)
-    ws2.cell(row=i, column=2, value=v)
+    ws2.cell(row=i, column=1, value=k).font = Font(name=FONT_NAME)
+    ws2.cell(row=i, column=2, value=v).font = Font(name=FONT_NAME)
 ws2.column_dimensions["A"].width = 20
 ws2.column_dimensions["B"].width = 10
 
