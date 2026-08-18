@@ -2056,6 +2056,8 @@ function switchColumns(filterType) {
             // render() だけでは不十分なため resetLayout() でレイアウトサイズを再計算する
             gantt.resetLayout();
             gantt.scrollTo(ss.x, ss.y);
+            // リソースパネル（下段/全画面）の幅もガントのグリッド幅に追従させる
+            if (typeof updateResourceData === "function") updateResourceData();
         } catch (e) {}
     }
 
