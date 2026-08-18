@@ -1590,7 +1590,7 @@ gantt.form_blocks["wish_date_lb"] = {
 
 gantt.form_blocks["template"] = {
     render: function(sns) {
-        return "<div class='gantt_cal_ltext'><input type='date' id='cal_" + sns.name + "' style='width:150px;height:34px;border:1px solid #ccc;border-radius:4px;padding:0 6px;font-size:13px;'></div>";
+        return "<div class='gantt_cal_ltext'><input type='date' id='cal_" + sns.name + "' style='width:130px;height:28px;border:1px solid #ccc;border-radius:4px;padding:0 6px;font-size:13px;'></div>";
     },
     set_value: function(node, value, task, sns) {
         const input = node.querySelector("input");
