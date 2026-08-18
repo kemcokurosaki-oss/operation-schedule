@@ -2010,7 +2010,9 @@ function switchColumns(filterType) {
     let rafPending = false;
 
     function syncGridWidth() {
-        gantt.config.grid_width = _getColsSum(gantt.config.columns);
+        // grid_width だけを書き換えてもカスタムレイアウト（_setLayout）側の
+        // 固定ピクセル幅は更新されないため、レイアウト自体を再構築する
+        _setLayout(_getColsSum(gantt.config.columns));
     }
 
     function rerender() {
