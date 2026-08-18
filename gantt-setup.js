@@ -1637,11 +1637,11 @@ gantt.form_blocks["operation_progress_lb"] = {
 // 総枚数と完了枚数を横並びで表示するカスタムフォームブロック
 gantt.form_blocks["sheets_pair"] = {
     render: function(sns) {
-        return `<div class='gantt_cal_ltext' style='display:flex;gap:8px;align-items:center;'>
+        return `<div class='gantt_cal_ltext' style='display:flex;gap:6px;align-items:center;'>
             <span style='font-size:12px;white-space:nowrap;color:#555;'>総枚数</span>
-            <input type='number' id='lb_total_sheets' min='0' style='width:75px;height:34px;border:1px solid #ccc;border-radius:4px;padding:0 6px;font-size:13px;'>
+            <input type='number' id='lb_total_sheets' min='0' style='width:60px;height:28px;border:1px solid #ccc;border-radius:4px;padding:0 6px;font-size:13px;'>
             <span style='font-size:12px;white-space:nowrap;color:#555;'>完了枚数</span>
-            <input type='number' id='lb_completed_sheets' min='0' style='width:75px;height:34px;border:1px solid #ccc;border-radius:4px;padding:0 6px;font-size:13px;'>
+            <input type='number' id='lb_completed_sheets' min='0' style='width:60px;height:28px;border:1px solid #ccc;border-radius:4px;padding:0 6px;font-size:13px;'>
         </div>`;
     },
     set_value: function(node, value, task, sns) {
