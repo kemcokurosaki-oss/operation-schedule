@@ -1,7 +1,7 @@
 // ---- 完了工事一覧（閲覧のみ）----
 // ・全体工程表の completed_projects ＋ tasks.is_archived=true の工事番号のうち、
 //   操業工程表の対象タスクが1件以上ある工事だけを一覧表示
-// ・詳細モーダルは組立工程表と同様「操業」「出張」の2タブ（設計工程表の図面/計画など4タブは廃止）
+// ・詳細モーダルはメインタブ（計画／社内試運転／出張）と対応する3タブ構成
 
 async function openArchiveList() {
     const tableDiv = document.getElementById('archive_list_table');
