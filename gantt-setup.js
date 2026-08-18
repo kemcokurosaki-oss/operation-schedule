@@ -1887,6 +1887,20 @@ function _applyStoredDrawingWidths(cols) {
     return cols;
 }
 
+// 列ヘッダーに▼フィルターボタンを付与しない列（データ列でない／集計専用の列）
+const _COLUMN_FILTER_EXCLUDE = new Set(["add_btn"]);
+
+// 列定義のlabelに▼フィルターボタンのHTMLを追加する（列幅・既存レイアウトは変更しない）
+function _withColumnFilterBtn(col) {
+    if (_COLUMN_FILTER_EXCLUDE.has(col.name) || col.noFilterBtn) return col;
+    const btn = `<button type="button" class="col-filter-btn" data-col="${col.name}" onclick="event.stopPropagation(); onColumnFilterBtnClick(event, '${col.name}')"></button>`;
+    return Object.assign({}, col, { label: (col.label || "") + btn });
+}
+
+function _applyColumnFilterButtons(cols) {
+    return cols.map(_withColumnFilterBtn);
+}
+
 // 試運転列定義（デフォルト）
 function _getDrawingColumns() {
     return _applyStoredDrawingWidths([
