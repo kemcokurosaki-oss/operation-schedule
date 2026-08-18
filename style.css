@@ -295,20 +295,20 @@ html, body { margin: 0; padding: 0; height: 100%; overflow: hidden; font-family:
 .gantt_cal_ltext select {
     width: 280px !important;
     height: 34px !important;
-    font-size: 16px !important;
+    font-size: 13px !important;
     padding: 0 6px !important;
     box-sizing: border-box !important;
 }
 .gantt_cal_ltext input[type="date"],
 .gantt_cal_ltext input[type="number"] {
     height: 34px !important;
-    font-size: 16px !important;
+    font-size: 13px !important;
     box-sizing: border-box !important;
 }
 .gantt_cal_ltext textarea:not(.lb-textarea-full) {
     width: 280px !important;
     height: 34px !important;
-    font-size: 16px !important;
+    font-size: 13px !important;
     line-height: 24px !important;
     padding: 5px 6px 0 6px !important;
     box-sizing: border-box !important;
