@@ -1016,9 +1016,8 @@ function _updateMachineFilterBtn() {
     }
 }
 
-function toggleUnitFilterDropdown() {
-    const dd = document.getElementById('unit_filter_dropdown');
-    if (dd) dd.style.display = dd.style.display === 'none' ? '' : 'none';
+function toggleUnitFilterDropdown(e) {
+    _toggleFilterDropdown('unit_filter_dropdown', e);
 }
 
 function unitFilterAllChanged(checkbox) {
