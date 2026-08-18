@@ -70,7 +70,7 @@ for no, cat, content in rows:
     cat_cell.alignment = Alignment(horizontal="center", vertical="center", wrap_text=True)
     fill_color = CATEGORY_COLORS.get(cat, "FFFFFF")
     cat_cell.fill = PatternFill("solid", fgColor=fill_color)
-    content_cell = ws.cell(row=r, column=3, value="・" + content)
+    content_cell = ws.cell(row=r, column=3, value=content)
     content_cell.font = Font(name=FONT_NAME)
     content_cell.alignment = Alignment(horizontal="left", vertical="center", wrap_text=True)
     for col in range(1, 4):
