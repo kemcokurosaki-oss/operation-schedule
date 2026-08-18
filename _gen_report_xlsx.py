@@ -42,19 +42,19 @@ border = Border(left=thin, right=thin, top=thin, bottom=thin)
 # タイトル
 ws.merge_cells("A1:C1")
 ws["A1"] = "操業工程表アプリ 修正内容報告（対象期間：2026年8月17日～8月18日）"
-ws["A1"].font = Font(size=14, bold=True)
+ws["A1"].font = Font(name=FONT_NAME, size=14, bold=True)
 ws["A1"].alignment = Alignment(horizontal="left", vertical="center")
 ws.row_dimensions[1].height = 26
 
 ws["A2"] = "作成日：2026年8月18日"
-ws["A2"].font = Font(size=10, italic=True, color="666666")
+ws["A2"].font = Font(name=FONT_NAME, size=10, italic=True, color="666666")
 
 # ヘッダー行
 headers = ["No.", "カテゴリ", "変更内容"]
 header_row = 4
 for col, h in enumerate(headers, start=1):
     c = ws.cell(row=header_row, column=col, value=h)
-    c.font = Font(bold=True, color="FFFFFF")
+    c.font = Font(name=FONT_NAME, bold=True, color="FFFFFF")
     c.fill = PatternFill("solid", fgColor="4472C4")
     c.alignment = Alignment(horizontal="center", vertical="center")
     c.border = border
@@ -62,12 +62,16 @@ for col, h in enumerate(headers, start=1):
 # データ行
 r = header_row + 1
 for no, cat, content in rows:
-    ws.cell(row=r, column=1, value=no).alignment = Alignment(horizontal="center", vertical="center")
+    no_cell = ws.cell(row=r, column=1, value=no)
+    no_cell.font = Font(name=FONT_NAME)
+    no_cell.alignment = Alignment(horizontal="center", vertical="center")
     cat_cell = ws.cell(row=r, column=2, value=cat)
+    cat_cell.font = Font(name=FONT_NAME)
     cat_cell.alignment = Alignment(horizontal="center", vertical="center", wrap_text=True)
     fill_color = CATEGORY_COLORS.get(cat, "FFFFFF")
     cat_cell.fill = PatternFill("solid", fgColor=fill_color)
     content_cell = ws.cell(row=r, column=3, value="・" + content)
+    content_cell.font = Font(name=FONT_NAME)
     content_cell.alignment = Alignment(horizontal="left", vertical="center", wrap_text=True)
     for col in range(1, 4):
         ws.cell(row=r, column=col).border = border
