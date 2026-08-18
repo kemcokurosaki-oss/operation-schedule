@@ -224,6 +224,12 @@ html, body { margin: 0; padding: 0; height: 100%; overflow: hidden; font-family:
     border: 1px solid rgba(0,0,0,0.15);
 }
 .resource-bar-text { padding: 0 5px; overflow: hidden; text-overflow: ellipsis; }
+.resource-cell-bar { cursor: grab; }
+.resource-cell-bar.dragging { opacity: 0.55; box-shadow: 0 0 0 2px rgba(0,0,0,0.4); z-index: 50 !important; cursor: grabbing; }
+.resource-bar-handle { position: absolute; top: 0; bottom: 0; width: 6px; cursor: ew-resize; z-index: 15; }
+.resource-bar-handle-left { left: 0; }
+.resource-bar-handle-right { right: 0; }
+.resource-bar-handle:hover { background: rgba(255,255,255,0.35); }
 
 /* 担当者ごとのバーの色設定（区別しやすいように調整） */
 .owner-horio { background-color: #e74c3c !important; border-color: #c0392b !important; color: #fff !important; } /* 堀尾: 赤 */
