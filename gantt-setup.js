@@ -1416,7 +1416,7 @@ function _tripLbAutoFill(pn) {
 // 全幅テキストエリア（組立図面名・品名など）
 gantt.form_blocks["textarea_full"] = {
     render: function(sns) {
-        return "<div class='gantt_cal_ltext'><textarea class='lb-textarea-full' style='height:40px;font-size:13px;line-height:22px;padding:6px 6px 0 6px;box-sizing:border-box;resize:none;overflow:hidden;border:1px solid #ccc;border-radius:4px;'></textarea></div>";
+        return "<div class='gantt_cal_ltext'><textarea class='lb-textarea-full' style='height:32px;font-size:13px;line-height:18px;padding:4px 6px 0 6px;box-sizing:border-box;resize:none;overflow:hidden;border:1px solid #ccc;border-radius:4px;'></textarea></div>";
     },
     set_value: function(node, value, task, sns) {
         node.querySelector("textarea").value = value || '';
