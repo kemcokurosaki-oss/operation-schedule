@@ -24,13 +24,10 @@ rows = [
 
 CATEGORY_COLORS = {
     "新機能": "DDEBF7",
-    "新機能／UI改善": "DDEBF7",
     "不具合修正": "FCE4E4",
     "UI改善": "E2EFDA",
     "仕様変更": "FFF2CC",
-    "仕様変更（統合）": "FFF2CC",
-    "その他（整理）": "F2F2F2",
-    "用語統一": "F2F2F2",
+    "その他": "F2F2F2",
 }
 
 wb = openpyxl.Workbook()
@@ -41,7 +38,7 @@ thin = Side(style="thin", color="BFBFBF")
 border = Border(left=thin, right=thin, top=thin, bottom=thin)
 
 # タイトル
-ws.merge_cells("A1:E1")
+ws.merge_cells("A1:C1")
 ws["A1"] = "操業工程表アプリ 修正内容報告（対象期間：2026年8月17日～8月18日）"
 ws["A1"].font = Font(size=14, bold=True)
 ws["A1"].alignment = Alignment(horizontal="left", vertical="center")
@@ -51,7 +48,7 @@ ws["A2"] = "作成日：2026年8月18日"
 ws["A2"].font = Font(size=10, italic=True, color="666666")
 
 # ヘッダー行
-headers = ["No.", "日付", "カテゴリ", "変更内容", "関連ファイル"]
+headers = ["No.", "カテゴリ", "変更内容"]
 header_row = 4
 for col, h in enumerate(headers, start=1):
     c = ws.cell(row=header_row, column=col, value=h)
@@ -62,24 +59,21 @@ for col, h in enumerate(headers, start=1):
 
 # データ行
 r = header_row + 1
-for no, date, cat, content, files in rows:
-    ws.cell(row=r, column=1, value=no).alignment = Alignment(horizontal="center", vertical="top")
-    ws.cell(row=r, column=2, value=date).alignment = Alignment(horizontal="center", vertical="top")
-    cat_cell = ws.cell(row=r, column=3, value=cat)
-    cat_cell.alignment = Alignment(horizontal="center", vertical="top", wrap_text=True)
+for no, cat, content in rows:
+    ws.cell(row=r, column=1, value=no).alignment = Alignment(horizontal="center", vertical="center")
+    cat_cell = ws.cell(row=r, column=2, value=cat)
+    cat_cell.alignment = Alignment(horizontal="center", vertical="center", wrap_text=True)
     fill_color = CATEGORY_COLORS.get(cat, "FFFFFF")
     cat_cell.fill = PatternFill("solid", fgColor=fill_color)
-    content_cell = ws.cell(row=r, column=4, value=content)
-    content_cell.alignment = Alignment(horizontal="left", vertical="top", wrap_text=True)
-    files_cell = ws.cell(row=r, column=5, value=files)
-    files_cell.alignment = Alignment(horizontal="left", vertical="top", wrap_text=True)
-    for col in range(1, 6):
+    content_cell = ws.cell(row=r, column=3, value="・" + content)
+    content_cell.alignment = Alignment(horizontal="left", vertical="center", wrap_text=True)
+    for col in range(1, 4):
         ws.cell(row=r, column=col).border = border
-    ws.row_dimensions[r].height = 60
+    ws.row_dimensions[r].height = 24
     r += 1
 
 # 列幅
-widths = {"A": 6, "B": 8, "C": 16, "D": 90, "E": 34}
+widths = {"A": 6, "B": 14, "C": 100}
 for col, w in widths.items():
     ws.column_dimensions[col].width = w
 
@@ -87,8 +81,8 @@ ws.freeze_panes = f"A{header_row+1}"
 
 # 集計シート
 summary = {}
-for _, _, cat, _, _ in rows:
-    key = cat.split("（")[0]
+for _, cat, _ in rows:
+    key = cat
     summary[key] = summary.get(key, 0) + 1
 
 ws2 = wb.create_sheet("集計")
