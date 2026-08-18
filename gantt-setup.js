@@ -1976,6 +1976,132 @@ function switchColumns(filterType) {
     gantt.render();
 }
 
+// ===== 列幅ドラッグリサイズ（計画・社内試運転モード：ユニ・タスクのみ） =====
+(function() {
+    const RESIZABLE = [
+        { name: "unit", minW: 60 },
+        { name: "text", minW: 150 }
+    ];
+
+    function isTargetMode() {
+        return gantt.config._columnFilterType === "planning" || gantt.config._columnFilterType === "operation";
+    }
+
+    // 列内容の最大表示幅を計測（Canvas measureText）
+    function calcMaxWidth(name) {
+        const canvas = document.createElement("canvas");
+        const ctx = canvas.getContext("2d");
+        const sampleCell = document.querySelector("#gantt_here .gantt_cell");
+        ctx.font = sampleCell ? window.getComputedStyle(sampleCell).font : "13px sans-serif";
+        let maxW = 0;
+        try {
+            gantt.eachTask((task) => {
+                const text = task[name] || "";
+                if (!text) return;
+                const w = ctx.measureText(String(text)).width;
+                if (w > maxW) maxW = w;
+            });
+        } catch (e) {}
+        return Math.ceil(maxW) + 20;
+    }
+
+    let dragging = null;
+    let rafPending = false;
+
+    function syncGridWidth() {
+        gantt.config.grid_width = _getColsSum(gantt.config.columns);
+    }
+
+    function rerender() {
+        try {
+            const ss = gantt.getScrollState();
+            gantt.render();
+            gantt.scrollTo(ss.x, ss.y);
+        } catch (e) {}
+    }
+
+    // ヘッダーセルにリサイズハンドルを注入（render のたびに再注入が必要）
+    function injectHandles() {
+        if (!isTargetMode()) return;
+        const cols = gantt.config.columns;
+        const allCells = document.querySelectorAll("#gantt_here .gantt_grid_head_cell");
+        RESIZABLE.forEach((r) => {
+            const colIdx = cols.findIndex((c) => c.name === r.name);
+            if (colIdx < 0) return;
+            const cell = allCells[colIdx];
+            if (!cell || cell.querySelector(".col-resize-handle")) return;
+
+            cell.style.position = "relative";
+            cell.style.overflow = "visible";
+
+            const handle = document.createElement("div");
+            handle.className = "col-resize-handle";
+            handle.style.cssText = "position:absolute;right:-3px;top:0;width:6px;height:100%;cursor:col-resize;z-index:10;background:transparent;user-select:none;";
+
+            handle.addEventListener("mouseenter", () => { handle.style.background = "rgba(66,133,244,0.35)"; });
+            handle.addEventListener("mouseleave", () => { if (!dragging) handle.style.background = "transparent"; });
+
+            handle.addEventListener("mousedown", (e) => {
+                e.preventDefault();
+                e.stopPropagation();
+                const col = cols.find((c) => c.name === r.name);
+                dragging = {
+                    name: r.name,
+                    minW: r.minW,
+                    maxW: Math.max(calcMaxWidth(r.name), r.minW),
+                    startX: e.clientX,
+                    startWidth: col.width,
+                    col: col
+                };
+                document.body.style.cursor = "col-resize";
+            });
+
+            // ダブルクリックで内容幅に自動フィット
+            handle.addEventListener("dblclick", (e) => {
+                e.preventDefault();
+                e.stopPropagation();
+                const col = cols.find((c) => c.name === r.name);
+                if (!col) return;
+                const fitW = Math.max(calcMaxWidth(r.name), r.minW);
+                col.width = fitW;
+                syncGridWidth();
+                _saveDrawingColWidth(r.name, fitW);
+                rerender();
+            });
+
+            cell.appendChild(handle);
+        });
+    }
+
+    window.addEventListener("mousemove", (e) => {
+        if (!dragging) return;
+        const delta = e.clientX - dragging.startX;
+        const newW = Math.max(dragging.minW, Math.min(dragging.maxW, dragging.startWidth + delta));
+        dragging.col.width = newW;
+        syncGridWidth();
+
+        if (!rafPending) {
+            rafPending = true;
+            requestAnimationFrame(() => {
+                rafPending = false;
+                if (!dragging) return;
+                rerender();
+            });
+        }
+    });
+
+    window.addEventListener("mouseup", () => {
+        if (!dragging) return;
+        _saveDrawingColWidth(dragging.name, dragging.col.width);
+        document.body.style.cursor = "";
+        dragging = null;
+        rerender();
+    });
+
+    gantt.attachEvent("onGanttRender", () => { setTimeout(injectHandles, 0); });
+})();
+// ===== 列幅ドラッグリサイズ ここまで =====
+
 // スタイルとテンプレート
 gantt.templates.task_text = function(start, end, task) {
     const colorClass = getOwnerColorClass(task.owner);
