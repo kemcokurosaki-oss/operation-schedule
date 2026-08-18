@@ -1177,6 +1177,9 @@ gantt.attachEvent("onAfterTaskAdd", async function(id, item) {
 });
 
 gantt.attachEvent("onAfterTaskUpdate", function(id) {
+    // 担当別モード（全画面）中はメインガントが display:none のため、ここで refreshTask すると
+    // DHTMLX内部のスケールキャッシュが壊れ、リソースパネルの全バーが座標異常で消える
+    if (typeof isResourceFullscreen !== 'undefined' && isResourceFullscreen) return true;
     if (typeof gantt.refreshTask === "function") gantt.refreshTask(id);
     return true;
 });
