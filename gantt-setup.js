@@ -2061,10 +2061,11 @@ function switchColumns(filterType) {
 
     // ヘッダーセルにリサイズハンドルを注入（render のたびに再注入が必要）
     function injectHandles() {
-        if (!isTargetMode()) return;
+        const active = activeResizeConfig();
+        if (!active) return;
         const cols = gantt.config.columns;
         const allCells = document.querySelectorAll("#gantt_here .gantt_grid_head_cell");
-        RESIZABLE.forEach((r) => {
+        active.list.forEach((r) => {
             const colIdx = cols.findIndex((c) => c.name === r.name);
             if (colIdx < 0) return;
             const cell = allCells[colIdx];
@@ -2090,7 +2091,8 @@ function switchColumns(filterType) {
                     maxW: Math.max(calcMaxWidth(r.name), r.minW),
                     startX: e.clientX,
                     startWidth: col.width,
-                    col: col
+                    col: col,
+                    save: active.save
                 };
                 document.body.style.cursor = "col-resize";
             });
@@ -2104,7 +2106,7 @@ function switchColumns(filterType) {
                 const fitW = Math.max(calcMaxWidth(r.name), r.minW);
                 col.width = fitW;
                 syncGridWidth();
-                _saveDrawingColWidth(r.name, fitW);
+                active.save(r.name, fitW);
                 rerender();
             });
 
