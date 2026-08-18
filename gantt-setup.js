@@ -1575,7 +1575,7 @@ gantt.form_blocks["add_row_count_lb"] = {
 // 出図希望日 / 手配期日（wish_date、文字列 YYYY-MM-DD）ライトボックス用
 gantt.form_blocks["wish_date_lb"] = {
     render: function(sns) {
-        return "<div class='gantt_cal_ltext'><input type='date' style='width:110px;height:26px;border:1px solid #ccc;border-radius:4px;padding:0 4px;font-size:12px;'></div>";
+        return "<div class='gantt_cal_ltext'><input type='date' style='width:150px;height:34px;border:1px solid #ccc;border-radius:4px;padding:0 6px;font-size:16px;'></div>";
     },
     set_value: function(node, value, task, sns) {
         node.querySelector("input").value = value || '';
