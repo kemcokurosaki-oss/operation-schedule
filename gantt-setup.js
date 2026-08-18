@@ -1864,9 +1864,32 @@ function _isCompletedForDisplay(task) {
     return false;
 }
 
+// 列幅ドラッグリサイズ（計画・社内試運転モード：ユニ・タスクのみ）の保存/復元
+function _loadDrawingColWidths() {
+    try { return JSON.parse(localStorage.getItem('gantt_col_widths_drawing_v1') || '{}'); }
+    catch (e) { return {}; }
+}
+function _saveDrawingColWidth(name, width) {
+    try {
+        const widths = _loadDrawingColWidths();
+        widths[name] = width;
+        localStorage.setItem('gantt_col_widths_drawing_v1', JSON.stringify(widths));
+    } catch (e) {}
+}
+function _applyStoredDrawingWidths(cols) {
+    const stored = _loadDrawingColWidths();
+    ['unit', 'text'].forEach((name) => {
+        const w = stored[name];
+        if (!w) return;
+        const col = cols.find((c) => c.name === name);
+        if (col) col.width = w;
+    });
+    return cols;
+}
+
 // 試運転列定義（デフォルト）
 function _getDrawingColumns() {
-    return [
+    return _applyStoredDrawingWidths([
         { name: "project_number", label: "工番",  width: 55, align: "center", editor: { type: "text", map_to: "project_number" } },
         { name: "machine",        label: "機械",  width: 40, align: "center", editor: { type: "text", map_to: "machine" } },
         { name: "unit",           label: "ユニ",         width: 60, align: "center", editor: { type: "text", map_to: "unit" } },
@@ -1880,7 +1903,7 @@ function _getDrawingColumns() {
           editor: { type: "start_date_editor", map_to: "start_date" } },
         { name: "end_date",       label: "終了日",       width: 84, align: "center", template: _fmtDate, editor: { type: "completion_date", map_to: "end_date" } },
         { name: "add_btn",        label: "",             width: 25, align: "center", template: (task) => _isEditor ? `<div class='custom_add_btn' onclick='createTask(${task.id})'>+</div>` : '' }
-    ];
+    ]);
 }
 // 図面列合計: 18+18+120+16+16+14+16+16+16+16+16+20+20+20 = 342px
 
