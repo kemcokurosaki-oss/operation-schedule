@@ -307,12 +307,20 @@ function _taskCountsAsOperationForCompletedList(row) {
     return _passesDrawingModeFilter(row);
 }
 
-/** 完了詳細モーダル「操業」タブ：組立工程表の「組立」タブに相当（出張以外の操業系） */
-function _isOperationArchiveMainTabTask(row) {
+/** 完了詳細モーダル「計画」タブ：全体工程表の計画系タスクに相当 */
+function _isPlanningArchiveTask(row) {
     if (!_isDetailedTaskRow(row)) return false;
     if (_isTripTask(row)) return false;
     const tt = String(row.task_type || '').trim().toLowerCase();
-    if (tt === 'planning' || tt === 'long_lead_item') return true;
+    return tt === 'planning' || tt === 'long_lead_item';
+}
+
+/** 完了詳細モーダル「社内試運転」タブ：組立工程表の「組立」タブに相当（出張・計画以外の操業系） */
+function _isTrialRunArchiveTask(row) {
+    if (!_isDetailedTaskRow(row)) return false;
+    if (_isTripTask(row)) return false;
+    const tt = String(row.task_type || '').trim().toLowerCase();
+    if (tt === 'planning' || tt === 'long_lead_item') return false;
     return _passesDrawingModeFilter(row);
 }
 
