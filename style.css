@@ -254,8 +254,8 @@ html, body { margin: 0; padding: 0; height: 100%; overflow: hidden; font-family:
 
 /* ライトボックス全体の拡大 */
 .gantt_cal_light {
-    width: 680px !important;
-    min-width: 680px !important;
+    width: 560px !important;
+    min-width: 560px !important;
     font-size: 13px !important;
     font-family: "メイリオ", Meiryo, sans-serif !important;
 }
@@ -263,7 +263,7 @@ html, body { margin: 0; padding: 0; height: 100%; overflow: hidden; font-family:
     font-family: "メイリオ", Meiryo, sans-serif !important;
 }
 .gantt_cal_ltitle {
-    padding: 8px 14px !important;
+    padding: 6px 12px !important;
     font-size: 14px !important;
     color: #000 !important;
 }
@@ -273,15 +273,15 @@ html, body { margin: 0; padding: 0; height: 100%; overflow: hidden; font-family:
 /* 項目名と入力欄を横並びにする */
 .gantt_cal_larea {
     display: grid !important;
-    grid-template-columns: 130px 1fr !important;
+    grid-template-columns: 110px 1fr !important;
     align-items: center !important;
-    row-gap: 6px !important;
-    padding: 8px 14px !important;
+    row-gap: 4px !important;
+    padding: 6px 12px !important;
 }
 .gantt_cal_lsection {
     font-size: 13px !important;
     padding: 0 8px 0 0 !important;
-    line-height: 34px !important;
+    line-height: 28px !important;
     width: auto !important;
     min-width: unset !important;
     text-align: right !important;
@@ -289,42 +289,42 @@ html, body { margin: 0; padding: 0; height: 100%; overflow: hidden; font-family:
 }
 .gantt_cal_ltext {
     padding: 0 !important;
-    min-height: 34px !important;
+    min-height: 28px !important;
 }
 .gantt_cal_ltext input[type="text"],
 .gantt_cal_ltext select {
-    width: 280px !important;
-    height: 34px !important;
+    width: 220px !important;
+    height: 28px !important;
     font-size: 13px !important;
     padding: 0 6px !important;
     box-sizing: border-box !important;
 }
 .gantt_cal_ltext input[type="date"],
 .gantt_cal_ltext input[type="number"] {
-    height: 34px !important;
+    height: 28px !important;
     font-size: 13px !important;
     box-sizing: border-box !important;
 }
 .gantt_cal_ltext textarea:not(.lb-textarea-full) {
-    width: 280px !important;
-    height: 34px !important;
+    width: 220px !important;
+    height: 28px !important;
     font-size: 13px !important;
-    line-height: 24px !important;
-    padding: 5px 6px 0 6px !important;
+    line-height: 18px !important;
+    padding: 4px 6px 0 6px !important;
     box-sizing: border-box !important;
     resize: none !important;
     overflow: hidden !important;
 }
 .gantt_cal_lcontrols {
-    padding: 8px 14px !important;
+    padding: 6px 12px !important;
 }
 .gantt_btn_set.gantt_save_btn,
 .gantt_btn_set.gantt_cancel_btn,
 .gantt_btn_set.gantt_delete_btn {
-    height: 36px !important;
-    line-height: 36px !important;
+    height: 30px !important;
+    line-height: 30px !important;
     font-size: 13px !important;
-    padding: 0 16px !important;
+    padding: 0 14px !important;
     text-align: center !important;
     cursor: pointer !important;
     border-radius: 4px !important;

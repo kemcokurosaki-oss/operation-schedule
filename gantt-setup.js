@@ -1377,7 +1377,7 @@ gantt.locale.labels.section_add_row_count    = "追加行数";
 // 出張モード: 工事番号フィールド（oninput で客先・工事名を自動反映）
 gantt.form_blocks["trip_pn_lb"] = {
     render: function(sns) {
-        return "<div class='gantt_cal_ltext'><input type='text' id='trip_lb_pn' style='width:100%;height:34px;border:1px solid #ccc;border-radius:4px;padding:0 8px;font-size:16px;box-sizing:border-box;' oninput='_tripLbAutoFill(this.value)'></div>";
+        return "<div class='gantt_cal_ltext'><input type='text' id='trip_lb_pn' style='width:100%;height:34px;border:1px solid #ccc;border-radius:4px;padding:0 8px;font-size:13px;box-sizing:border-box;' oninput='_tripLbAutoFill(this.value)'></div>";
     },
     set_value: function(node, value, task, sns) {
         node.querySelector("input").value = value || '';
@@ -1391,7 +1391,7 @@ gantt.form_blocks["trip_pn_lb"] = {
 // 出張モード: 客先・工事名（自動反映先、手動編集も可）
 gantt.form_blocks["trip_text_lb"] = {
     render: function(sns) {
-        return "<div class='gantt_cal_ltext'><input type='text' id='trip_lb_" + sns.name + "' style='width:100%;height:34px;border:1px solid #ccc;border-radius:4px;padding:0 8px;font-size:16px;box-sizing:border-box;'></div>";
+        return "<div class='gantt_cal_ltext'><input type='text' id='trip_lb_" + sns.name + "' style='width:100%;height:34px;border:1px solid #ccc;border-radius:4px;padding:0 8px;font-size:13px;box-sizing:border-box;'></div>";
     },
     set_value: function(node, value, task, sns) {
         node.querySelector("input").value = value || '';
@@ -1416,7 +1416,7 @@ function _tripLbAutoFill(pn) {
 // 全幅テキストエリア（組立図面名・品名など）
 gantt.form_blocks["textarea_full"] = {
     render: function(sns) {
-        return "<div class='gantt_cal_ltext'><textarea class='lb-textarea-full' style='height:40px;font-size:16px;line-height:22px;padding:6px 6px 0 6px;box-sizing:border-box;resize:none;overflow:hidden;border:1px solid #ccc;border-radius:4px;'></textarea></div>";
+        return "<div class='gantt_cal_ltext'><textarea class='lb-textarea-full' style='height:40px;font-size:13px;line-height:22px;padding:6px 6px 0 6px;box-sizing:border-box;resize:none;overflow:hidden;border:1px solid #ccc;border-radius:4px;'></textarea></div>";
     },
     set_value: function(node, value, task, sns) {
         node.querySelector("textarea").value = value || '';
@@ -1433,7 +1433,7 @@ gantt.form_blocks["textarea_full"] = {
 gantt.form_blocks["owner_select_lb"] = {
     render: function(sns) {
         return `<div class='gantt_cal_ltext owner-lb-wrap' style='position:relative;'>
-            <div class='owner-lb-display' tabindex="0" style='width:100%;height:36px;border:1px solid #ccc;border-radius:4px;padding:0 32px 0 10px;box-sizing:border-box;display:flex;align-items:center;overflow:hidden;white-space:nowrap;text-overflow:ellipsis;cursor:pointer;background:#fff;position:relative;font-size:16px;'>
+            <div class='owner-lb-display' tabindex="0" style='width:100%;height:36px;border:1px solid #ccc;border-radius:4px;padding:0 32px 0 10px;box-sizing:border-box;display:flex;align-items:center;overflow:hidden;white-space:nowrap;text-overflow:ellipsis;cursor:pointer;background:#fff;position:relative;font-size:13px;'>
                 -- 未選択 --
                 <span style='position:absolute;right:10px;top:50%;transform:translateY(-50%);font-size:12px;color:#666;'>▼</span>
             </div>
@@ -1458,10 +1458,10 @@ gantt.form_blocks["owner_select_lb"] = {
         const popup = document.createElement('div');
         popup.style.cssText = 'display:none;position:fixed;z-index:99999;min-width:230px;max-height:340px;overflow-y:auto;background:#fff;border:1px solid #aaa;border-radius:4px;box-shadow:0 3px 10px rgba(0,0,0,0.25);padding:6px 0;';
         popup.innerHTML = `<div style="padding:8px 12px 6px;border-bottom:1px solid #eee;">
-                <input type="text" class="owner-lb-free-input" placeholder="自由入力（カンマ区切り）" value="${custom.join(',')}" style="width:100%;height:34px;border:1px solid #ccc;border-radius:4px;padding:0 8px;box-sizing:border-box;font-size:16px;font-family:'メイリオ',Meiryo,sans-serif;">
+                <input type="text" class="owner-lb-free-input" placeholder="自由入力（カンマ区切り）" value="${custom.join(',')}" style="width:100%;height:34px;border:1px solid #ccc;border-radius:4px;padding:0 8px;box-sizing:border-box;font-size:13px;font-family:'メイリオ',Meiryo,sans-serif;">
             </div>` +
             OWNER_OPTIONS.map(function(name) {
-                return `<label style="display:flex;align-items:center;padding:7px 12px;cursor:pointer;font-size:16px;font-family:'メイリオ',Meiryo,sans-serif;white-space:nowrap;">
+                return `<label style="display:flex;align-items:center;padding:7px 12px;cursor:pointer;font-size:13px;font-family:'メイリオ',Meiryo,sans-serif;white-space:nowrap;">
                     <input type="checkbox" value="${name}" ${known.includes(name) ? 'checked' : ''} style="margin-right:9px;cursor:pointer;transform:scale(1.3);">
                     ${name}
                 </label>`;
@@ -1551,8 +1551,8 @@ gantt.form_blocks["task_select_lb"] = {
 gantt.form_blocks["add_row_count_lb"] = {
     render: function(sns) {
         return `<div class='gantt_cal_ltext' style='display:flex;align-items:center;gap:8px;'>
-            <input type='number' min='1' max='100' step='1' style='width:90px;height:34px;border:1px solid #ccc;border-radius:4px;padding:0 6px;font-size:16px;'>
-            <span style='font-size:15px;color:#555;'>行</span>
+            <input type='number' min='1' max='100' step='1' style='width:90px;height:34px;border:1px solid #ccc;border-radius:4px;padding:0 6px;font-size:13px;'>
+            <span style='font-size:12px;color:#555;'>行</span>
         </div>`;
     },
     set_value: function(node, value, task, sns) {
@@ -1575,7 +1575,7 @@ gantt.form_blocks["add_row_count_lb"] = {
 // 出図希望日 / 手配期日（wish_date、文字列 YYYY-MM-DD）ライトボックス用
 gantt.form_blocks["wish_date_lb"] = {
     render: function(sns) {
-        return "<div class='gantt_cal_ltext'><input type='date' style='width:150px;height:34px;border:1px solid #ccc;border-radius:4px;padding:0 6px;font-size:16px;'></div>";
+        return "<div class='gantt_cal_ltext'><input type='date' style='width:150px;height:34px;border:1px solid #ccc;border-radius:4px;padding:0 6px;font-size:13px;'></div>";
     },
     set_value: function(node, value, task, sns) {
         node.querySelector("input").value = value || '';
@@ -1590,7 +1590,7 @@ gantt.form_blocks["wish_date_lb"] = {
 
 gantt.form_blocks["template"] = {
     render: function(sns) {
-        return "<div class='gantt_cal_ltext'><input type='date' id='cal_" + sns.name + "' style='width:150px;height:34px;border:1px solid #ccc;border-radius:4px;padding:0 6px;font-size:16px;'></div>";
+        return "<div class='gantt_cal_ltext'><input type='date' id='cal_" + sns.name + "' style='width:150px;height:34px;border:1px solid #ccc;border-radius:4px;padding:0 6px;font-size:13px;'></div>";
     },
     set_value: function(node, value, task, sns) {
         const input = node.querySelector("input");
@@ -1614,8 +1614,8 @@ gantt.form_blocks["template"] = {
 gantt.form_blocks["operation_progress_lb"] = {
     render: function(sns) {
         return `<div class='gantt_cal_ltext' style='display:flex;align-items:center;gap:8px;'>
-            <input type='number' min='0' max='100' step='1' placeholder='0〜100' style='width:100px;height:36px;border:1px solid #ccc;border-radius:4px;padding:0 10px;font-size:16px;text-align:center;'>
-            <span style='font-size:16px;color:#555;'>%</span>
+            <input type='number' min='0' max='100' step='1' placeholder='0〜100' style='width:100px;height:36px;border:1px solid #ccc;border-radius:4px;padding:0 10px;font-size:13px;text-align:center;'>
+            <span style='font-size:13px;color:#555;'>%</span>
         </div>`;
     },
     set_value: function(node, value, task, sns) {
@@ -1638,10 +1638,10 @@ gantt.form_blocks["operation_progress_lb"] = {
 gantt.form_blocks["sheets_pair"] = {
     render: function(sns) {
         return `<div class='gantt_cal_ltext' style='display:flex;gap:8px;align-items:center;'>
-            <span style='font-size:14px;white-space:nowrap;color:#555;'>総枚数</span>
-            <input type='number' id='lb_total_sheets' min='0' style='width:75px;height:34px;border:1px solid #ccc;border-radius:4px;padding:0 6px;font-size:16px;'>
-            <span style='font-size:14px;white-space:nowrap;color:#555;'>完了枚数</span>
-            <input type='number' id='lb_completed_sheets' min='0' style='width:75px;height:34px;border:1px solid #ccc;border-radius:4px;padding:0 6px;font-size:16px;'>
+            <span style='font-size:12px;white-space:nowrap;color:#555;'>総枚数</span>
+            <input type='number' id='lb_total_sheets' min='0' style='width:75px;height:34px;border:1px solid #ccc;border-radius:4px;padding:0 6px;font-size:13px;'>
+            <span style='font-size:12px;white-space:nowrap;color:#555;'>完了枚数</span>
+            <input type='number' id='lb_completed_sheets' min='0' style='width:75px;height:34px;border:1px solid #ccc;border-radius:4px;padding:0 6px;font-size:13px;'>
         </div>`;
     },
     set_value: function(node, value, task, sns) {
@@ -1663,10 +1663,10 @@ gantt.form_blocks["sheets_pair"] = {
 gantt.form_blocks["date_range"] = {
     render: function(sns) {
         return `<div class='gantt_cal_ltext' style='display:flex;gap:8px;align-items:center;'>
-            <span style='font-size:14px;white-space:nowrap;color:#555;'>開始日</span>
-            <input type='date' id='cal_start_date' style='width:150px;height:34px;border:1px solid #ccc;border-radius:4px;padding:0 6px;font-size:16px;'>
-            <span id='cal_end_date_label' style='font-size:14px;white-space:nowrap;color:#555;'>完了予定日</span>
-            <input type='date' id='cal_end_date' style='width:150px;height:34px;border:1px solid #ccc;border-radius:4px;padding:0 6px;font-size:16px;'>
+            <span style='font-size:12px;white-space:nowrap;color:#555;'>開始日</span>
+            <input type='date' id='cal_start_date' style='width:150px;height:34px;border:1px solid #ccc;border-radius:4px;padding:0 6px;font-size:13px;'>
+            <span id='cal_end_date_label' style='font-size:12px;white-space:nowrap;color:#555;'>完了予定日</span>
+            <input type='date' id='cal_end_date' style='width:150px;height:34px;border:1px solid #ccc;border-radius:4px;padding:0 6px;font-size:13px;'>
         </div>`;
     },
     set_value: function(node, value, task, sns) {
