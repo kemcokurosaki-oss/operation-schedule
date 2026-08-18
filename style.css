@@ -256,7 +256,7 @@ html, body { margin: 0; padding: 0; height: 100%; overflow: hidden; font-family:
 .gantt_cal_light {
     width: 680px !important;
     min-width: 680px !important;
-    font-size: 16px !important;
+    font-size: 13px !important;
     font-family: "メイリオ", Meiryo, sans-serif !important;
 }
 .gantt_cal_light * {
@@ -264,7 +264,7 @@ html, body { margin: 0; padding: 0; height: 100%; overflow: hidden; font-family:
 }
 .gantt_cal_ltitle {
     padding: 8px 14px !important;
-    font-size: 17px !important;
+    font-size: 14px !important;
     color: #000 !important;
 }
 .gantt_cal_ltitle span, .gantt_cal_ltitle div {
