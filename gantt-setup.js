@@ -2133,7 +2133,7 @@ function switchColumns(filterType) {
 
     window.addEventListener("mouseup", () => {
         if (!dragging) return;
-        _saveDrawingColWidth(dragging.name, dragging.col.width);
+        dragging.save(dragging.name, dragging.col.width);
         document.body.style.cursor = "";
         dragging = null;
         rerender();
