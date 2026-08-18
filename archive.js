@@ -130,7 +130,7 @@ function _sortArchiveDetailRows(rows) {
 
 async function _loadArchiveDetailTable() {
     const typeFilter = _archiveDetailTaskType;
-    ['operation', 'business_trip'].forEach(t => {
+    ['planning', 'operation', 'business_trip'].forEach(t => {
         const btn = document.getElementById('dtab_' + t);
         if (btn) btn.classList.toggle('active', t === typeFilter);
     });
