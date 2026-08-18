@@ -776,9 +776,45 @@ function _rebuildMachineFilterFromRows(rows) {
     _updateMachineFilterBtn();
 }
 
-function toggleProjectFilterDropdown() {
-    const dd = document.getElementById('project_filter_dropdown');
-    if (dd) dd.style.display = dd.style.display === 'none' ? '' : 'none';
+// フィルタードロップダウン共通ヘルパー（既存4種＋列ヘッダー共有パネル）
+const _ALL_FILTER_DROPDOWN_IDS = [
+    'project_filter_dropdown', 'machine_filter_dropdown', 'unit_filter_dropdown',
+    'owner_filter_dropdown', 'col_filter_dropdown'
+];
+
+function _closeAllFilterDropdowns() {
+    _ALL_FILTER_DROPDOWN_IDS.forEach(id => {
+        const el = document.getElementById(id);
+        if (el) el.style.display = 'none';
+    });
+    _openColFilterName = null;
+}
+
+/** クリックされたボタン（または列ヘッダーセル）の直下にドロップダウンを固定位置で表示 */
+function _positionDropdownNear(dd, triggerEl) {
+    if (!triggerEl) return;
+    const anchor = triggerEl.closest('.gantt_grid_head_cell') || triggerEl;
+    const r = anchor.getBoundingClientRect();
+    dd.style.position = 'fixed';
+    dd.style.top = (r.bottom + 2) + 'px';
+    dd.style.left = r.left + 'px';
+}
+
+/** 開閉トグル共通処理。ダブルクリック等での取り違えを避けるため他は必ず閉じてから開く */
+function _toggleFilterDropdown(ddId, e) {
+    if (e) e.stopPropagation();
+    const dd = document.getElementById(ddId);
+    if (!dd) return;
+    const wasOpen = dd.style.display !== 'none' && dd.style.display !== '';
+    _closeAllFilterDropdowns();
+    if (!wasOpen) {
+        _positionDropdownNear(dd, e ? (e.currentTarget || e.target) : null);
+        dd.style.display = 'block';
+    }
+}
+
+function toggleProjectFilterDropdown(e) {
+    _toggleFilterDropdown('project_filter_dropdown', e);
 }
 
 function projectFilterAllChanged(checkbox) {
