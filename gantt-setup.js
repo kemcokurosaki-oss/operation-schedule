@@ -1391,7 +1391,7 @@ gantt.form_blocks["trip_pn_lb"] = {
 // 出張モード: 客先・工事名（自動反映先、手動編集も可）
 gantt.form_blocks["trip_text_lb"] = {
     render: function(sns) {
-        return "<div class='gantt_cal_ltext'><input type='text' id='trip_lb_" + sns.name + "' style='width:100%;height:26px;border:1px solid #ccc;border-radius:4px;padding:0 6px;font-size:12px;box-sizing:border-box;'></div>";
+        return "<div class='gantt_cal_ltext'><input type='text' id='trip_lb_" + sns.name + "' style='width:100%;height:34px;border:1px solid #ccc;border-radius:4px;padding:0 8px;font-size:16px;box-sizing:border-box;'></div>";
     },
     set_value: function(node, value, task, sns) {
         node.querySelector("input").value = value || '';
