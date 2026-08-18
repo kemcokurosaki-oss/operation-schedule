@@ -1550,8 +1550,8 @@ gantt.form_blocks["task_select_lb"] = {
 // 新規追加時にまとめて何行追加するか指定するプルダウン
 gantt.form_blocks["add_row_count_lb"] = {
     render: function(sns) {
-        return `<div class='gantt_cal_ltext' style='display:flex;align-items:center;gap:8px;'>
-            <input type='number' min='1' max='100' step='1' style='width:90px;height:34px;border:1px solid #ccc;border-radius:4px;padding:0 6px;font-size:13px;'>
+        return `<div class='gantt_cal_ltext' style='display:flex;align-items:center;gap:6px;'>
+            <input type='number' min='1' max='100' step='1' style='width:70px;height:28px;border:1px solid #ccc;border-radius:4px;padding:0 6px;font-size:13px;'>
             <span style='font-size:12px;color:#555;'>行</span>
         </div>`;
     },
