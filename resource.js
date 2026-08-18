@@ -457,20 +457,11 @@ function renderOwnerDetailTimeline(ownerName) {
         if (isMatch) ownerTasks.push(t);
     });
 
-    // 開始日順でソート
+    // 開始日の昇順でソート（日付未定は末尾）
     ownerTasks.sort((a, b) => {
-        const orderKey = function(tt) {
-            const n = typeof _normalizeTaskTypeForDb === 'function' ? _normalizeTaskTypeForDb(tt) : String(tt || '');
-            if (n === 'planning') return 0;
-            if (n === 'business_trip') return 2;
-            return 1;
-        };
-        const ta = orderKey(a.task_type);
-        const tb = orderKey(b.task_type);
-        if (ta !== tb) return ta - tb;
-        const pa = String(a.project_number || '');
-        const pb = String(b.project_number || '');
-        return pa.localeCompare(pb, undefined, { numeric: true });
+        const da = (!a.has_no_date && a.start_date) ? new Date(a.start_date).getTime() : Infinity;
+        const db = (!b.has_no_date && b.start_date) ? new Date(b.start_date).getTime() : Infinity;
+        return da - db;
     });
 
     if (ownerTasks.length === 0) {
