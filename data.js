@@ -163,6 +163,12 @@ let currentOwnerFilter = [];      // 空配列 = 全担当者
 let currentMachineFilter = [];    // 空配列 = 機械で絞り込みなし
 let currentUnitFilter = [];       // 空配列 = ユニットで絞り込みなし
 
+// グリッド列ヘッダーの▼フィルター（工事番号・機械・ユニット・担当者以外の列）
+// colName -> 選択値の配列。空配列 = 全表示
+let columnFilters = {};
+// 現在、共有ドロップダウンで開いている列名（閉じているときはnull）
+let _openColFilterName = null;
+
 // フィルターで「全解除（何も表示しない）」を表すセンチネル値
 const FILTER_NONE = ' __none__';
 let _clearingEndDateId = null;   // 完了予定日クリア中のタスクID
