@@ -299,6 +299,12 @@ html, body { margin: 0; padding: 0; height: 100%; overflow: hidden; font-family:
     padding: 0 6px !important;
     box-sizing: border-box !important;
 }
+.gantt_cal_ltext input[type="date"],
+.gantt_cal_ltext input[type="number"] {
+    height: 34px !important;
+    font-size: 16px !important;
+    box-sizing: border-box !important;
+}
 .gantt_cal_ltext textarea:not(.lb-textarea-full) {
     width: 280px !important;
     height: 34px !important;
