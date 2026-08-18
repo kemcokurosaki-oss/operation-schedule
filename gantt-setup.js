@@ -1988,6 +1988,7 @@ function switchColumns(filterType) {
     }
 
     // 列内容の最大表示幅を計測（Canvas measureText）
+    // 現在の表示（モードのフィルタ・折りたたみ状態）で実際に見えている行のみを対象にする
     function calcMaxWidth(name) {
         const canvas = document.createElement("canvas");
         const ctx = canvas.getContext("2d");
@@ -1995,12 +1996,14 @@ function switchColumns(filterType) {
         ctx.font = sampleCell ? window.getComputedStyle(sampleCell).font : "13px sans-serif";
         let maxW = 0;
         try {
-            gantt.eachTask((task) => {
-                const text = task[name] || "";
-                if (!text) return;
+            const count = gantt.getVisibleTaskCount();
+            for (let i = 0; i < count; i++) {
+                const task = gantt.getTaskByIndex(i);
+                const text = task ? (task[name] || "") : "";
+                if (!text) continue;
                 const w = ctx.measureText(String(text)).width;
                 if (w > maxW) maxW = w;
-            });
+            }
         } catch (e) {}
         return Math.ceil(maxW) + 20;
     }
