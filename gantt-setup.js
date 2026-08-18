@@ -2016,7 +2016,9 @@ function switchColumns(filterType) {
     function rerender() {
         try {
             const ss = gantt.getScrollState();
-            gantt.render();
+            // grid_width の変更をグリッド/タイムラインの境界（レイアウト）に反映するには
+            // render() だけでは不十分なため resetLayout() でレイアウトサイズを再計算する
+            gantt.resetLayout();
             gantt.scrollTo(ss.x, ss.y);
         } catch (e) {}
     }
