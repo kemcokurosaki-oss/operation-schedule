@@ -959,9 +959,8 @@ function _updateOwnerFilterBtn() {
     }
 }
 
-function toggleMachineFilterDropdown() {
-    const dd = document.getElementById('machine_filter_dropdown');
-    if (dd) dd.style.display = dd.style.display === 'none' ? '' : 'none';
+function toggleMachineFilterDropdown(e) {
+    _toggleFilterDropdown('machine_filter_dropdown', e);
 }
 
 function machineFilterAllChanged(checkbox) {
