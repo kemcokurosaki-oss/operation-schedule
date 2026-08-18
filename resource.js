@@ -751,8 +751,15 @@ function showOwnerOverview() {
 }
 
 function syncResourceScroll() {
-    const left = gantt.getScrollState().x;
     const resourceContent = document.querySelector(".resource-content");
+    if (isResourceFullscreen) {
+        // 全画面時はメインガント（非表示）と独立してスクロールするため、
+        // 現在のスクロール位置（再描画でも保持される）をヘッダーに反映するだけに留める
+        const left = resourceContent ? resourceContent.scrollLeft : 0;
+        _syncCalendarHeaderScroll(left);
+        return;
+    }
+    const left = gantt.getScrollState().x;
     if (resourceContent) resourceContent.scrollLeft = left;
     _syncCalendarHeaderScroll(left);
 }
