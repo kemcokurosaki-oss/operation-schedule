@@ -396,7 +396,7 @@ function renderResourceTimeline(owners) {
                          style="position:absolute;top:4px;height:22px;left:${left}px;width:${width}px;z-index:10;"
                          title="${t.text} (${t.project_number})">
                          <div class="resource-bar-handle resource-bar-handle-left" data-role="resize-left"></div>
-                         <span class="resource-bar-text" style="color:${textColor};font-size:11px;font-weight:bold;">${t.project_number || ""} ${t.text}</span>
+                         <span class="resource-bar-text" style="color:${textColor};font-size:11px;font-weight:bold;">${[t.project_number, t.machine, t.text].filter(Boolean).join(" ")}</span>
                          <div class="resource-bar-handle resource-bar-handle-right" data-role="resize-right"></div>
                     </div>
                 `;
