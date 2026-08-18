@@ -564,13 +564,18 @@ function _startResourceBarDrag(e, bar, taskId, mode) {
     const origStart = new Date(task.start_date);
     const origEnd   = new Date(task.end_date); // gantt内部は排他的終了日（実end_date + 1日）
     const minWidth  = 6;
-
-    bar.classList.add('dragging');
-    document.body.style.cursor = (mode === 'move') ? 'grabbing' : 'ew-resize';
-    document.body.style.userSelect = 'none';
+    const dragThreshold = 3; // これ未満の移動はダブルクリックとして扱う（クリック直後の再描画でdblclickが取れなくなるのを防ぐ）
+    let moved = false;
 
     function onMove(ev) {
         const dx = ev.clientX - startClientX;
+        if (Math.abs(dx) < dragThreshold) return;
+        if (!moved) {
+            moved = true;
+            bar.classList.add('dragging');
+            document.body.style.cursor = (mode === 'move') ? 'grabbing' : 'ew-resize';
+            document.body.style.userSelect = 'none';
+        }
         if (mode === 'move') {
             bar.style.left = (startLeft + dx) + 'px';
         } else if (mode === 'resize-left') {
@@ -588,6 +593,7 @@ function _startResourceBarDrag(e, bar, taskId, mode) {
     async function onUp() {
         document.removeEventListener('mousemove', onMove);
         document.removeEventListener('mouseup', onUp);
+        if (!moved) return; // 実質的な移動がなければ何もしない（ダブルクリック判定を妨げない）
         bar.classList.remove('dragging');
         document.body.style.cursor = '';
         document.body.style.userSelect = '';
