@@ -13,6 +13,7 @@ html, body { margin: 0; padding: 0; height: 100%; overflow: hidden; font-family:
 #filter_btn_row { gap: 0; border-bottom: 1px solid #ddd; padding-bottom: 0; height: 31px; box-sizing: border-box; }
 .project-info { font-size: 16px; font-weight: bold; color: #333; }
 .zoom-controls { display: flex; gap: 5px; }
+.header-divider { width: 1px; align-self: stretch; background: #ccc; }
 .header-select {
     padding: 5px 24px 5px 8px;
     font-size: 13px;
