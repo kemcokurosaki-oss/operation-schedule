@@ -76,11 +76,11 @@ function closeArchiveList() {
 }
 
 let _archiveDetailProjectNumber = null;
-let _archiveDetailTaskType = 'operation';
+let _archiveDetailTaskType = 'planning';
 
 async function openArchiveDetail(projectNumber) {
     _archiveDetailProjectNumber = projectNumber;
-    _archiveDetailTaskType = 'operation';
+    _archiveDetailTaskType = 'planning';
     document.getElementById('archive_detail_title').textContent = `${projectNumber} のタスク一覧`;
     document.getElementById('archive_detail_overlay').classList.add('open');
     await _loadArchiveDetailTable();
