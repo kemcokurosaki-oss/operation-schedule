@@ -2163,7 +2163,8 @@ function switchColumns(filterType) {
 gantt.templates.task_text = function(start, end, task) {
     const colorClass = getOwnerColorClass(task.owner);
     const textColor = (["owner-hongo", "owner-default"].includes(colorClass)) ? "#222" : "#fff";
-    return `<span style="color:${textColor};">${task.text}</span>`;
+    const label = [task.project_number, task.machine, task.text].filter(Boolean).join(" ");
+    return `<span style="color:${textColor};">${label}</span>`;
 };
 
 gantt.templates.task_class = function(start, end, task) {
