@@ -1074,33 +1074,289 @@ function _updateUnitFilterBtn() {
 }
 
 // ドロップダウン外クリックで閉じる
+// キャプチャフェーズで登録：dhtmlxガント側のグリッド行・タイムラインのクリック処理が
+// バブリング途中でstopPropagationしても、documentへの到達前（キャプチャ段階）で確実に検知する
 document.addEventListener('click', function(e) {
-    const ownerWrap = document.getElementById('owner_filter_wrap');
-    if (ownerWrap && !ownerWrap.contains(e.target)) {
-        const dd = document.getElementById('owner_filter_dropdown');
-        if (dd) dd.style.display = 'none';
+    const t = e.target;
+
+    // フィルタートリガー自身のクリックは、各ボタンのonclick（開閉・排他制御）に処理を任せる
+    if (t.closest && t.closest('.col-filter-btn')) {
+        return;
     }
-    const machineWrap = document.getElementById('machine_filter_wrap');
-    if (machineWrap && !machineWrap.contains(e.target)) {
-        const dd = document.getElementById('machine_filter_dropdown');
-        if (dd) dd.style.display = 'none';
-    }
-    const unitWrap = document.getElementById('unit_filter_wrap');
-    if (unitWrap && !unitWrap.contains(e.target)) {
-        const dd = document.getElementById('unit_filter_dropdown');
-        if (dd) dd.style.display = 'none';
-    }
-    const projectWrap = document.getElementById('project_filter_wrap');
-    if (projectWrap && !projectWrap.contains(e.target)) {
-        const dd = document.getElementById('project_filter_dropdown');
-        if (dd) dd.style.display = 'none';
-    }
+
     const archiveBtnWrap = document.getElementById('archive_btn_wrap');
-    if (archiveBtnWrap && !archiveBtnWrap.contains(e.target)) {
+    if (archiveBtnWrap && !archiveBtnWrap.contains(t)) {
         const menu = document.getElementById('archive_dropdown_menu');
         if (menu) menu.classList.remove('open');
     }
-});
+
+    _ALL_FILTER_DROPDOWN_IDS.forEach(id => {
+        const dd = document.getElementById(id);
+        if (dd && dd.style.display !== 'none' && !dd.contains(t)) {
+            dd.style.display = 'none';
+            if (id === 'col_filter_dropdown') _openColFilterName = null;
+        }
+    });
+}, true);
+
+// ------------------------------------------------------------
+// 列ヘッダー▼ボタンのクリック処理（工事番号・機械・ユニット・担当者は既存パネルを流用、
+// それ以外の列は共有パネル col_filter_dropdown を使い回す）
+// ------------------------------------------------------------
+const _LEGACY_HEADER_FILTER_TOGGLERS = {
+    project_number: toggleProjectFilterDropdown,
+    machine: toggleMachineFilterDropdown,
+    unit: toggleUnitFilterDropdown,
+    owner: toggleOwnerFilterDropdown
+};
+
+/** フィルタードロップダウンの昇順・降順ボタン。colName省略時は現在開いている列（共有パネル）を対象にする */
+function applyColumnSort(direction, colName) {
+    const name = colName || _openColFilterName;
+    if (!name) return;
+    const field = _COLUMN_FIELD_MAP[name] || name;
+    const accessor = _COLUMN_SORT_VALUE_ACCESSORS[name];
+    const desc = direction === 'desc';
+    gantt.sort(function(a, b) {
+        let av = accessor ? accessor(a) : a[field];
+        let bv = accessor ? accessor(b) : b[field];
+        if (av instanceof Date) av = av.getTime();
+        if (bv instanceof Date) bv = bv.getTime();
+        const aEmpty = (av == null || av === '');
+        const bEmpty = (bv == null || bv === '');
+        if (aEmpty || bEmpty) {
+            if (aEmpty && bEmpty) return 0;
+            return aEmpty ? 1 : -1; // 空欄は昇順・降順どちらでも常に末尾へ
+        }
+        let cmp;
+        if (typeof av === 'string' || typeof bv === 'string') {
+            cmp = String(av).localeCompare(String(bv), 'ja', { numeric: true });
+        } else {
+            cmp = av < bv ? -1 : (av > bv ? 1 : 0);
+        }
+        return desc ? -cmp : cmp;
+    });
+    gantt.render();
+    _closeAllFilterDropdowns();
+}
+
+function onColumnFilterBtnClick(e, colName) {
+    const legacyToggle = _LEGACY_HEADER_FILTER_TOGGLERS[colName];
+    if (legacyToggle) {
+        legacyToggle(e);
+        return;
+    }
+    _openGenericColumnFilter(colName, e);
+}
+
+function _openGenericColumnFilter(colName, e) {
+    const dd = document.getElementById('col_filter_dropdown');
+    if (!dd) return;
+    const wasOpenSame = dd.style.display === 'block' && _openColFilterName === colName;
+    _closeAllFilterDropdowns();
+    if (wasOpenSame) return;
+    _openColFilterName = colName;
+    _renderGenericColumnFilterList(colName);
+    _positionDropdownNear(dd, e ? (e.currentTarget || e.target) : null);
+    dd.style.display = 'block';
+}
+
+// 年月日ツリー表示の対象とする列（開始日・完了予定日などの日付列）
+const _DATE_COLUMNS = new Set(['start_date', 'end_date']);
+
+/** "YY/MM/DD" 形式の表示値を年月日に分解（一致しなければnull） */
+function _parseDateFilterValue(v) {
+    const m = /^(\d{2})\/(\d{2})\/(\d{2})$/.exec(v);
+    if (!m) return null;
+    return { year: 2000 + Number(m[1]), month: Number(m[2]), day: Number(m[3]) };
+}
+
+/** 日付列フィルター：Excelのオートフィルターのような年→月→日のツリーHTMLを構築 */
+function _buildDateFilterTreeHtml(values, checkedSet) {
+    const esc = _escapeHtmlAttr;
+    const tree = new Map(); // year -> Map(month -> [{day, value}])
+    values.forEach(v => {
+        const d = _parseDateFilterValue(v);
+        if (!d) return;
+        if (!tree.has(d.year)) tree.set(d.year, new Map());
+        const monthMap = tree.get(d.year);
+        if (!monthMap.has(d.month)) monthMap.set(d.month, []);
+        monthMap.get(d.month).push({ day: d.day, value: v });
+    });
+    const years = Array.from(tree.keys()).sort((a, b) => a - b);
+    let html = '';
+    years.forEach(year => {
+        const monthMap = tree.get(year);
+        const months = Array.from(monthMap.keys()).sort((a, b) => a - b);
+        const yearValues = [];
+        months.forEach(m => monthMap.get(m).forEach(d => yearValues.push(d.value)));
+        html += `<div class="col-filter-tree-node">
+            <label class="col-filter-tree-row col-filter-tree-year">
+                <span class="col-filter-tree-toggle" onclick="event.preventDefault(); _toggleDateTreeNode(this)">-</span>
+                <input type="checkbox" class="col-filter-chk-year" data-values='${esc(JSON.stringify(yearValues))}' onchange="_dateFilterGroupChanged(this)"> ${year}年
+            </label>
+            <div class="col-filter-tree-children">`;
+        months.forEach(m => {
+            const days = monthMap.get(m).slice().sort((a, b) => a.day - b.day);
+            const monthValues = days.map(d => d.value);
+            html += `<div class="col-filter-tree-node">
+                <label class="col-filter-tree-row col-filter-tree-month">
+                    <span class="col-filter-tree-toggle" onclick="event.preventDefault(); _toggleDateTreeNode(this)">+</span>
+                    <input type="checkbox" class="col-filter-chk-month" data-values='${esc(JSON.stringify(monthValues))}' onchange="_dateFilterGroupChanged(this)"> ${m}月
+                </label>
+                <div class="col-filter-tree-children" style="display:none;">`;
+            days.forEach(d => {
+                const checked = checkedSet.has(d.value) ? ' checked' : '';
+                html += `<label class="col-filter-tree-row col-filter-tree-day"><span class="col-filter-tree-toggle"></span><input type="checkbox" class="col-filter-chk-item" value="${esc(d.value)}" onchange="colFilterItemChanged(); _syncDateFilterTreeState();"${checked}> ${d.day}日</label>`;
+            });
+            html += `</div></div>`;
+        });
+        html += `</div></div>`;
+    });
+    return html;
+}
+
+/** ツリーの展開／折りたたみ切り替え */
+function _toggleDateTreeNode(toggleEl) {
+    const node = toggleEl.closest('.col-filter-tree-node');
+    if (!node) return;
+    const children = node.querySelector(':scope > .col-filter-tree-children');
+    if (!children) return;
+    const collapsed = children.style.display === 'none';
+    children.style.display = collapsed ? '' : 'none';
+    toggleEl.textContent = collapsed ? '-' : '+';
+}
+
+/** 年・月チェックボックスの checked/indeterminate を、配下の日チェックボックスの状態から再計算 */
+function _syncDateFilterTreeState() {
+    const itemChecked = new Map();
+    document.querySelectorAll('#col_filter_chk_list .col-filter-chk-item').forEach(it => {
+        itemChecked.set(it.value, it.checked);
+    });
+    document.querySelectorAll('#col_filter_chk_list .col-filter-chk-year, #col_filter_chk_list .col-filter-chk-month').forEach(cb => {
+        let vals = [];
+        try { vals = JSON.parse(cb.dataset.values || '[]'); } catch (_) { vals = []; }
+        if (!vals.length) { cb.checked = false; cb.indeterminate = false; return; }
+        const checkedCount = vals.filter(v => itemChecked.get(String(v))).length;
+        cb.checked = checkedCount === vals.length;
+        cb.indeterminate = checkedCount > 0 && checkedCount < vals.length;
+    });
+}
+
+/** 年・月チェックボックスの変更 → 配下の日チェックボックスをまとめて切り替え */
+function _dateFilterGroupChanged(checkbox) {
+    checkbox.indeterminate = false;
+    let vals = [];
+    try { vals = JSON.parse(checkbox.dataset.values || '[]'); } catch (_) { vals = []; }
+    const valueSet = new Set(vals.map(String));
+    document.querySelectorAll('#col_filter_chk_list .col-filter-chk-item').forEach(item => {
+        if (valueSet.has(item.value)) item.checked = checkbox.checked;
+    });
+    colFilterItemChanged();
+    _syncDateFilterTreeState();
+}
+
+function _renderGenericColumnFilterList(colName) {
+    const listEl = document.getElementById('col_filter_chk_list');
+    const allChk = document.getElementById('col_filter_chk_all');
+    if (!listEl) return;
+    const values = _collectColumnFilterValues(colName);
+    let current = columnFilters[colName] || [];
+    if (current.length > 0 && current[0] !== FILTER_NONE) {
+        current = current.filter(v => values.includes(v));
+    }
+    columnFilters[colName] = current;
+    const allSelected = current.length === 0;
+    const checkedSet = new Set(allSelected ? values : current);
+    const esc = _escapeHtmlAttr;
+
+    const nonEmptyValues = values.filter(v => v !== '');
+    const isDateTree = _DATE_COLUMNS.has(colName) && nonEmptyValues.length > 0 && nonEmptyValues.every(v => _parseDateFilterValue(v));
+    if (isDateTree) {
+        let html = '';
+        if (values.includes('')) {
+            const checked = checkedSet.has('') ? ' checked' : '';
+            html += `<label class="col-filter-tree-row"><span class="col-filter-tree-toggle"></span><input type="checkbox" class="col-filter-chk-item" value=""${checked} onchange="colFilterItemChanged(); _syncDateFilterTreeState();"> (空欄)</label>`;
+        }
+        html += _buildDateFilterTreeHtml(nonEmptyValues, checkedSet);
+        listEl.innerHTML = html;
+        _syncDateFilterTreeState();
+    } else {
+        listEl.innerHTML = values.map(v => {
+            const checked = checkedSet.has(v) ? ' checked' : '';
+            const ev = esc(v);
+            const labelText = v === '' ? '(空欄)' : ev;
+            return `<label><input type="checkbox" class="col-filter-chk-item" value="${ev}" onchange="colFilterItemChanged()"${checked}> ${labelText}</label>`;
+        }).join('');
+    }
+
+    if (allChk) {
+        allChk.onchange = function() { colFilterAllChanged(this); };
+        if (allSelected) {
+            allChk.checked = true;
+            allChk.indeterminate = false;
+        } else {
+            const visibleCount = current.filter(v => v !== FILTER_NONE).length;
+            allChk.checked = values.length > 0 && visibleCount >= values.length;
+            allChk.indeterminate = visibleCount > 0 && visibleCount < values.length;
+        }
+    }
+}
+
+function colFilterAllChanged(checkbox) {
+    const colName = _openColFilterName;
+    if (!colName) return;
+    checkbox.indeterminate = false;
+    const items = document.querySelectorAll('#col_filter_chk_list .col-filter-chk-item');
+    if (checkbox.checked) {
+        items.forEach(c => { c.checked = true; });
+        columnFilters[colName] = [];
+    } else {
+        items.forEach(c => { c.checked = false; });
+        columnFilters[colName] = [FILTER_NONE];
+    }
+    _syncDateFilterTreeState();
+    updateDisplay();
+}
+
+function colFilterItemChanged() {
+    const colName = _openColFilterName;
+    if (!colName) return;
+    const allItems = document.querySelectorAll('#col_filter_chk_list .col-filter-chk-item');
+    const checked = [...allItems].filter(c => c.checked).map(c => c.value);
+    const total = allItems.length;
+    if (checked.length === total) {
+        columnFilters[colName] = [];
+    } else if (checked.length === 0) {
+        columnFilters[colName] = [FILTER_NONE];
+    } else {
+        columnFilters[colName] = checked;
+    }
+    const allChk = document.getElementById('col_filter_chk_all');
+    if (allChk) {
+        allChk.checked = checked.length === total;
+        allChk.indeterminate = checked.length > 0 && checked.length < total;
+    }
+    updateDisplay();
+}
+
+/** 列名がフィルターで絞り込み中かどうか（▼ボタンのハイライト表示用） */
+function _isColumnFilterActive(colName) {
+    if (colName === 'project_number') return currentProjectFilter.length > 0;
+    if (colName === 'machine') return currentMachineFilter.length > 0;
+    if (colName === 'unit') return currentUnitFilter.length > 0;
+    if (colName === 'owner') return currentOwnerFilter.length > 0;
+    return (columnFilters[colName] || []).length > 0;
+}
+
+/** グリッド再描画のたびに、列ヘッダー▼ボタンのハイライト状態を反映し直す */
+function _refreshColumnFilterBtnStyles() {
+    document.querySelectorAll('.col-filter-btn').forEach(btn => {
+        const colName = btn.getAttribute('data-col');
+        btn.classList.toggle('col-filter-active', _isColumnFilterActive(colName));
+    });
+}
+gantt.attachEvent('onGanttRender', _refreshColumnFilterBtnStyles);
 
 function updateFilterButtons() {
     document.getElementById('resource_home_btn').classList.toggle('active', isResourceFullscreen);
