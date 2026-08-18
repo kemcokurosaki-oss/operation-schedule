@@ -1456,13 +1456,13 @@ gantt.form_blocks["owner_select_lb"] = {
         const custom = allNames.filter(function(n) { return !knownSet.has(n); });
 
         const popup = document.createElement('div');
-        popup.style.cssText = 'display:none;position:fixed;z-index:99999;min-width:230px;max-height:340px;overflow-y:auto;background:#fff;border:1px solid #aaa;border-radius:4px;box-shadow:0 3px 10px rgba(0,0,0,0.25);padding:6px 0;';
-        popup.innerHTML = `<div style="padding:8px 12px 6px;border-bottom:1px solid #eee;">
-                <input type="text" class="owner-lb-free-input" placeholder="自由入力（カンマ区切り）" value="${custom.join(',')}" style="width:100%;height:34px;border:1px solid #ccc;border-radius:4px;padding:0 8px;box-sizing:border-box;font-size:13px;font-family:'メイリオ',Meiryo,sans-serif;">
+        popup.style.cssText = 'display:none;position:fixed;z-index:99999;min-width:200px;max-height:300px;overflow-y:auto;background:#fff;border:1px solid #aaa;border-radius:4px;box-shadow:0 3px 10px rgba(0,0,0,0.25);padding:4px 0;';
+        popup.innerHTML = `<div style="padding:6px 10px 4px;border-bottom:1px solid #eee;">
+                <input type="text" class="owner-lb-free-input" placeholder="自由入力（カンマ区切り）" value="${custom.join(',')}" style="width:100%;height:28px;border:1px solid #ccc;border-radius:4px;padding:0 6px;box-sizing:border-box;font-size:13px;font-family:'メイリオ',Meiryo,sans-serif;">
             </div>` +
             OWNER_OPTIONS.map(function(name) {
-                return `<label style="display:flex;align-items:center;padding:7px 12px;cursor:pointer;font-size:13px;font-family:'メイリオ',Meiryo,sans-serif;white-space:nowrap;">
-                    <input type="checkbox" value="${name}" ${known.includes(name) ? 'checked' : ''} style="margin-right:9px;cursor:pointer;transform:scale(1.3);">
+                return `<label style="display:flex;align-items:center;padding:5px 10px;cursor:pointer;font-size:13px;font-family:'メイリオ',Meiryo,sans-serif;white-space:nowrap;">
+                    <input type="checkbox" value="${name}" ${known.includes(name) ? 'checked' : ''} style="margin-right:7px;cursor:pointer;">
                     ${name}
                 </label>`;
             }).join('');
