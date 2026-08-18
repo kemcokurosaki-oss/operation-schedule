@@ -1940,9 +1940,32 @@ function _getPlanningColumns() {
     return _getDrawingColumns();
 }
 
+// 列幅ドラッグリサイズ（出張モード：ユニ・客先・工事名のみ）の保存/復元
+function _loadTripColWidths() {
+    try { return JSON.parse(localStorage.getItem('gantt_col_widths_trip_v1') || '{}'); }
+    catch (e) { return {}; }
+}
+function _saveTripColWidth(name, width) {
+    try {
+        const widths = _loadTripColWidths();
+        widths[name] = width;
+        localStorage.setItem('gantt_col_widths_trip_v1', JSON.stringify(widths));
+    } catch (e) {}
+}
+function _applyStoredTripWidths(cols) {
+    const stored = _loadTripColWidths();
+    ['unit', 'customer_name', 'project_details'].forEach((name) => {
+        const w = stored[name];
+        if (!w) return;
+        const col = cols.find((c) => c.name === name);
+        if (col) col.width = w;
+    });
+    return cols;
+}
+
 // 出張・現地試運転列定義
 function _getTripColumns() {
-    return [
+    return _applyStoredTripWidths([
         { name: "project_number",  label: "工番",   width: 55,  align: "center", editor: { type: "text", map_to: "project_number" } },
         { name: "machine",         label: "機械",   width: 40,  align: "center", editor: { type: "text", map_to: "machine" } },
         { name: "unit",            label: "ユニ",   width: 45,  align: "center", editor: { type: "text", map_to: "unit" } },
@@ -1955,7 +1978,7 @@ function _getTripColumns() {
           editor: { type: "start_date_editor", map_to: "start_date" } },
         { name: "end_date",        label: "終了日", width: 65,  align: "center", template: _fmtDate, editor: { type: "completion_date", map_to: "end_date" } },
         { name: "add_btn",         label: "",       width: 25,  align: "center", template: (task) => _isEditor ? `<div class='custom_add_btn' onclick='createTask(${task.id})'>+</div>` : '' }
-    ];
+    ]);
 }
 
 // 列セット切り替え（試運転・計画・出張の3モード）
