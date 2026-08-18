@@ -904,9 +904,8 @@ function _updateProjectFilterBtn() {
     }
 }
 
-function toggleOwnerFilterDropdown() {
-    const dd = document.getElementById('owner_filter_dropdown');
-    if (dd) dd.style.display = dd.style.display === 'none' ? '' : 'none';
+function toggleOwnerFilterDropdown(e) {
+    _toggleFilterDropdown('owner_filter_dropdown', e);
 }
 
 function ownerFilterAllChanged(checkbox) {
