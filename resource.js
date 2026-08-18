@@ -414,6 +414,7 @@ function renderResourceTimeline(owners) {
     container.innerHTML = html;
     renderResourceCalendarHeader();
     syncResourceScroll();
+    _bindResourceBarInteractions(container);
 }
 
 function renderOwnerDetailTimeline(ownerName) {
