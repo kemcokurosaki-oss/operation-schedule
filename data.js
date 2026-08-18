@@ -1044,35 +1044,27 @@ function _colSetName(filterType) {
 
 function setTaskTypeFilter(type) {
     const prevColSet = _colSetName(currentTaskTypeFilter);
-    currentTaskTypeFilter = (currentTaskTypeFilter === type) ? null : type;
+    currentTaskTypeFilter = type;
     updateFilterButtons();
 
-    if (currentTaskTypeFilter === null) {
-        // フィルター全オフ → リソース全画面に戻す
-        _enterResourceFullscreen();
-        _rebuildMachineFilterOptionsFromGantt();
-        _rebuildUnitFilterOptionsFromGantt();
-        _rebuildOwnerFilterOptionsFromGantt();
-    } else {
-        // フィルターON → ガントビューに切り替え
-        if (isResourceFullscreen) {
-            _exitResourceFullscreen();
-        }
-        if (_colSetName(currentTaskTypeFilter) !== prevColSet) {
-            switchColumns(currentTaskTypeFilter);
-        } else {
-            gantt.refreshData();
-        }
-        _rebuildMachineFilterOptionsFromGantt();
-        _rebuildUnitFilterOptionsFromGantt();
-        _rebuildOwnerFilterOptionsFromGantt();
-        // ブラウザの描画確定後にズームレベルを再設定してカレンダーヘッダーを完全再描画
-        setTimeout(() => {
-            gantt.setSizes();
-            const currentLevel = document.querySelector('.zoom-btn.active')?.textContent === '週単位' ? 'week' : 'day';
-            gantt.ext.zoom.setLevel(currentLevel);
-        }, 0);
+    // フィルターON → ガントビューに切り替え
+    if (isResourceFullscreen) {
+        _exitResourceFullscreen();
     }
+    if (_colSetName(currentTaskTypeFilter) !== prevColSet) {
+        switchColumns(currentTaskTypeFilter);
+    } else {
+        gantt.refreshData();
+    }
+    _rebuildMachineFilterOptionsFromGantt();
+    _rebuildUnitFilterOptionsFromGantt();
+    _rebuildOwnerFilterOptionsFromGantt();
+    // ブラウザの描画確定後にズームレベルを再設定してカレンダーヘッダーを完全再描画
+    setTimeout(() => {
+        gantt.setSizes();
+        const currentLevel = document.querySelector('.zoom-btn.active')?.textContent === '週単位' ? 'week' : 'day';
+        gantt.ext.zoom.setLevel(currentLevel);
+    }, 0);
 }
 
 function togglePlanFilter()      { setTaskTypeFilter('planning'); }
