@@ -1662,11 +1662,11 @@ gantt.form_blocks["sheets_pair"] = {
 // 開始日と完了予定日を横並びで表示するカスタムフォームブロック
 gantt.form_blocks["date_range"] = {
     render: function(sns) {
-        return `<div class='gantt_cal_ltext' style='display:flex;gap:6px;align-items:center;'>
-            <span style='font-size:11px;white-space:nowrap;color:#555;'>開始日</span>
-            <input type='date' id='cal_start_date' style='width:110px;height:26px;border:1px solid #ccc;border-radius:4px;padding:0 4px;font-size:12px;'>
-            <span id='cal_end_date_label' style='font-size:11px;white-space:nowrap;color:#555;'>完了予定日</span>
-            <input type='date' id='cal_end_date' style='width:110px;height:26px;border:1px solid #ccc;border-radius:4px;padding:0 4px;font-size:12px;'>
+        return `<div class='gantt_cal_ltext' style='display:flex;gap:8px;align-items:center;'>
+            <span style='font-size:14px;white-space:nowrap;color:#555;'>開始日</span>
+            <input type='date' id='cal_start_date' style='width:150px;height:34px;border:1px solid #ccc;border-radius:4px;padding:0 6px;font-size:16px;'>
+            <span id='cal_end_date_label' style='font-size:14px;white-space:nowrap;color:#555;'>完了予定日</span>
+            <input type='date' id='cal_end_date' style='width:150px;height:34px;border:1px solid #ccc;border-radius:4px;padding:0 6px;font-size:16px;'>
         </div>`;
     },
     set_value: function(node, value, task, sns) {
