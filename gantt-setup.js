@@ -1731,9 +1731,8 @@ gantt.attachEvent("onLightboxSave", function(id, task, is_new){
     return true;
 });
 
-// ライトボックス表示前の処理（担当別モード時は非表示）
+// ライトボックス表示前の処理（担当別モードのタスクバーからも開けるようにする）
 gantt.attachEvent("onBeforeLightbox", function(id) {
-    if (isResourceFullscreen) return false;
     const task = gantt.getTask(id);
     const isBT = task && (
         _normalizeTaskTypeForDb(task.task_type) === 'business_trip' ||
