@@ -500,6 +500,7 @@ function _getColsSum(cols) {
 }
 
 _setLayout(_getColsSum(_getDrawingColumns()));
+gantt.config.grid_elastic_columns = false; // 列幅を自動伸縮させず、指定したwidthをそのまま使う（ドラッグリサイズ時に他列が連動して縮むのを防止）
 gantt.config.min_column_width = 22; // カレンダーの列幅を22に設定
 gantt.config.inline_editors_save_on_blur = true; // フォーカスが外れたとき自動保存
 gantt.config.row_height = 30;
