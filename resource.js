@@ -496,7 +496,7 @@ function renderOwnerDetailTimeline(ownerName) {
                     <div style="display: flex; align-items: center; padding: 0 6px; font-size: 12px; color: #333; width: 100%; overflow: hidden; white-space: nowrap; gap: 6px;">
                         <span style="flex-shrink: 0; font-size: 10px; color: ${typeClr.color}; background: ${typeClr.bg}; border-radius: 2px; padding: 1px 4px; font-weight: bold; min-width: 58px; text-align: center; display: inline-block;">${typeLabel}</span>
                         <span style="flex-shrink: 0; font-weight: bold; color: #546e7a; min-width: 60px;">${t.project_number || '-'}</span>
-                        <span style="flex-shrink: 0; color: #555; min-width: 70px; overflow: hidden; text-overflow: ellipsis;">${t.machine || ''}</span>
+                        <span style="flex-shrink: 0; color: #333; min-width: 30px; overflow: hidden; text-overflow: ellipsis;">${t.machine || ''}</span>
                         <span style="overflow: hidden; text-overflow: ellipsis;">${t.text}</span>
                     </div>
                 </div>
