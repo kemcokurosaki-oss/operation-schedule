@@ -240,7 +240,7 @@ window.addEventListener('pageshow', function (ev) {
 
 // リソース表示の列幅定数（担当者名 / 詳細タスク名）
 const RESOURCE_OVERVIEW_COL_WIDTH = 120;  // 担当者名列
-const RESOURCE_DETAIL_COL_WIDTH   = 350;  // 詳細表示（工事番号＋タスク名列）
+const RESOURCE_DETAIL_COL_WIDTH   = 420;  // 詳細表示（工事番号＋機械名＋タスク名列）
 
 // ガントのタイムライン開始位置を取得（グリッド幅＋リサイザー幅を含む正確な値）
 function _getRenderedGanttGridWidth() {
