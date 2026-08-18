@@ -99,8 +99,10 @@ function _archiveDetailRowVisible(t, inMasterCompleted) {
     if (_archiveDetailTaskType === 'business_trip') {
         modeOk = typeof _isTripTask === 'function' && _isTripTask(t)
             && typeof _isOperationMajorItem === 'function' && _isOperationMajorItem(t.major_item);
+    } else if (_archiveDetailTaskType === 'planning') {
+        modeOk = typeof _isPlanningArchiveTask === 'function' && _isPlanningArchiveTask(t);
     } else {
-        modeOk = typeof _isOperationArchiveMainTabTask === 'function' && _isOperationArchiveMainTabTask(t);
+        modeOk = typeof _isTrialRunArchiveTask === 'function' && _isTrialRunArchiveTask(t);
     }
     if (!modeOk) return false;
 
