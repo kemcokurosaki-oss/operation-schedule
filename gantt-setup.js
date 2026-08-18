@@ -1529,7 +1529,7 @@ gantt.form_blocks["task_select_lb"] = {
     render: function(sns) {
         const opts = ['現地試運転', '現地SV', '調査'].map(v =>
             `<option value="${v}">${v}</option>`).join('');
-        return `<div class='gantt_cal_ltext'><select style='width:100%;height:30px;border:1px solid #ccc;border-radius:4px;padding:0 5px;font-size:12px;'>${opts}</select></div>`;
+        return `<div class='gantt_cal_ltext'><select style='width:100%;height:28px;border:1px solid #ccc;border-radius:4px;padding:0 5px;font-size:13px;'>${opts}</select></div>`;
     },
     set_value: function(node, value, task, sns) {
         const sel = node.querySelector("select");
