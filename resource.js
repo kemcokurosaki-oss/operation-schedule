@@ -617,7 +617,9 @@ function _startResourceBarDrag(e, bar, taskId, mode) {
         task.start_date = newStart;
         task.end_date = newEnd;
         task.duration = gantt.calculateDuration(newStart, newEnd);
-        if (typeof gantt.isTaskExists === 'function' && gantt.isTaskExists(taskId) && typeof gantt.refreshTask === 'function') {
+        // 担当別モード（全画面）中はメインガントが display:none のため refreshTask しない
+        // （DHTMLX内部のスケールキャッシュが壊れ、リソースパネルの全バーが座標異常で消えるため）
+        if (!isResourceFullscreen && typeof gantt.isTaskExists === 'function' && gantt.isTaskExists(taskId) && typeof gantt.refreshTask === 'function') {
             gantt.refreshTask(taskId);
         }
         await _saveResourceBarDates(taskId, newStart, newEnd);
