@@ -1920,12 +1920,12 @@ function _getPlanningColumns() {
 // 出張・現地試運転列定義
 function _getTripColumns() {
     return [
-        { name: "project_number",  label: "工番",   width: 60,  align: "center", editor: { type: "text", map_to: "project_number" } },
+        { name: "project_number",  label: "工番",   width: 55,  align: "center", editor: { type: "text", map_to: "project_number" } },
         { name: "machine",         label: "機械",   width: 40,  align: "center", editor: { type: "text", map_to: "machine" } },
         { name: "unit",            label: "ユニ",   width: 45,  align: "center", editor: { type: "text", map_to: "unit" } },
         { name: "customer_name",   label: "客先",   width: 100, align: "center", editor: { type: "text", map_to: "customer_name" } },
         { name: "project_details", label: "工事名", width: 100, align: "center", editor: { type: "text", map_to: "project_details" } },
-        { name: "text",            label: "タスク", width: 100, tree: true,      editor: { type: "task_select", map_to: "text" } },
+        { name: "text",            label: "タスク", width: 90,  tree: true,      editor: { type: "task_select", map_to: "text" } },
         { name: "owner",           label: "担当",   width: 60,  align: "center", editor: { type: "owner_select", map_to: "owner" } },
         { name: "start_date",      label: "開始日", width: 65,  align: "center",
           template: _fmtStartDateCell,
