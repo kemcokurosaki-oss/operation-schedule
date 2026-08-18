@@ -1999,15 +1999,24 @@ function switchColumns(filterType) {
     gantt.render();
 }
 
-// ===== 列幅ドラッグリサイズ（計画・社内試運転モード：ユニ・タスクのみ） =====
+// ===== 列幅ドラッグリサイズ（計画・社内試運転：ユニ・タスク／出張：ユニ・客先・工事名） =====
 (function() {
-    const RESIZABLE = [
+    const DRAWING_RESIZABLE = [
         { name: "unit", minW: 60 },
         { name: "text", minW: 150 }
     ];
+    const TRIP_RESIZABLE = [
+        { name: "unit", minW: 45 },
+        { name: "customer_name", minW: 100 },
+        { name: "project_details", minW: 100 }
+    ];
 
-    function isTargetMode() {
-        return gantt.config._columnFilterType === "planning" || gantt.config._columnFilterType === "operation";
+    // 現在のモードに応じた対象列と保存関数を返す（対象外のモードなら null）
+    function activeResizeConfig() {
+        const ft = gantt.config._columnFilterType;
+        if (ft === "planning" || ft === "operation") return { list: DRAWING_RESIZABLE, save: _saveDrawingColWidth };
+        if (ft === "business_trip") return { list: TRIP_RESIZABLE, save: _saveTripColWidth };
+        return null;
     }
 
     // 列内容の最大表示幅を計測（Canvas measureText）
