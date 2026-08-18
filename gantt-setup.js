@@ -1064,7 +1064,23 @@ function createTask(afterTaskId) {
         alert("新規追加の編集画面が開いています。先に保存またはキャンセルしてください。");
         return;
     }
-    const projectNumber = _getSingleFilterValue(currentProjectFilter);
+    let projectNumber = _getSingleFilterValue(currentProjectFilter);
+    let inheritMachine = _getSingleFilterValue(currentMachineFilter);
+    let inheritUnit = _getSingleFilterValue(currentUnitFilter);
+    let inheritOwner = _getSingleFilterValue(currentOwnerFilter);
+    if (afterTaskId != null) {
+        const t = gantt.getTask(afterTaskId);
+        if (t) {
+            if (!projectNumber) {
+                projectNumber = t.project_number || "";
+            }
+            inheritMachine = t.machine || "";
+            inheritUnit = t.unit || "";
+            if (!inheritOwner) {
+                inheritOwner = t.owner || "";
+            }
+        }
+    }
     const pf = String(projectNumber);
 
     const visibleTasks = gantt.getTaskByTime().filter(t => {
@@ -1075,19 +1091,7 @@ function createTask(afterTaskId) {
         return true;
     }).sort((a, b) => _sortOrderValue(a) - _sortOrderValue(b));
 
-    let inheritMachine = _getSingleFilterValue(currentMachineFilter);
-    let inheritUnit = _getSingleFilterValue(currentUnitFilter);
-    let inheritOwner = _getSingleFilterValue(currentOwnerFilter);
-    if (afterTaskId != null) {
-        const t = gantt.getTask(afterTaskId);
-        if (t) {
-            inheritMachine = t.machine || "";
-            inheritUnit = t.unit || "";
-            if (!inheritOwner) {
-                inheritOwner = t.owner || "";
-            }
-        }
-    } else if (visibleTasks.length > 0) {
+    if (afterTaskId == null && visibleTasks.length > 0) {
         const last = visibleTasks[visibleTasks.length - 1];
         if (!inheritMachine) inheritMachine = last.machine || "";
         if (!inheritUnit) inheritUnit = last.unit || "";
