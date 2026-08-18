@@ -527,6 +527,116 @@ function renderOwnerDetailTimeline(ownerName) {
     container.innerHTML = html;
     renderResourceCalendarHeader();
     syncResourceScroll();
+    _bindResourceBarInteractions(container);
+}
+
+// 担当別モードのタスクバー編集：ドラッグで開始日・終了日（期間）を変更、ダブルクリックでライトボックス（担当者含む全項目）を開く
+function _bindResourceBarInteractions(container) {
+    container.querySelectorAll('.resource-cell-bar').forEach(bar => {
+        const taskId = bar.dataset.taskId;
+        if (!taskId) return;
+
+        bar.addEventListener('mousedown', function(e) {
+            if (!_isEditor) return;
+            const roleEl = e.target.closest('[data-role]');
+            const mode = roleEl ? roleEl.dataset.role : 'move';
+            _startResourceBarDrag(e, bar, taskId, mode);
+        });
+
+        bar.addEventListener('dblclick', function(e) {
+            if (!_isEditor) return;
+            e.stopPropagation();
+            e.preventDefault();
+            gantt.showLightbox(taskId);
+        });
+    });
+}
+
+function _startResourceBarDrag(e, bar, taskId, mode) {
+    e.stopPropagation();
+    e.preventDefault();
+    const task = gantt.getTask(taskId);
+    if (!task) return;
+
+    const startClientX = e.clientX;
+    const startLeft  = parseFloat(bar.style.left);
+    const startWidth = parseFloat(bar.style.width);
+    const origStart = new Date(task.start_date);
+    const origEnd   = new Date(task.end_date); // gantt内部は排他的終了日（実end_date + 1日）
+    const minWidth  = 6;
+
+    bar.classList.add('dragging');
+    document.body.style.cursor = (mode === 'move') ? 'grabbing' : 'ew-resize';
+    document.body.style.userSelect = 'none';
+
+    function onMove(ev) {
+        const dx = ev.clientX - startClientX;
+        if (mode === 'move') {
+            bar.style.left = (startLeft + dx) + 'px';
+        } else if (mode === 'resize-left') {
+            const newWidth = startWidth - dx;
+            if (newWidth < minWidth) return;
+            bar.style.left  = (startLeft + dx) + 'px';
+            bar.style.width = newWidth + 'px';
+        } else if (mode === 'resize-right') {
+            const newWidth = startWidth + dx;
+            if (newWidth < minWidth) return;
+            bar.style.width = newWidth + 'px';
+        }
+    }
+
+    async function onUp() {
+        document.removeEventListener('mousemove', onMove);
+        document.removeEventListener('mouseup', onUp);
+        bar.classList.remove('dragging');
+        document.body.style.cursor = '';
+        document.body.style.userSelect = '';
+
+        let newStart = origStart;
+        let newEnd   = origEnd;
+
+        if (mode === 'move') {
+            const durationDays = gantt.calculateDuration(origStart, origEnd);
+            newStart = gantt.dateFromPos(parseFloat(bar.style.left));
+            newEnd = gantt.date.add(newStart, durationDays, 'day');
+        } else if (mode === 'resize-left') {
+            newStart = gantt.dateFromPos(parseFloat(bar.style.left));
+            if (newStart >= origEnd) newStart = gantt.date.add(origEnd, -1, 'day');
+        } else if (mode === 'resize-right') {
+            const right = parseFloat(bar.style.left) + parseFloat(bar.style.width);
+            newEnd = gantt.dateFromPos(right);
+            if (newEnd <= origStart) newEnd = gantt.date.add(origStart, 1, 'day');
+        }
+
+        task.start_date = newStart;
+        task.end_date = newEnd;
+        task.duration = gantt.calculateDuration(newStart, newEnd);
+        if (typeof gantt.isTaskExists === 'function' && gantt.isTaskExists(taskId) && typeof gantt.refreshTask === 'function') {
+            gantt.refreshTask(taskId);
+        }
+        await _saveResourceBarDates(taskId, newStart, newEnd);
+        updateResourceData();
+    }
+
+    document.addEventListener('mousemove', onMove);
+    document.addEventListener('mouseup', onUp);
+}
+
+async function _saveResourceBarDates(taskId, startDate, endDate) {
+    const completionDate = gantt.date.add(new Date(endDate), -1, 'day');
+    try {
+        const { error } = await supabaseClient
+            .from('tasks')
+            .update({
+                start_date: _toDateStr(startDate),
+                end_date: _toDateStr(completionDate),
+                last_updated_by: (typeof window._getCurrentEditorName === 'function' ? window._getCurrentEditorName() : '') || ''
+            })
+            .eq('id', taskId);
+        if (error) console.error('リソースバー日付保存エラー:', error);
+    } catch (e) {
+        console.error('Exception in _saveResourceBarDates:', e);
+    }
 }
 
 const _DOW_NAMES = ['日', '月', '火', '水', '木', '金', '土'];
