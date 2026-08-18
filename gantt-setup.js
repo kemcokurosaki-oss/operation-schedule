@@ -1433,9 +1433,9 @@ gantt.form_blocks["textarea_full"] = {
 gantt.form_blocks["owner_select_lb"] = {
     render: function(sns) {
         return `<div class='gantt_cal_ltext owner-lb-wrap' style='position:relative;'>
-            <div class='owner-lb-display' tabindex="0" style='width:100%;height:36px;border:1px solid #ccc;border-radius:4px;padding:0 32px 0 10px;box-sizing:border-box;display:flex;align-items:center;overflow:hidden;white-space:nowrap;text-overflow:ellipsis;cursor:pointer;background:#fff;position:relative;font-size:13px;'>
+            <div class='owner-lb-display' tabindex="0" style='width:100%;height:28px;border:1px solid #ccc;border-radius:4px;padding:0 26px 0 8px;box-sizing:border-box;display:flex;align-items:center;overflow:hidden;white-space:nowrap;text-overflow:ellipsis;cursor:pointer;background:#fff;position:relative;font-size:13px;'>
                 -- 未選択 --
-                <span style='position:absolute;right:10px;top:50%;transform:translateY(-50%);font-size:12px;color:#666;'>▼</span>
+                <span style='position:absolute;right:8px;top:50%;transform:translateY(-50%);font-size:11px;color:#666;'>▼</span>
             </div>
         </div>`;
     },
