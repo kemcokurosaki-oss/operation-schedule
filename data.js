@@ -550,7 +550,82 @@ function _taskVisibleOnGantt(task) {
     if (!_taskVisibleIgnoringOwnerFilter(task)) return false;
     if (!_taskVisibleIgnoringMachineFilter(task)) return false;
     if (!_taskVisibleIgnoringUnitFilter(task)) return false;
+    if (!_taskPassesGenericColumnFilters(task)) return false;
     return true;
+}
+
+// ------------------------------------------------------------
+// グリッド列ヘッダーの▼フィルター（工事番号・機械・ユニット・担当者以外の列）
+// ------------------------------------------------------------
+
+// 列名からタスクのフィールド名へのマッピング（一致しないものだけ列挙）
+const _COLUMN_FIELD_MAP = {};
+
+// 実データ列を持たない計算列のソート用アクセサ（タスクから比較値を算出）
+const _COLUMN_SORT_VALUE_ACCESSORS = {};
+
+/** 現在の列セット（gantt.config.columns）から列定義を取得 */
+function _findColumnDef(colName) {
+    return (gantt.config.columns || []).find(c => c.name === colName);
+}
+
+/** 列定義とタスクから、その列に表示されている値（フィルター比較用の文字列）を取得 */
+function _colFilterValueForTask(col, task) {
+    let v;
+    if (typeof col.template === 'function') {
+        v = col.template(task);
+    } else {
+        const field = _COLUMN_FIELD_MAP[col.name] || col.name;
+        v = task[field];
+    }
+    if (v == null) return '';
+    return String(v).replace(/<[^>]*>/g, '').trim();
+}
+
+/** 指定列の絞り込みだけを無視して（他の全フィルターは適用して）表示対象か判定（候補値の再計算用） */
+function _taskVisibleIgnoringColumnFilter(task, colName) {
+    if (!_taskVisibleIgnoringOwnerFilter(task)) return false;
+    if (!_taskVisibleIgnoringMachineFilter(task)) return false;
+    if (!_taskVisibleIgnoringUnitFilter(task)) return false;
+    for (const name in columnFilters) {
+        if (name === colName) continue;
+        const vals = columnFilters[name];
+        if (!vals || vals.length === 0) continue;
+        const col = _findColumnDef(name);
+        if (!col) continue;
+        if (vals[0] === FILTER_NONE) return false;
+        if (!vals.includes(_colFilterValueForTask(col, task))) return false;
+    }
+    return true;
+}
+
+/** 列ヘッダーフィルター（工事番号・機械・ユニット・担当者以外）をすべて適用した判定 */
+function _taskPassesGenericColumnFilters(task) {
+    for (const name in columnFilters) {
+        const vals = columnFilters[name];
+        if (!vals || vals.length === 0) continue;
+        const col = _findColumnDef(name);
+        if (!col) continue;
+        if (vals[0] === FILTER_NONE) return false;
+        if (!vals.includes(_colFilterValueForTask(col, task))) return false;
+    }
+    return true;
+}
+
+/** 指定列の候補値一覧を、現在の他フィルターを反映して収集（空欄セルがあれば先頭に''として含める） */
+function _collectColumnFilterValues(colName) {
+    const col = _findColumnDef(colName);
+    if (!col) return [];
+    const set = new Set();
+    let hasEmpty = false;
+    gantt.eachTask(function(task) {
+        if (!_taskVisibleIgnoringColumnFilter(task, colName)) return;
+        const v = _colFilterValueForTask(col, task);
+        if (v !== '') set.add(v); else hasEmpty = true;
+    });
+    const sorted = Array.from(set).sort((a, b) => a.localeCompare(b, 'ja', { numeric: true }));
+    if (hasEmpty) sorted.unshift('');
+    return sorted;
 }
 
 function _collectMachineValues(rows) {
