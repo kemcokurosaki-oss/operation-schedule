@@ -512,10 +512,12 @@ function renderOwnerDetailTimeline(ownerName) {
                     <div style="position: absolute; top: 0; left: 0; right: 0; bottom: 0; z-index: 0;">${weekendBackgroundHtml}</div>
                     <div style="position: absolute; top: 0; left: 0; right: 0; bottom: 0; ${backgroundStyle} z-index: 1;"></div>
                     ${hasDate ? `
-                    <div class="resource-cell-bar ${colorClass}"
+                    <div class="resource-cell-bar ${colorClass}" data-task-id="${t.id}"
                          style="position: absolute; top: 4px; height: 22px; left: ${left}px; width: ${barWidth}px; z-index: 10;"
                          title="${t.text} (${t.project_number})">
+                         <div class="resource-bar-handle resource-bar-handle-left" data-role="resize-left"></div>
                          <span class="resource-bar-text" style="color:${textColor}; font-size:11px; font-weight:bold;">${t.project_number || ""} ${t.text}</span>
+                         <div class="resource-bar-handle resource-bar-handle-right" data-role="resize-right"></div>
                     </div>` : ''}
                 </div>
             </div>
