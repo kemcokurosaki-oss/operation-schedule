@@ -2001,7 +2001,7 @@ function switchColumns(filterType) {
     if (filterType === 'planning') baseCols = _getPlanningColumns();
     else if (filterType === 'business_trip') baseCols = _getTripColumns();
     else baseCols = _getDrawingColumns();
-    gantt.config.columns = baseCols;
+    gantt.config.columns = _applyColumnFilterButtons(baseCols);
     gantt.config._columnFilterType = filterType;
     _setLayout(_getColsSum(baseCols));
     // gantt.render() だけでは列数・列幅の DOM 変更が反映されないため init で再構築し、
