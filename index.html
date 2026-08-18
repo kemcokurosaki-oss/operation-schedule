@@ -102,6 +102,18 @@
             <div id="gantt_here" style="width:100%;"></div>
         </div>
 
+        <!-- グリッド列ヘッダー用の共有フィルタードロップダウン（開いた列に応じて内容を差し替え） -->
+        <div id="col_filter_dropdown" class="col-filter-dropdown" style="display:none;">
+            <div class="col-filter-sort-row" onclick="applyColumnSort('asc')"><span class="col-filter-sort-icon">A↓</span>昇順</div>
+            <div class="col-filter-sort-row" onclick="applyColumnSort('desc')"><span class="col-filter-sort-icon">Z↓</span>降順</div>
+            <div class="col-filter-dropdown-sep"></div>
+            <label>
+                <input type="checkbox" id="col_filter_chk_all" checked> 全選択
+            </label>
+            <div class="col-filter-dropdown-sep"></div>
+            <div id="col_filter_chk_list" class="col-filter-dropdown-list"></div>
+        </div>
+
         <!-- 独立したリソースパネル -->
         <div id="resource_panel">
             <div id="resource_resizer"></div>
