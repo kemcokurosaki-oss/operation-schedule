@@ -1917,11 +1917,13 @@ async function initialize() {
     document.getElementById("gantt_ctx_paste").addEventListener("click", async function() {
         _ctxMenu.style.display = 'none';
         if (_copiedTasks.length === 0) return;
-        if (currentProjectFilter.length !== 1) {
-            alert("貼り付け先の工事番号を1つ選択してください。");
+        const pasteTaskId = _ctxTaskId;
+        _ctxTaskId = null;
+        if (!pasteTaskId || !gantt.isTaskExists(pasteTaskId)) {
+            alert("貼り付け先の行を右クリックしてください。");
             return;
         }
-        const destProject = currentProjectFilter[0];
+        const destProject = gantt.getTask(pasteTaskId).project_number;
 
         // 現在表示中タスクの末尾 sort_order を求める
         const _getSO = t => (t.sort_order != null) ? t.sort_order : t.id * 1000;
