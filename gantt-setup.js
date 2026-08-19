@@ -1234,7 +1234,7 @@ gantt.attachEvent("onAfterTaskUpdate", async function(id, item) {
             console.error("Error updating task:", error);
             alert("タスクの更新に失敗しました。\n" + error.message);
         } else {
-            if (isResourceView) updateResourceData();
+            if (isResourceView || isResourceFullscreen) updateResourceData();
             // ▼マークの色を即時更新
             requestAnimationFrame(_renderWishDateMarks);
         }
