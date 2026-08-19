@@ -1937,7 +1937,7 @@ async function initialize() {
                 is_detailed:      false,
                 major_item:       '操業',
                 is_business_trip: destModeKey === 'business_trip',
-                sort_order:       baseSO + (i + 1) * 1000
+                sort_order:       _baseSOFor(project) + (i + 1) * 1000
             };
         });
 
