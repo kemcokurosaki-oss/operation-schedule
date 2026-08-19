@@ -549,7 +549,7 @@ function setZoom(level, btn) {
     gantt.ext.zoom.setLevel(level);
     document.querySelectorAll('.zoom-btn').forEach(b => b.classList.remove('active'));
     btn.classList.add('active');
-    if (isResourceView) updateResourceData();
+    if (isResourceView || isResourceFullscreen) updateResourceData();
 }
 
 // 選択削除ボタンの表示更新
