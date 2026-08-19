@@ -669,7 +669,7 @@ function renderResourceCalendarHeader() {
     const columnWidth = scale.col_width;
     // 全画面時は専用幅、ボトムパネル時はガントのグリッド幅に合わせる
     const actualGridWidth = isResourceFullscreen
-        ? (_resourceDetailOwner ? RESOURCE_DETAIL_COL_WIDTH : RESOURCE_OVERVIEW_COL_WIDTH)
+        ? (_getResourceDetailOwner() ? RESOURCE_DETAIL_COL_WIDTH : RESOURCE_OVERVIEW_COL_WIDTH)
         : (_getRenderedGanttGridWidth());
     const dates = scale.trace_x;
     const unit = gantt.getState().scale_unit;
