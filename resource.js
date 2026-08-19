@@ -290,8 +290,8 @@ function updateResourceData() {
     });
 
     console.log("Found active owners for resource view:", activeOwners);
-    if (_resourceDetailOwner) {
-        renderOwnerDetailTimeline(_resourceDetailOwner);
+    if (_getResourceDetailOwner()) {
+        renderOwnerDetailTimeline(_getResourceDetailOwner());
     } else {
         renderResourceTimeline(activeOwners);
     }
