@@ -881,6 +881,7 @@ function _exitResourceFullscreen() {
         panel.style.display = "none";
         document.getElementById('resource_title').textContent = '担当者別リソース状況';
         document.getElementById('resource_back_btn').style.display = 'none';
+        document.querySelector(".resource-header-bar").style.display = 'none';
     }
     updateFilterButtons();
     setTimeout(() => { _refreshMainGanttTimelineScale(true); }, 50);
