@@ -1715,49 +1715,46 @@ async function initialize() {
         _ctxMenu.style.left = (left + window.scrollX) + 'px';
     });
 
-    // コピー項目設定
-    const COPY_FIELDS = [
-        { key: 'project_number',  label: '工事番号',   default: true },
-        { key: 'machine',         label: '機械',       default: true },
-        { key: 'unit',            label: 'ユニ',       default: false },
-        { key: 'unit2',           label: 'ユニ2',      default: true },
-        { key: 'text',            label: 'タスク名',   default: false },
-        { key: 'model_type',      label: '機種',       default: true },
-        { key: 'part_number',     label: '型式・図番', default: true },
-        { key: 'quantity',        label: '個数',       default: true },
-        { key: 'manufacturer',    label: 'メーカー',   default: true },
-        { key: 'status',          label: '状態',       default: true },
-        { key: 'customer_name',   label: '客先名',     default: true },
-        { key: 'project_details', label: '案件詳細',   default: true },
-        { key: 'characteristic',  label: '特性',       default: true },
-        { key: 'derivation',      label: '派生',       default: true },
-        { key: 'owner',           label: '担当',       default: true },
-        { key: 'start_date',      label: '開始日',     default: true },
-        { key: 'end_date',        label: '完了予定日', default: false },
-        { key: 'total_sheets',    label: '総枚数',     default: false },
-        { key: 'completed_sheets',label: '完了枚数',   default: false },
+    // コピー項目設定（操業工程表の各モードのグリッド列構成に合わせた項目のみ）
+    const COPY_FIELDS_OPERATION = [ // 試運転・計画モード
+        { key: 'project_number', label: '工番',   default: true },
+        { key: 'machine',        label: '機械',   default: true },
+        { key: 'unit',           label: 'ユニ',   default: true },
+        { key: 'text',           label: 'タスク', default: false },
+        { key: 'owner',          label: '担当',   default: true },
+        { key: 'status',         label: '進捗',   default: false },
+        { key: 'start_date',     label: '開始日', default: true },
+        { key: 'end_date',       label: '終了日', default: false },
+    ];
+    const COPY_FIELDS_TRIP = [ // 出張モード
+        { key: 'project_number',  label: '工番',   default: true },
+        { key: 'machine',         label: '機械',   default: true },
+        { key: 'unit',            label: 'ユニ',   default: true },
+        { key: 'customer_name',   label: '客先',   default: true },
+        { key: 'project_details', label: '工事名', default: true },
+        { key: 'text',            label: 'タスク', default: false },
+        { key: 'owner',           label: '担当',   default: true },
+        { key: 'start_date',      label: '開始日', default: true },
+        { key: 'end_date',        label: '終了日', default: false },
     ];
     const COPY_OPTS_KEY = 'gantt_copy_opts';
 
-    // コピーモーダルの生成
+    // コピーモーダルの生成（項目一覧はコピー対象タスクのモードに応じて描画時に差し替える）
     const _copyOverlay = document.createElement('div');
     _copyOverlay.id = 'copy_options_overlay';
     _copyOverlay.innerHTML = `
         <div id="copy_options_dialog">
             <h3>コピーする項目を選択</h3>
-            <div class="copy-opts-grid">
-                ${COPY_FIELDS.map(f => `
-                    <label>
-                        <input type="checkbox" data-copy-key="${f.key}">
-                        ${f.label}
-                    </label>`).join('')}
-            </div>
+            <div class="copy-opts-grid" id="copy_opts_grid"></div>
             <div class="copy-opts-actions">
                 <button class="btn" id="copy_opts_cancel">キャンセル</button>
                 <button class="btn btn-primary" id="copy_opts_exec">コピー実行</button>
             </div>
         </div>`;
     document.body.appendChild(_copyOverlay);
+    const _copyOptsGrid = document.getElementById('copy_opts_grid');
+
+    let _activeCopyFields = COPY_FIELDS_OPERATION;
 
     // チェック状態をlocalStorageから復元
     function _loadCopyOpts() {
@@ -1766,17 +1763,24 @@ async function initialize() {
         } catch { return null; }
     }
     function _saveCopyOpts() {
-        const state = {};
+        const state = _loadCopyOpts() || {};
         _copyOverlay.querySelectorAll('[data-copy-key]').forEach(cb => {
             state[cb.dataset.copyKey] = cb.checked;
         });
         localStorage.setItem(COPY_OPTS_KEY, JSON.stringify(state));
     }
-    function _applyDefaultOpts() {
+    // コピー対象タスクのモードに応じたチェックボックス一覧を描画
+    function _renderCopyOpts(fields) {
+        _activeCopyFields = fields;
         const saved = _loadCopyOpts();
-        _copyOverlay.querySelectorAll('[data-copy-key]').forEach(cb => {
+        _copyOptsGrid.innerHTML = fields.map(f => `
+            <label>
+                <input type="checkbox" data-copy-key="${f.key}">
+                ${f.label}
+            </label>`).join('');
+        _copyOptsGrid.querySelectorAll('[data-copy-key]').forEach(cb => {
             const key = cb.dataset.copyKey;
-            const field = COPY_FIELDS.find(f => f.key === key);
+            const field = fields.find(f => f.key === key);
             cb.checked = saved ? (saved[key] ?? field.default) : field.default;
         });
     }
@@ -1789,7 +1793,8 @@ async function initialize() {
         _ctxMenu.style.display = 'none';
         _ctxTaskId = null;
         if (!_copySourceId || !gantt.isTaskExists(_copySourceId)) return;
-        _applyDefaultOpts();
+        const src = gantt.getTask(_copySourceId);
+        _renderCopyOpts(_isTripTask(src) ? COPY_FIELDS_TRIP : COPY_FIELDS_OPERATION);
         _copyOverlay.classList.add('open');
     });
 
