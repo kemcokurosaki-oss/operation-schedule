@@ -886,8 +886,8 @@ function toggleResourceView() {
         btn.innerText = "リソース表示";
         btn.classList.remove('active');
         panel.style.display = "none";
-        // 詳細モードをリセット
-        _resourceDetailOwner = null;
+        // 詳細モードをリセット（通常モード側の状態のみ）
+        _resourceDetailOwnerNormal = null;
         document.getElementById('resource_title').textContent = '担当者別リソース状況';
         document.getElementById('resource_back_btn').style.display = 'none';
     }
