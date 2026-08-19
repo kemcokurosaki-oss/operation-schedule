@@ -1881,18 +1881,25 @@ async function initialize() {
             return;
         }
         const destProject = destTask.project_number;
+        // コピー元で工事番号にチェックが入っていた場合はその工事番号を維持し、それ以外は貼り付け先の工事番号を使う
+        const _effectiveProject = (src) => (src._pnKeepSource && src.project_number) ? src.project_number : destProject;
 
-        // 現在表示中タスクの末尾 sort_order を求める
+        // 実際に使う工事番号ごとに、表示中タスクの末尾 sort_order を求める
         const _getSO = t => (t.sort_order != null) ? t.sort_order : t.id * 1000;
-        const visibleTasks = gantt.getTaskByTime().filter(t => {
-            const isDetailed = (t.is_detailed === true || String(t.is_detailed).toUpperCase() === 'TRUE');
-            if (isDetailed) return false;
-            if (String(t.project_number) !== String(destProject)) return false;
-            if (_copyModeKey(t) !== destModeKey) return false;
-            return true;
-        }).sort((a, b) => _getSO(a) - _getSO(b));
-
-        let baseSO = visibleTasks.length > 0 ? _getSO(visibleTasks[visibleTasks.length - 1]) : 0;
+        const _baseSOCache = new Map();
+        const _baseSOFor = (project) => {
+            if (_baseSOCache.has(project)) return _baseSOCache.get(project);
+            const visibleTasks = gantt.getTaskByTime().filter(t => {
+                const isDetailed = (t.is_detailed === true || String(t.is_detailed).toUpperCase() === 'TRUE');
+                if (isDetailed) return false;
+                if (String(t.project_number) !== String(project)) return false;
+                if (_copyModeKey(t) !== destModeKey) return false;
+                return true;
+            }).sort((a, b) => _getSO(a) - _getSO(b));
+            const so = visibleTasks.length > 0 ? _getSO(visibleTasks[visibleTasks.length - 1]) : 0;
+            _baseSOCache.set(project, so);
+            return so;
+        };
 
         // コピー元タスクをsort_order順に並べて貼り付け順序を維持
         const sortedCopied = [..._copiedTasks].sort((a, b) => _getSO(a) - _getSO(b));
@@ -1904,11 +1911,12 @@ async function initialize() {
             const startDate = src.start_date instanceof Date
                 ? _toDateStr(src.start_date)
                 : src.start_date;
+            const project = _effectiveProject(src);
             return {
                 text:             src.text             || "",
                 start_date:       startDate,
                 end_date:         endDate,
-                project_number:   destProject,
+                project_number:   project,
                 machine:          src.machine          || "",
                 unit:             src.unit             || "",
                 unit2:            src.unit2            || "",
