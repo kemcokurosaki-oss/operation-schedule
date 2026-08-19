@@ -1811,36 +1811,13 @@ async function initialize() {
         _copySourceId = null;
     });
 
-    // コピー元の直下に挿入する sort_order を計算するヘルパー
-    function _calcInsertAfterSortOrder(sourceId) {
-        const src = gantt.getTask(sourceId);
-        const projectNumber = src.project_number;
-        const taskTypeNorm = typeof _normalizeTaskTypeForDb === 'function' ? _normalizeTaskTypeForDb(src.task_type) : src.task_type;
-        const _getSO = t => (t.sort_order != null) ? t.sort_order : t.id * 1000;
-    const allTasks = gantt.getTaskByTime().filter(t => {
-        const isDetailed = (t.is_detailed === true || String(t.is_detailed).toUpperCase() === 'TRUE');
-        if (isDetailed) return false;
-        if (String(t.project_number) !== String(projectNumber)) return false;
-            if (taskTypeNorm && typeof _normalizeTaskTypeForDb === 'function' && _normalizeTaskTypeForDb(t.task_type) !== taskTypeNorm) return false;
-            return true;
-        }).sort((a, b) => _getSO(a) - _getSO(b));
-        const idx = allTasks.findIndex(t => String(t.id) === String(sourceId));
-        if (idx < 0) return _getSO(src) + 1000;
-        const afterSO = _getSO(allTasks[idx]);
-        if (idx + 1 < allTasks.length) {
-            return Math.round((afterSO + _getSO(allTasks[idx + 1])) / 2);
-        }
-        return afterSO + 1000;
-    }
-
-    // 単一コピー実行
-    document.getElementById("copy_opts_exec").addEventListener("click", async function() {
+    // 単一コピー実行（この時点では追加せずバッファへ保存し、貼り付け先を選んでから追加する）
+    document.getElementById("copy_opts_exec").addEventListener("click", function() {
         _saveCopyOpts();
         _copyOverlay.classList.remove('open');
         if (!_copySourceId || !gantt.isTaskExists(_copySourceId)) return;
 
         const src = gantt.getTask(_copySourceId);
-        const insertSortOrder = _calcInsertAfterSortOrder(_copySourceId);
         _copySourceId = null;
 
         // チェック状態を収集
@@ -1849,57 +1826,14 @@ async function initialize() {
             checked[cb.dataset.copyKey] = cb.checked;
         });
 
-        const _v  = (key, fallback) => checked[key] ? (src[key] || fallback) : fallback;
-        const _n  = (key) => checked[key] ? (Number(src[key]) || 0) : 0;
-        const _dt = (key) => {
-            if (!checked[key]) return null;
-            if (key === 'end_date') {
-                return src.end_date instanceof Date
-                    ? _toDateStr(gantt.date.add(new Date(src.end_date), -1, 'day'))
-                    : src.end_date;
-            }
-            return src[key] instanceof Date ? _toDateStr(src[key]) : src[key];
-        };
-
-        const { data, error } = await supabaseClient
-            .from('tasks')
-            .insert([{
-                text:             _v('text', ""),
-                start_date:       _dt('start_date'),
-                end_date:         _dt('end_date'),
-                project_number:   _v('project_number', ""),
-                machine:          _v('machine', ""),
-                unit:             _v('unit', ""),
-                unit2:            _v('unit2', ""),
-                model_type:       _v('model_type', ""),
-                part_number:      _v('part_number', ""),
-                quantity:         _n('quantity'),
-                manufacturer:     _v('manufacturer', ""),
-                status:           _v('status', ""),
-                customer_name:    _v('customer_name', ""),
-                project_details:  _v('project_details', ""),
-                characteristic:   _v('characteristic', ""),
-                derivation:       _v('derivation', ""),
-                owner:            _v('owner', ""),
-                total_sheets:     _n('total_sheets'),
-                completed_sheets: _n('completed_sheets'),
-                wish_date:        src.wish_date || null,
-                task_type:        _copyModeKey(src),
-                is_detailed:      false,
-                major_item:       '操業',
-                is_business_trip: _copyModeKey(src) === 'business_trip',
-                sort_order:       insertSortOrder
-            }])
-            .select();
-
-        if (error) {
-            console.error("Error copying task:", error);
-            alert("タスクのコピーに失敗しました。\n" + error.message);
-            return;
-        }
-
-        await loadData();
-        if (data && data[0]) gantt.showTask(data[0].id);
+        // 選択されなかった項目は空にしてバッファへ保存（実際の追加は「貼り付け」実行時）
+        const buffered = Object.assign({}, src);
+        _activeCopyFields.forEach(f => {
+            if (checked[f.key]) return;
+            buffered[f.key] = (f.key === 'start_date' || f.key === 'end_date') ? null : "";
+        });
+        _copiedTasks = [buffered];
+        alert("1件をコピーしました。\n貼り付け先の行を右クリック →「コピーした行を貼り付け」してください。");
     });
 
     // 複数行コピー
