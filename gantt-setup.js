@@ -1261,7 +1261,7 @@ gantt.attachEvent("onAfterTaskDrag", async function(id, mode, e) {
             })
             .eq('id', id);
         if (error) console.error("Error saving drag:", error);
-        else if (isResourceView) updateResourceData();
+        else if (isResourceView || isResourceFullscreen) updateResourceData();
     } catch(e) {
         console.error("Exception in onAfterTaskDrag:", e);
     }
