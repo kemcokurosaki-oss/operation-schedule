@@ -1987,10 +1987,10 @@ async function initialize() {
                 total_sheets:     Number(src.total_sheets)     || 0,
                 completed_sheets: Number(src.completed_sheets) || 0,
                 wish_date:        src.wish_date        || null,
-                task_type:        _normalizeTaskTypeForDb(currentTaskTypeFilter || src.task_type || "operation"),
+                task_type:        destModeKey,
                 is_detailed:      false,
                 major_item:       '操業',
-                is_business_trip: currentTaskTypeFilter === 'business_trip' ? true : false,
+                is_business_trip: destModeKey === 'business_trip',
                 sort_order:       baseSO + (i + 1) * 1000
             };
         });
