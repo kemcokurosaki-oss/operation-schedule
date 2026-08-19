@@ -840,23 +840,16 @@ function _enterResourceFullscreen() {
 // リソース全画面モードを抜けてガントビューへ
 function _exitResourceFullscreen() {
     isResourceFullscreen = false;
-    isResourceView = false;
-    // 担当別モードの個人ドリルダウン状態をリセット（通常モード側の状態には影響させない）
-    _resourceDetailOwnerFullscreen = null;
-    const resourceTitle = document.getElementById('resource_title');
-    if (resourceTitle) resourceTitle.textContent = '担当者別リソース状況';
-    const resourceBackBtn = document.getElementById('resource_back_btn');
-    if (resourceBackBtn) resourceBackBtn.style.display = 'none';
+    // 担当別モードの個人ドリルダウン状態（_resourceDetailOwnerFullscreen）はリセットしない。
+    // 次に担当別モードへ戻った時に、開いていた個人タイムラインをそのまま復元するため。
     const panel = document.getElementById("resource_panel");
     const ganttEl = document.getElementById("gantt_here");
     const ganttHost = document.getElementById("gantt_host");
     const btn = document.getElementById("resource_toggle");
     panel.classList.remove('resource-fullscreen');
-    panel.style.display = "none";
     if (ganttHost) ganttHost.style.display = "";
     ganttEl.style.display = "";
     btn.style.display = ""; // リソースボタンを復元
-    btn.innerText = "リソース表示";
     document.getElementById("resource_close_btn").style.display = "";
     // リソースズームバーを非表示にしてメインのズームボタンを復元
     const rZoomBar = document.getElementById('resource_zoom_bar');
@@ -867,6 +860,20 @@ function _exitResourceFullscreen() {
         const wBtn = document.getElementById('zoom_week_btn');
         if (dBtn) dBtn.classList.toggle('active', lvl === 'day');
         if (wBtn) wBtn.classList.toggle('active', lvl === 'week');
+    }
+    // isResourceView（担当別モードに入る前からの、通常モードのボトムパネル表示状態）に応じて、
+    // 通常モードのリソースパネル表示をそのまま復元するか、閉じた状態にするかを分岐する。
+    if (isResourceView) {
+        btn.innerText = "リソース表示中 ×";
+        btn.classList.add('active');
+        updateResourceData();
+        panel.style.display = "flex";
+    } else {
+        btn.innerText = "リソース表示";
+        btn.classList.remove('active');
+        panel.style.display = "none";
+        document.getElementById('resource_title').textContent = '担当者別リソース状況';
+        document.getElementById('resource_back_btn').style.display = 'none';
     }
     updateFilterButtons();
     setTimeout(() => { _refreshMainGanttTimelineScale(true); }, 50);
