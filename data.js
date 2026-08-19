@@ -1844,7 +1844,7 @@ async function initialize() {
         _ctxTaskId = null;
     });
 
-    // 複数行貼り付け
+    // コピーしたタスクの貼り付け
     document.getElementById("gantt_ctx_paste").addEventListener("click", async function() {
         _ctxMenu.style.display = 'none';
         if (_copiedTasks.length === 0) return;
