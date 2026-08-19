@@ -125,7 +125,7 @@ async function loadData() {
     _rebuildOwnerFilterFromRows(data);
 
     // 追加：データ読み込み完了直後にリソースデータを更新
-    if (isResourceView) {
+    if (isResourceView || isResourceFullscreen) {
         updateResourceData();
         gantt.render();
     } else {
