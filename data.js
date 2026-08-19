@@ -1832,6 +1832,8 @@ async function initialize() {
             if (checked[f.key]) return;
             buffered[f.key] = (f.key === 'start_date' || f.key === 'end_date') ? null : "";
         });
+        // 工事番号にチェックが入っている場合はコピー元の工事番号を維持し、貼り付け先の工事番号で上書きしない
+        buffered._pnKeepSource = !!checked['project_number'];
         _copiedTasks = [buffered];
         alert("1件をコピーしました。\n貼り付け先の行を右クリック →「コピーした行を貼り付け」してください。");
     });
