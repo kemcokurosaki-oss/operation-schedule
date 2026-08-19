@@ -1934,7 +1934,15 @@ async function initialize() {
             alert("貼り付け先の行を右クリックしてください。");
             return;
         }
-        const destProject = gantt.getTask(pasteTaskId).project_number;
+        const destTask = gantt.getTask(pasteTaskId);
+        const destModeKey = _copyModeKey(destTask);
+        const mismatched = _copiedTasks.filter(t => _copyModeKey(t) !== destModeKey);
+        if (mismatched.length > 0) {
+            const srcModeKey = _copyModeKey(_copiedTasks[0]);
+            alert(`コピーしたタスクは「${_COPY_MODE_LABELS[srcModeKey] || srcModeKey}」モードのため、「${_COPY_MODE_LABELS[destModeKey] || destModeKey}」モードの行には貼り付けできません。\n同じモードの行を右クリックして貼り付けてください。`);
+            return;
+        }
+        const destProject = destTask.project_number;
 
         // 現在表示中タスクの末尾 sort_order を求める
         const _getSO = t => (t.sort_order != null) ? t.sort_order : t.id * 1000;
@@ -1942,7 +1950,7 @@ async function initialize() {
             const isDetailed = (t.is_detailed === true || String(t.is_detailed).toUpperCase() === 'TRUE');
             if (isDetailed) return false;
             if (String(t.project_number) !== String(destProject)) return false;
-            if (currentTaskTypeFilter && typeof _normalizeTaskTypeForDb === 'function' && _normalizeTaskTypeForDb(t.task_type) !== _normalizeTaskTypeForDb(currentTaskTypeFilter)) return false;
+            if (_copyModeKey(t) !== destModeKey) return false;
             return true;
         }).sort((a, b) => _getSO(a) - _getSO(b));
 
