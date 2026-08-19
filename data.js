@@ -1862,9 +1862,8 @@ async function initialize() {
             alert(`コピーしたタスクは「${_COPY_MODE_LABELS[srcModeKey] || srcModeKey}」モードのため、「${_COPY_MODE_LABELS[destModeKey] || destModeKey}」モードの行には貼り付けできません。\n同じモードの行を右クリックして貼り付けてください。`);
             return;
         }
-        const destProject = destTask.project_number;
-        // コピー元で工事番号にチェックが入っていた場合はその工事番号を維持し、それ以外は貼り付け先の工事番号を使う
-        const _effectiveProject = (src) => (src._pnKeepSource && src.project_number) ? src.project_number : destProject;
+        // 工事番号にチェックが入っていた場合はコピー元の工事番号を維持し、そうでなければ貼り付け先に関わらず空欄にする
+        const _effectiveProject = (src) => (src._pnKeepSource && src.project_number) ? src.project_number : "";
 
         // 実際に使う工事番号ごとに、表示中タスクの末尾 sort_order を求める
         const _getSO = t => (t.sort_order != null) ? t.sort_order : t.id * 1000;
