@@ -863,13 +863,10 @@ html, body { margin: 0; padding: 0; height: 100%; overflow: hidden; font-family:
 }
 #gantt_ctx_copy { color: #1565c0; }
 #gantt_ctx_copy:hover { background: #e3f2fd; }
-#gantt_ctx_copy_multi { color: #1565c0; }
-#gantt_ctx_copy_multi:hover { background: #e3f2fd; }
 #gantt_ctx_paste { color: #2e7d32; }
 #gantt_ctx_paste:hover { background: #e8f5e9; }
 #gantt_ctx_paste.disabled { color: #aaa; pointer-events: none; }
 #gantt_ctx_copy.disabled { color: #aaa; pointer-events: none; }
-#gantt_ctx_copy_multi.disabled { color: #aaa; pointer-events: none; }
 #gantt_ctx_delete { color: #c62828; }
 #gantt_ctx_delete:hover { background: #ffebee; }
 .gantt_ctx_sep { border-top: 1px solid #eee; margin: 3px 0; }
