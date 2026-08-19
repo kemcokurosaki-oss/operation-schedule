@@ -1112,7 +1112,7 @@ function createTask(afterTaskId) {
     const newId = gantt.uid();
     _pendingNewTaskLightboxId = newId;
 
-    const wishDefault = (taskType === 'planning' || taskType === 'business_trip') ? null : _toDateStr(today);
+    const wishDefault = null;
 
     gantt.addTask({
         id: newId,
