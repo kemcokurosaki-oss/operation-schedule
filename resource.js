@@ -6,7 +6,20 @@ let _lastGridClickId = null;
 let isResourceView = false;
 let lastOwnerName = '';
 let currentResourceOwnerFilter = "";
-let _resourceDetailOwner = null; // null=一覧表示, string=特定担当者の詳細表示
+// 担当別モードと通常（ボトムパネル）モードは完全に別画面として扱うため、
+// 個人ドリルダウン状態もモードごとに独立した変数で保持する
+let _resourceDetailOwnerNormal = null;      // 通常モード: null=一覧表示, string=特定担当者の詳細表示
+let _resourceDetailOwnerFullscreen = null;  // 担当別全画面モード: 同上
+function _getResourceDetailOwner() {
+    return isResourceFullscreen ? _resourceDetailOwnerFullscreen : _resourceDetailOwnerNormal;
+}
+function _setResourceDetailOwner(name) {
+    if (isResourceFullscreen) {
+        _resourceDetailOwnerFullscreen = name;
+    } else {
+        _resourceDetailOwnerNormal = name;
+    }
+}
 const dayNames = ['日', '月', '火', '水', '木', '金', '土'];
 const GRID_WIDTH = 1000; // gantt_design.htmlの既存設定に合わせる
 // 列幅（gantt_design.htmlの既存設定に合わせる）
