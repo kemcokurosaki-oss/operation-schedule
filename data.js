@@ -1704,8 +1704,10 @@ async function initialize() {
             isMultiDelete ? `選択した ${_gridSelection.size} 件を削除` : "このタスクを削除";
         document.getElementById("gantt_ctx_edit_multi").textContent =
             isMultiEdit ? `選択した ${_gridSelection.size} 件を編集` : "このタスクを編集";
-        // 貼り付けの有効/無効
-        document.getElementById("gantt_ctx_paste").classList.toggle('disabled', _copiedTasks.length === 0);
+        // 貼り付けの有効/無効（コピー元とモードが異なる行には貼り付け不可）
+        const _rowTask = gantt.isTaskExists(_ctxTaskId) ? gantt.getTask(_ctxTaskId) : null;
+        const _pasteModeMismatch = _copiedTasks.length > 0 && _rowTask && _copyModeKey(_rowTask) !== _copyModeKey(_copiedTasks[0]);
+        document.getElementById("gantt_ctx_paste").classList.toggle('disabled', _copiedTasks.length === 0 || _pasteModeMismatch);
         _ctxMenu.style.display = 'block';
         const menuH = _ctxMenu.offsetHeight;
         const menuW = _ctxMenu.offsetWidth;
