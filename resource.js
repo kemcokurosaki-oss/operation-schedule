@@ -866,6 +866,13 @@ function _exitResourceFullscreen() {
     if (isResourceView) {
         btn.innerText = "リソース表示中 ×";
         btn.classList.add('active');
+        // 担当別モードに入る前、通常モード側で個人詳細表示中だった場合はその見た目も復元する
+        const normalOwner = _resourceDetailOwnerNormal;
+        document.getElementById('resource_title').textContent = normalOwner
+            ? `${normalOwner}さんの詳細リソース状況`
+            : '担当者別リソース状況';
+        document.getElementById('resource_back_btn').style.display = normalOwner ? '' : 'none';
+        document.querySelector(".resource-header-bar").style.display = normalOwner ? '' : 'none';
         updateResourceData();
         panel.style.display = "flex";
     } else {
