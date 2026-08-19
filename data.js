@@ -1671,7 +1671,6 @@ async function initialize() {
     _ctxMenu.id = 'gantt_ctx_menu';
     _ctxMenu.innerHTML =
         '<div id="gantt_ctx_copy"       class="gantt_ctx_item">このタスクをコピー</div>' +
-        '<div id="gantt_ctx_copy_multi" class="gantt_ctx_item">選択した行をコピー（<span id="gantt_ctx_copy_multi_count">0</span>件）</div>' +
         '<div class="gantt_ctx_sep"></div>' +
         '<div id="gantt_ctx_edit_multi" class="gantt_ctx_item">このタスクを編集</div>' +
         '<div class="gantt_ctx_sep"></div>' +
@@ -1681,7 +1680,7 @@ async function initialize() {
     document.body.appendChild(_ctxMenu);
 
     let _ctxTaskId = null;
-    let _copiedTasks = []; // 複数行コピーのバッファ
+    let _copiedTasks = []; // 単一タスクコピーのバッファ（貼り付けるまでは未追加）
 
     document.getElementById("gantt_here").addEventListener("contextmenu", function(e) {
         if (!_isEditor) return;
@@ -1689,17 +1688,11 @@ async function initialize() {
         if (!row) return;
         e.preventDefault();
         _ctxTaskId = row.getAttribute("task_id");
-        // 選択件数を更新
-        document.getElementById("gantt_ctx_copy_multi_count").textContent = _gridSelection.size;
-        // 単一選択時は「このタスクをコピー」、複数選択時は「選択した行をコピー」を表示
-        const isMultiCopy = _gridSelection.size > 1 && _gridSelection.has(String(_ctxTaskId));
-        document.getElementById("gantt_ctx_copy").style.display = isMultiCopy ? "none" : "";
-        document.getElementById("gantt_ctx_copy_multi").style.display = isMultiCopy ? "" : "none";
-        // 一括編集は複数選択時のみ表示（単一選択時は非表示）
-        document.getElementById("gantt_ctx_edit_multi").style.display = isMultiCopy ? "" : "none";
+        // 複数選択中は一括編集・一括削除のみ対象にする（コピーは常に右クリックした行1件のみ）
+        const isMultiEdit = _gridSelection.size > 1 && _gridSelection.has(String(_ctxTaskId));
+        document.getElementById("gantt_ctx_edit_multi").style.display = isMultiEdit ? "" : "none";
         // 削除ラベルを選択数に応じて切り替え
         const isMultiDelete = _gridSelection.size > 1 && _gridSelection.has(String(_ctxTaskId));
-        const isMultiEdit = _gridSelection.size > 1 && _gridSelection.has(String(_ctxTaskId));
         document.getElementById("gantt_ctx_delete").textContent =
             isMultiDelete ? `選択した ${_gridSelection.size} 件を削除` : "このタスクを削除";
         document.getElementById("gantt_ctx_edit_multi").textContent =
