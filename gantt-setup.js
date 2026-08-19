@@ -2004,12 +2004,10 @@ function switchColumns(filterType) {
     gantt.config.columns = _applyColumnFilterButtons(baseCols);
     gantt.config._columnFilterType = filterType;
     _setLayout(_getColsSum(baseCols));
-    // gantt.render() だけでは列数・列幅の DOM 変更が反映されないため init で再構築し、
-    // 直前の loadData() データを再 parse して表示を復元する
-    gantt.init("gantt_here");
-    if (typeof _lastParsedTasks !== 'undefined' && _lastParsedTasks.length > 0) {
-        gantt.parse({ data: _lastParsedTasks });
-    }
+    // gantt.render() だけでは列数・列幅の DOM 変更が反映されないため resetLayout で再構築する。
+    // gantt.init() の再呼び出しはコンテナ DOM を丸ごと作り直してしまい、
+    // ダブルクリック編集やバーのドラッグなどのイベントバインディングが失われることがあるため使わない。
+    gantt.resetLayout();
     gantt.render();
 }
 
