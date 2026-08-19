@@ -1715,6 +1715,12 @@ async function initialize() {
         _ctxMenu.style.left = (left + window.scrollX) + 'px';
     });
 
+    // タスクのモード（試運転／計画／出張）を判定するキー。コピー・貼り付けはこのキーが一致する行同士でのみ許可する
+    function _copyModeKey(task) {
+        return _isTripTask(task) ? 'business_trip' : _normalizeTaskTypeForDb(task.task_type || 'operation');
+    }
+    const _COPY_MODE_LABELS = { operation: '試運転', planning: '計画', business_trip: '出張' };
+
     // コピー項目設定（操業工程表の各モードのグリッド列構成に合わせた項目のみ）
     const COPY_FIELDS_OPERATION = [ // 試運転・計画モード
         { key: 'project_number', label: '工番',   default: true },
