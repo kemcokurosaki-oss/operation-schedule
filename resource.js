@@ -740,7 +740,7 @@ function renderResourceCalendarHeader() {
 }
 
 function showOwnerDetail(ownerName) {
-    _resourceDetailOwner = ownerName;
+    _setResourceDetailOwner(ownerName);
     document.getElementById('resource_title').textContent = `${ownerName}さんの詳細リソース状況`;
     document.getElementById('resource_back_btn').style.display = '';
     document.querySelector(".resource-header-bar").style.display = '';
