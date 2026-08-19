@@ -1831,17 +1831,6 @@ async function initialize() {
         alert("1件をコピーしました。\n貼り付け先の行を右クリック →「コピーした行を貼り付け」してください。");
     });
 
-    // 複数行コピー
-    document.getElementById("gantt_ctx_copy_multi").addEventListener("click", function() {
-        _ctxMenu.style.display = 'none';
-        if (_gridSelection.size === 0) { alert("行を選択してからコピーしてください。"); return; }
-        _copiedTasks = [..._gridSelection]
-            .map(id => gantt.isTaskExists(id) ? gantt.getTask(id) : null)
-            .filter(Boolean);
-        alert(`${_copiedTasks.length} 行をコピーしました。\n貼り付け先の行を右クリック →「コピーした行を貼り付け」してください。`);
-        _ctxTaskId = null;
-    });
-
     // 複数行一括編集
     document.getElementById("gantt_ctx_edit_multi").addEventListener("click", function() {
         _ctxMenu.style.display = "none";
