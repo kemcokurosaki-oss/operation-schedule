@@ -781,7 +781,9 @@ function _syncCalendarHeaderScroll(left) {
 // リソース全画面モードに入る（フィルターなし初期表示用）
 function _enterResourceFullscreen() {
     isResourceFullscreen = true;
-    isResourceView = true;
+    // isResourceView（通常モードのボトムパネル表示状態）はここでは変更しない。
+    // 担当別モードを抜けた際に、入る前の状態へ復元するために保持しておく。
+    // 担当別モード中の再描画判定は isResourceFullscreen 側で行う。
     // 担当者・機械・ユニットフィルターをリセット
     currentOwnerFilter = [];
     _updateOwnerFilterBtn();
