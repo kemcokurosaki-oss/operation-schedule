@@ -1882,10 +1882,10 @@ async function initialize() {
                 total_sheets:     _n('total_sheets'),
                 completed_sheets: _n('completed_sheets'),
                 wish_date:        src.wish_date || null,
-                task_type:        _normalizeTaskTypeForDb(currentTaskTypeFilter || src.task_type || "operation"),
+                task_type:        _copyModeKey(src),
                 is_detailed:      false,
                 major_item:       '操業',
-                is_business_trip: currentTaskTypeFilter === 'business_trip' ? true : false,
+                is_business_trip: _copyModeKey(src) === 'business_trip',
                 sort_order:       insertSortOrder
             }])
             .select();
