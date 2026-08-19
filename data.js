@@ -1449,7 +1449,7 @@ function toggleTripFilter()      { setTaskTypeFilter('business_trip'); }
 // 工事番号セレクトボックスの表示更新
 function updateDisplay() {
 
-    if (isResourceView) {
+    if (isResourceView || isResourceFullscreen) {
         updateResourceData();
     }
     gantt.render();
