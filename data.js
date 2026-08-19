@@ -1437,12 +1437,9 @@ function setTaskTypeFilter(type) {
     _rebuildMachineFilterOptionsFromGantt();
     _rebuildUnitFilterOptionsFromGantt();
     _rebuildOwnerFilterOptionsFromGantt();
-    // ブラウザの描画確定後にズームレベルを再設定してカレンダーヘッダーを完全再描画
-    setTimeout(() => {
-        gantt.setSizes();
-        const currentLevel = document.querySelector('.zoom-btn.active')?.textContent === '週単位' ? 'week' : 'day';
-        gantt.ext.zoom.setLevel(currentLevel);
-    }, 0);
+    // レイアウト確定前に setSizes すると日付ヘッダー・クリック判定が崩れるため、
+    // タブ復帰時と同じ2フレーム遅延の再描画に統一する（_scheduleRefreshMainGanttAfterShow参照）
+    _scheduleRefreshMainGanttAfterShow();
 }
 
 function togglePlanFilter()      { setTaskTypeFilter('planning'); }
