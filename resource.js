@@ -839,8 +839,8 @@ function _enterResourceFullscreen() {
 function _exitResourceFullscreen() {
     isResourceFullscreen = false;
     isResourceView = false;
-    // 担当別モードを抜けたら個人ドリルダウン状態もリセット（次回リソース表示時に一覧から開始させる）
-    _resourceDetailOwner = null;
+    // 担当別モードの個人ドリルダウン状態をリセット（通常モード側の状態には影響させない）
+    _resourceDetailOwnerFullscreen = null;
     const resourceTitle = document.getElementById('resource_title');
     if (resourceTitle) resourceTitle.textContent = '担当者別リソース状況';
     const resourceBackBtn = document.getElementById('resource_back_btn');
