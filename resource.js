@@ -807,8 +807,8 @@ function _enterResourceFullscreen() {
     void panel.offsetHeight; // 強制リフロー：レイアウトを確定させる
     btn.style.display = "none";
     document.getElementById("resource_close_btn").style.display = "none";
-    if (_resourceDetailOwner) {
-        document.getElementById('resource_title').textContent = `${_resourceDetailOwner}さんの詳細リソース状況`;
+    if (_getResourceDetailOwner()) {
+        document.getElementById('resource_title').textContent = `${_getResourceDetailOwner()}さんの詳細リソース状況`;
         document.getElementById('resource_back_btn').style.display = '';
         document.querySelector(".resource-header-bar").style.display = '';
     } else {
