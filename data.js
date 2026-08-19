@@ -1543,7 +1543,10 @@ async function initialize() {
     });
 
     // 1. Gantt初期化（デフォルトは読み取り専用、ログイン後に解除）
-    gantt.config.readonly = true;
+    // supabaseClient.auth.onAuthStateChange の初回通知（ログイン済みセッションの復元）が
+    // ここより先に発火して _isEditor / readonly が確定していることがあるため、無条件に true で
+    // 上書きせず既知の認証状態を尊重する（さもないとログイン済みでも編集不可のまま固定される）
+    gantt.config.readonly = !_isEditor;
     gantt.config.columns = _getDrawingColumns();
     gantt.config._columnFilterType = 'operation';
     _setLayout(_getColsSum(gantt.config.columns));
