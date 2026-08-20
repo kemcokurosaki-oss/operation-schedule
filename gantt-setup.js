@@ -1159,6 +1159,13 @@ function createTask(afterTaskId) {
 
 // 完了予定日クリア時：フラグを元にhas_no_dateを設定
 gantt.attachEvent("onBeforeTaskUpdate", function(id, task) {
+    // Undo/Redo用：変更前の状態をスナップショットしておく（新規追加中の仮行は対象外）
+    if (!(_pendingNewTaskLightboxId != null && String(id) === String(_pendingNewTaskLightboxId)) && gantt.isTaskExists(id)) {
+        _undoBeforeSnapshot = { id: id, task: _cloneTaskSnapshot(gantt.getTask(id)) };
+    } else {
+        _undoBeforeSnapshot = null;
+    }
+
     if (_clearingEndDateId === id) {
         task.has_no_date = true;
         _clearingEndDateId = null;
@@ -1178,6 +1185,23 @@ gantt.attachEvent("onBeforeTaskUpdate", function(id, task) {
     _dateEditField = null;
     _dateEditOriginal = null;
 
+    return true;
+});
+
+// ドラッグ（移動・リサイズ）開始時：Undo/Redo用に変更前の状態をスナップショットしておく
+gantt.attachEvent("onBeforeTaskDrag", function(id) {
+    if (!(_pendingNewTaskLightboxId != null && String(_pendingNewTaskLightboxId) === String(id)) && gantt.isTaskExists(id)) {
+        _undoBeforeSnapshot = { id: id, task: _cloneTaskSnapshot(gantt.getTask(id)) };
+    } else {
+        _undoBeforeSnapshot = null;
+    }
+    return true;
+});
+
+// 削除実行前：Undo用に削除される行の内容をスナップショットしておく
+gantt.attachEvent("onBeforeTaskDelete", function(id, item) {
+    const isSuppressed = _suppressTaskDeleteId != null && String(_suppressTaskDeleteId) === String(id);
+    _undoBeforeSnapshot = isSuppressed ? null : { id: id, task: _cloneTaskSnapshot(item || gantt.getTask(id)) };
     return true;
 });
 
