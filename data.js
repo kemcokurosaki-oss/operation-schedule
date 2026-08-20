@@ -1537,14 +1537,13 @@ async function initialize() {
     console.log("URLパラメータ:", projectParam);
 
     // 0. プラグインの有効化
+    // ※ Undo/Redo（元に戻す・やり直し）は、このアプリが読み込んでいるdhtmlxGanttの
+    //   無償版CDNビルドには拡張が含まれていないため、gantt-setup.js側で自前実装している
+    //   （_undoStack/_redoStack, ganttUndo()/ganttRedo() を参照）
     gantt.plugins({
         marker: true,
-        multiselect: true,
-        undo: true
+        multiselect: true
     });
-    gantt.config.undo = true;
-    gantt.config.redo = true;
-    gantt.config.undo_steps = 20;
 
     // 1. Gantt初期化（デフォルトは読み取り専用、ログイン後に解除）
     // supabaseClient.auth.onAuthStateChange の初回通知（ログイン済みセッションの復元）が
