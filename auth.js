@@ -57,8 +57,11 @@ function _updateUIForAuth(isEditor) {
     _isEditor = isEditor;
     gantt.config.readonly = !isEditor;
     document.getElementById('create_task_btn').style.display  = isEditor ? '' : 'none';
+    document.getElementById('undo_btn').style.display  = isEditor ? '' : 'none';
+    document.getElementById('redo_btn').style.display  = isEditor ? '' : 'none';
     document.getElementById('multi_delete_btn').style.display  = isEditor ? '' : 'none';
     document.getElementById('archive_btn_wrap').style.display  = isEditor ? '' : 'none';
+    if (typeof _updateUndoRedoButtons === 'function') _updateUndoRedoButtons();
     const authBtn = document.getElementById('auth_btn');
     if (authBtn) {
         authBtn.textContent = isEditor ? 'ログアウト' : 'ログイン';
