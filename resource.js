@@ -369,12 +369,7 @@ function renderResourceTimeline(owners) {
         const allOwnerTasks = [];
         gantt.eachTask(t => {
             const isDetailed = (t.is_detailed === true || String(t.is_detailed).toLowerCase() === "true" || String(t.is_detailed).toLowerCase() === "t" || String(t.is_detailed) === "1");
-            let isMatch = false;
-            if (!isDetailed && t.owner) {
-                const taskOwners = String(t.owner).split(/[,、\s]+/).map(o => o.trim());
-                isMatch = taskOwners.includes(ownerName);
-            }
-            if (isMatch) allOwnerTasks.push(t);
+            if (!isDetailed && _taskMatchesOwnerName(t, ownerName)) allOwnerTasks.push(t);
         });
 
         const colorClass = getOwnerColorClass(ownerName);
