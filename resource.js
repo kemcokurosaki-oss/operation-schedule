@@ -47,6 +47,18 @@ function getOwnerColorClass(ownerStr) {
     return "owner-default";
 }
 
+// 担当者未定のタスクを担当別モードでまとめて表示するための仮想担当者名
+const UNASSIGNED_OWNER_LABEL = "未定";
+
+// タスクが指定の担当者（"未定"の場合は担当者未設定）に該当するか判定
+function _taskMatchesOwnerName(task, ownerName) {
+    const ownerStr = String(task.owner || '').trim();
+    if (ownerName === UNASSIGNED_OWNER_LABEL) return ownerStr === '';
+    if (!ownerStr) return false;
+    const owners = ownerStr.split(/[,、\s]+/).map(o => o.trim());
+    return owners.includes(ownerName);
+}
+
 // タスクタイプ別の色定義
 const TASK_TYPE_COLORS = {
     planning:       { bg: '#e3f2fd', color: '#1565c0' },  // 青系（計画）
