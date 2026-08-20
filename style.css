@@ -29,6 +29,7 @@ html, body { margin: 0; padding: 0; height: 100%; overflow: hidden; font-family:
 }
 .action-controls { margin-left: auto; display: flex; gap: 5px; }
 .btn { padding: 2px 10px; cursor: pointer; background: #f0f0f0; border: 1px solid #ccc; border-radius: 4px; font-size: 13px; font-family: "メイリオ", Meiryo, sans-serif; }
+.btn:disabled { cursor: default; opacity: 0.45; }
 
 .btn-primary { background: #2ecc71; color: #fff; border-color: #27ae60; font-weight: bold; }
 .btn-info { background: #f0f0f0; color: #333; border-color: #ccc; font-weight: normal; }
