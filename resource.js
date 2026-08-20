@@ -301,6 +301,19 @@ function updateResourceData() {
         }
     });
 
+    // 担当者未定（is_detailed でない かつ owner 未設定）のタスクがあれば「未定」行を末尾に追加
+    let hasUnassignedTask = false;
+    gantt.eachTask(function(task){
+        if (hasUnassignedTask) return;
+        const isDetailed = (task.is_detailed === true || String(task.is_detailed).toLowerCase() === "true" || String(task.is_detailed).toLowerCase() === "t" || String(task.is_detailed) === "1");
+        if (!isDetailed && String(task.owner || '').trim() === '') {
+            hasUnassignedTask = true;
+        }
+    });
+    if (hasUnassignedTask) {
+        activeOwners.push(UNASSIGNED_OWNER_LABEL);
+    }
+
     console.log("Found active owners for resource view:", activeOwners);
     if (_getResourceDetailOwner()) {
         renderOwnerDetailTimeline(_getResourceDetailOwner());
