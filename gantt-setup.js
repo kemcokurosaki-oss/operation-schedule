@@ -727,9 +727,9 @@ function _renderMultiEditForm() {
     function renderField(def) {
         if (def.inputType === "owner_multi") {
             const chks = OWNER_OPTIONS.map(function(n) {
-                return `<label style="display:inline-flex;align-items:center;gap:3px;padding:2px 7px;cursor:pointer;white-space:nowrap;font-size:12px;"><input type="checkbox" class="owner-me-chk" value="${n}"> ${n}</label>`;
+                return `<label style="display:inline-flex;align-items:center;gap:4px;padding:4px 10px;cursor:pointer;white-space:nowrap;font-size:13px;border:1px solid #ddd;border-radius:14px;background:#f7f9fc;"><input type="checkbox" class="owner-me-chk" value="${n}"> ${n}</label>`;
             }).join('');
-            return `<label>${def.label}<div style="display:flex;flex-wrap:wrap;border:1px solid #ccc;border-radius:3px;padding:3px;background:#fff;" data-me-owner-wrap>
+            return `<label class="me-owner-label">${def.label}<div style="display:flex;flex-wrap:wrap;gap:6px;border:1px solid #ccc;border-radius:4px;padding:6px;background:#fff;" data-me-owner-wrap>
                 ${chks}
                 <input type="hidden" data-me-key="${def.key}" data-me-type="owner_multi" value="">
             </div></label>`;
