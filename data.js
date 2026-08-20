@@ -1688,10 +1688,10 @@ async function initialize() {
         if (!row) return;
         e.preventDefault();
         _ctxTaskId = row.getAttribute("task_id");
-        // 複数選択中は一括編集・一括削除のみ対象にする（コピーは1行専用のため複数選択中は非表示）
+        // 複数選択中は一括編集・一括削除が対象。コピーは1行専用のため複数選択中は選択不可（表示は維持）
         const isMultiEdit = _gridSelection.size > 1 && _gridSelection.has(String(_ctxTaskId));
         document.getElementById("gantt_ctx_edit_multi").style.display = isMultiEdit ? "" : "none";
-        document.getElementById("gantt_ctx_copy").style.display = isMultiEdit ? "none" : "";
+        document.getElementById("gantt_ctx_copy").classList.toggle('disabled', isMultiEdit);
         // 削除ラベルを選択数に応じて切り替え
         const isMultiDelete = _gridSelection.size > 1 && _gridSelection.has(String(_ctxTaskId));
         document.getElementById("gantt_ctx_delete").textContent =
