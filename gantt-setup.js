@@ -1498,9 +1498,19 @@ gantt.form_blocks["owner_select_lb"] = {
             e.stopPropagation();
             if (popup.style.display === 'none') {
                 const rect = display.getBoundingClientRect();
-                popup.style.left = rect.left + 'px';
-                popup.style.top = (rect.bottom + 2) + 'px';
                 popup.style.display = 'block';
+                const dh = popup.offsetHeight;
+                const dw = popup.offsetWidth;
+                let top = rect.bottom + 2;
+                if (top + dh > window.innerHeight) {
+                    top = Math.max(0, rect.top - dh - 2);
+                }
+                let left = rect.left;
+                if (left + dw > window.innerWidth) {
+                    left = Math.max(0, window.innerWidth - dw);
+                }
+                popup.style.top = top + 'px';
+                popup.style.left = left + 'px';
             } else {
                 popup.style.display = 'none';
             }
