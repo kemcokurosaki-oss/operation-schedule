@@ -94,6 +94,8 @@ var HELP_TIPS = [
     { id: 'auth_btn',            title: 'ログイン',           text: '編集者としてログイン\nタスクの追加・編集・削除が可能になります' },
     { id: 'resource_toggle',     title: 'リソース表示',       text: 'ガントチャート下部に\n担当者別の業務状況を並列表示' },
     { id: 'create_task_btn',     title: '新規タスク追加',     text: '編集画面で入力してから追加します。並びは工事番号・機械・ユニットが同じ行の直後になります（要ログイン）' },
+    { id: 'undo_btn',            title: '元に戻す',          text: '直前の編集操作を取り消します（Ctrl+Z）' },
+    { id: 'redo_btn',            title: 'やり直し',          text: '元に戻した操作をやり直します（Ctrl+Y）' },
     { id: 'done_work_list_btn',  title: '完了工事一覧',       text: '完了工事の一覧・詳細の参照（要ログイン）' },
 ];
 var GRID_TIP = {
