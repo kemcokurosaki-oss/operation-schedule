@@ -47,13 +47,12 @@ function getOwnerColorClass(ownerStr) {
     return "owner-default";
 }
 
-// 担当者未定のタスクを担当別モードでまとめて表示するための仮想担当者名
+// 担当者が「未定」と入力されているタスクを担当別モードでまとめて表示するための担当者名
 const UNASSIGNED_OWNER_LABEL = "未定";
 
-// タスクが指定の担当者（"未定"の場合は担当者未設定）に該当するか判定
+// タスクが指定の担当者名に該当するか判定（owner欄が空のタスクは対象外）
 function _taskMatchesOwnerName(task, ownerName) {
     const ownerStr = String(task.owner || '').trim();
-    if (ownerName === UNASSIGNED_OWNER_LABEL) return ownerStr === '';
     if (!ownerStr) return false;
     const owners = ownerStr.split(/[,、\s]+/).map(o => o.trim());
     return owners.includes(ownerName);
