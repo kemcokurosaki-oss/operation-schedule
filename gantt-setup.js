@@ -5,6 +5,25 @@ gantt.config.date_format = "%Y-%m-%d";
 var _dateEditField = null;    // 'start' | 'end' | null
 var _dateEditOriginal = null; // { id, start_date, end_date }
 
+// ===== 元に戻す（Undo）／やり直し（Redo）履歴 =====
+// dhtmlxGanttの無償版にはUndo拡張が含まれていないため、編集前後の状態を自前でスタック管理する。
+var _undoStack = [];
+var _redoStack = [];
+var _UNDO_STACK_LIMIT = 20;
+var _undoBeforeSnapshot = null; // 直前の onBefore* イベントで採取した変更前スナップショット { id, task }
+
+// gantt内部管理用のプロパティ（$始まり）を除いてタスクの内容を複製する
+function _cloneTaskSnapshot(task) {
+    const clone = {};
+    for (const k in task) {
+        if (!Object.prototype.hasOwnProperty.call(task, k)) continue;
+        if (k.charAt(0) === '$') continue;
+        const v = task[k];
+        clone[k] = (v instanceof Date) ? new Date(v.getTime()) : v;
+    }
+    return clone;
+}
+
 /** DB 保存・表示モード用: task_type は planning / operation（試運転）/ business_trip のみ（drawing・long_lead_item・field_trip は廃止し operation・business_trip に正規化） */
 function _normalizeTaskTypeForDb(tt) {
     const sl = String(tt == null ? '' : tt).trim().toLowerCase();
