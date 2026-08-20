@@ -37,6 +37,8 @@
                 <button class="btn btn-info" id="resource_toggle" onclick="toggleResourceView()">リソース表示</button>
                 <button class="btn btn-primary" id="create_task_btn" onclick="createTask()" style="display:none;">+ 新規タスク追加</button>
                 <div class="action-controls">
+                    <button class="btn" id="undo_btn" onclick="ganttUndo()" style="display:none;" disabled title="元に戻す (Ctrl+Z)">↩ 元に戻す</button>
+                    <button class="btn" id="redo_btn" onclick="ganttRedo()" style="display:none;" disabled title="やり直し (Ctrl+Y)">↪ やり直し</button>
                     <button class="btn" id="multi_delete_btn" onclick="deleteSelectedTasks()" style="display:none;">選択削除 (<span id="multi_delete_count">0</span>件)</button>
                     <div style="position:relative;display:none;" id="archive_btn_wrap">
                         <button type="button" class="btn" id="done_work_list_btn" onclick="openArchiveList()">完了工事一覧</button>
