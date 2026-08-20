@@ -1194,6 +1194,53 @@ gantt.attachEvent("onAfterTaskUpdate", function(id) {
     return true;
 });
 
+// タスクの現在値をSupabaseへ反映する共通処理（通常編集・Undo/Redoの巻き戻し先どちらからも呼ばれる）
+async function _saveTaskToDb(id, item) {
+    // has_no_dateの場合はend_dateをnullで保存、それ以外は-1日して完了日を保存
+    const endDateStr = item.has_no_date
+        ? null
+        : _toDateStr(gantt.date.add(new Date(item.end_date), -1, 'day'));
+
+    return supabaseClient
+        .from('tasks')
+        .update({
+            text: item.text,
+            start_date: _toDateStr(item.start_date),
+            end_date: endDateStr,
+            project_number: item.project_number,
+            machine: item.machine,
+            unit: item.unit,
+            unit2: item.unit2,
+            model_type: item.model_type,
+            part_number: item.part_number,
+            quantity: item.quantity,
+            manufacturer: item.manufacturer,
+            status: item.status,
+            customer_name: item.customer_name,
+            project_details: item.project_details,
+            hyphen: item.hyphen ?? null,
+            characteristic: item.characteristic,
+            derivation: item.derivation,
+            owner: item.owner,
+            total_sheets: Number(item.total_sheets) || 0,
+            completed_sheets: Number(item.completed_sheets) || 0,
+            duration: item.duration,
+            // 全体工程表側で作成された行（task_type が元々未設定）は、操業工程表で編集しても
+            // task_type を自動入力しない。既存の値がある場合のみ正規化して保持する
+            // （新規追加時のみ _finalizePendingNewTaskToDb で 'operation' 等を自動設定する）
+            task_type: item.task_type ? _normalizeTaskTypeForDb(item.task_type) : null,
+            wish_date: item.wish_date || null,
+            is_business_trip: (currentTaskTypeFilter === 'business_trip' || item.is_business_trip === true || String(item.is_business_trip).toUpperCase() === 'TRUE') ? true : false,
+            last_updated_by: (typeof window._getCurrentEditorName === 'function' ? window._getCurrentEditorName() : '') || ''
+        })
+        .eq('id', id);
+}
+
+// タスクをSupabaseから削除する共通処理（通常削除・Undo/Redoの巻き戻し先どちらからも呼ばれる）
+async function _deleteTaskFromDb(id) {
+    return supabaseClient.from('tasks').delete().eq('id', id);
+}
+
 gantt.attachEvent("onAfterTaskUpdate", async function(id, item) {
     try {
         // 新規（createTask の仮行）の DB 反映は onAfterLightbox 経由の _finalizePendingNewTaskToDb で行う
@@ -1201,44 +1248,7 @@ gantt.attachEvent("onAfterTaskUpdate", async function(id, item) {
             return;
         }
 
-        // has_no_dateの場合はend_dateをnullで保存、それ以外は-1日して完了日を保存
-        const endDateStr = item.has_no_date
-            ? null
-            : _toDateStr(gantt.date.add(new Date(item.end_date), -1, 'day'));
-
-        const { error } = await supabaseClient
-            .from('tasks')
-            .update({
-                text: item.text,
-                start_date: _toDateStr(item.start_date),
-                end_date: endDateStr,
-                project_number: item.project_number,
-                machine: item.machine,
-                unit: item.unit,
-                unit2: item.unit2,
-                model_type: item.model_type,
-                part_number: item.part_number,
-                quantity: item.quantity,
-                manufacturer: item.manufacturer,
-                status: item.status,
-                customer_name: item.customer_name,
-                project_details: item.project_details,
-                hyphen: item.hyphen ?? null,
-                characteristic: item.characteristic,
-                derivation: item.derivation,
-                owner: item.owner,
-                total_sheets: Number(item.total_sheets) || 0,
-                completed_sheets: Number(item.completed_sheets) || 0,
-                duration: item.duration,
-                // 全体工程表側で作成された行（task_type が元々未設定）は、操業工程表で編集しても
-                // task_type を自動入力しない。既存の値がある場合のみ正規化して保持する
-                // （新規追加時のみ _finalizePendingNewTaskToDb で 'operation' 等を自動設定する）
-                task_type: item.task_type ? _normalizeTaskTypeForDb(item.task_type) : null,
-                wish_date: item.wish_date || null,
-                is_business_trip: (currentTaskTypeFilter === 'business_trip' || item.is_business_trip === true || String(item.is_business_trip).toUpperCase() === 'TRUE') ? true : false,
-                last_updated_by: (typeof window._getCurrentEditorName === 'function' ? window._getCurrentEditorName() : '') || ''
-            })
-            .eq('id', id);
+        const { error } = await _saveTaskToDb(id, item);
 
         if (error) {
             console.error("Error updating task:", error);
@@ -1283,11 +1293,8 @@ gantt.attachEvent("onAfterTaskDelete", async function(id, item) {
         return;
     }
     try {
-        const { error } = await supabaseClient
-            .from('tasks')
-            .delete()
-            .eq('id', id);
-        
+        const { error } = await _deleteTaskFromDb(id);
+
         if (error) {
             console.error("Error deleting task:", error);
             alert("タスクの削除に失敗しました。\n" + error.message);
@@ -1295,6 +1302,87 @@ gantt.attachEvent("onAfterTaskDelete", async function(id, item) {
     } catch (e) {
         console.error("Exception in onAfterTaskDelete:", e);
         alert("タスク削除中に予期せぬエラーが発生しました。");
+    }
+});
+
+// ===== 元に戻す（Undo）／やり直し（Redo） =====
+// dhtmlxGantt の undo/redo は画面上のタスクを巻き戻すだけで、Supabase への保存は保証されない。
+// そのため巻き戻し後の gantt 内部の状態を正とみなし、対象タスクが存在すれば保存、存在しなければ削除して
+// DB側を突き合わせる（既存の onAfterTaskUpdate 等が二重に発火しても、同じ内容の上書きなので実害はない）。
+async function _reconcileTaskAfterUndoRedo(id) {
+    try {
+        if (gantt.isTaskExists(id)) {
+            const { error } = await _saveTaskToDb(id, gantt.getTask(id));
+            if (error) console.error("Undo/Redo後の保存に失敗:", error);
+        } else {
+            const { error } = await _deleteTaskFromDb(id);
+            if (error) console.error("Undo/Redo後の削除に失敗:", error);
+        }
+    } catch (e) {
+        console.error("Exception in _reconcileTaskAfterUndoRedo:", e);
+    }
+}
+
+function _handleUndoRedoActions(actions) {
+    (actions || []).forEach(function (cmd) {
+        if (!cmd || cmd.entity !== 'task') return; // リンク（依存関係）は対象外
+        const id = (cmd.value && cmd.value.id != null) ? cmd.value.id
+            : (cmd.oldValue && cmd.oldValue.id != null) ? cmd.oldValue.id
+            : null;
+        if (id == null) return;
+        _reconcileTaskAfterUndoRedo(id);
+    });
+    if (isResourceView || isResourceFullscreen) updateResourceData();
+    _updateUndoRedoButtons();
+}
+
+gantt.attachEvent("onAfterUndo", function (actions) {
+    _handleUndoRedoActions(actions);
+});
+gantt.attachEvent("onAfterRedo", function (actions) {
+    _handleUndoRedoActions(actions);
+});
+
+function ganttUndo() {
+    if (!_isEditor) return;
+    if (typeof gantt.undo === 'function') gantt.undo();
+}
+function ganttRedo() {
+    if (!_isEditor) return;
+    if (typeof gantt.redo === 'function') gantt.redo();
+}
+
+function _updateUndoRedoButtons() {
+    const undoBtn = document.getElementById('undo_btn');
+    const redoBtn = document.getElementById('redo_btn');
+    if (!undoBtn || !redoBtn) return;
+    const undoStack = (typeof gantt.getUndoStack === 'function') ? gantt.getUndoStack() : [];
+    const redoStack = (typeof gantt.getRedoStack === 'function') ? gantt.getRedoStack() : [];
+    undoBtn.disabled = !(undoStack && undoStack.length);
+    redoBtn.disabled = !(redoStack && redoStack.length);
+}
+
+// 編集の度にUndo/Redoボタンの有効・無効を更新
+gantt.attachEvent("onAfterTaskUpdate", function () { _updateUndoRedoButtons(); return true; });
+gantt.attachEvent("onAfterTaskDrag", function () { _updateUndoRedoButtons(); return true; });
+gantt.attachEvent("onAfterTaskDelete", function () { _updateUndoRedoButtons(); return true; });
+gantt.attachEvent("onAfterTaskAdd", function () { _updateUndoRedoButtons(); return true; });
+
+// テキスト入力中（インライン編集・ライトボックス等）はブラウザ標準のUndoに任せ、
+// それ以外の場面でのみ Ctrl+Z / Ctrl+Y（またはCtrl+Shift+Z）でガントのUndo/Redoを実行する
+document.addEventListener('keydown', function (e) {
+    if (!_isEditor) return;
+    const tag = (e.target && e.target.tagName) || '';
+    const isEditableField = tag === 'INPUT' || tag === 'TEXTAREA' || tag === 'SELECT' || (e.target && e.target.isContentEditable);
+    if (isEditableField) return;
+    if (!(e.ctrlKey || e.metaKey)) return;
+    const key = e.key.toLowerCase();
+    if (key === 'z' && !e.shiftKey) {
+        e.preventDefault();
+        ganttUndo();
+    } else if (key === 'y' || (key === 'z' && e.shiftKey)) {
+        e.preventDefault();
+        ganttRedo();
     }
 });
 
