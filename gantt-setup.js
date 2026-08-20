@@ -1274,12 +1274,10 @@ gantt.attachEvent("onAfterTaskUpdate", async function(id, item) {
     try {
         // 新規（createTask の仮行）の DB 反映は onAfterLightbox 経由の _finalizePendingNewTaskToDb で行う
         if (_pendingNewTaskLightboxId != null && String(id) === String(_pendingNewTaskLightboxId)) {
-            _undoBeforeSnapshot = null;
             return;
         }
 
-        const beforeSnap = (_undoBeforeSnapshot && String(_undoBeforeSnapshot.id) === String(id)) ? _undoBeforeSnapshot.task : null;
-        _undoBeforeSnapshot = null;
+        const beforeState = _lastKnownTaskState[id] || null;
 
         const { error } = await _saveTaskToDb(id, item);
 
@@ -1287,9 +1285,10 @@ gantt.attachEvent("onAfterTaskUpdate", async function(id, item) {
             console.error("Error updating task:", error);
             alert("タスクの更新に失敗しました。\n" + error.message);
         } else {
-            if (beforeSnap) {
-                _pushUndoEntry({ type: 'update', id: id, before: beforeSnap, after: _cloneTaskSnapshot(item) });
+            if (beforeState) {
+                _pushUndoEntry({ type: 'update', id: id, before: beforeState, after: _cloneTaskSnapshot(item) });
             }
+            _rememberTaskState(id, item);
             if (isResourceView || isResourceFullscreen) updateResourceData();
             // ▼マークの色を即時更新
             requestAnimationFrame(_renderWishDateMarks);
@@ -1303,13 +1302,11 @@ gantt.attachEvent("onAfterTaskUpdate", async function(id, item) {
 // ドラッグ（移動・リサイズ）後にSupabaseへ保存
 gantt.attachEvent("onAfterTaskDrag", async function(id, mode, e) {
     if (_pendingNewTaskLightboxId != null && String(_pendingNewTaskLightboxId) === String(id)) {
-        _undoBeforeSnapshot = null;
         return;
     }
     const item = gantt.getTask(id);
     const completionDate = gantt.date.add(new Date(item.end_date), -1, 'day');
-    const beforeSnap = (_undoBeforeSnapshot && String(_undoBeforeSnapshot.id) === String(id)) ? _undoBeforeSnapshot.task : null;
-    _undoBeforeSnapshot = null;
+    const beforeState = _lastKnownTaskState[id] || null;
     try {
         const { error } = await supabaseClient
             .from('tasks')
@@ -1321,9 +1318,10 @@ gantt.attachEvent("onAfterTaskDrag", async function(id, mode, e) {
             .eq('id', id);
         if (error) console.error("Error saving drag:", error);
         else {
-            if (beforeSnap) {
-                _pushUndoEntry({ type: 'update', id: id, before: beforeSnap, after: _cloneTaskSnapshot(item) });
+            if (beforeState) {
+                _pushUndoEntry({ type: 'update', id: id, before: beforeState, after: _cloneTaskSnapshot(item) });
             }
+            _rememberTaskState(id, item);
             if (isResourceView || isResourceFullscreen) updateResourceData();
         }
     } catch(e) {
@@ -1334,11 +1332,10 @@ gantt.attachEvent("onAfterTaskDrag", async function(id, mode, e) {
 gantt.attachEvent("onAfterTaskDelete", async function(id, item) {
     if (_suppressTaskDeleteId != null && String(_suppressTaskDeleteId) === String(id)) {
         _suppressTaskDeleteId = null;
-        _undoBeforeSnapshot = null;
+        _forgetTaskState(id);
         return;
     }
-    const beforeSnap = (_undoBeforeSnapshot && String(_undoBeforeSnapshot.id) === String(id)) ? _undoBeforeSnapshot.task : _cloneTaskSnapshot(item);
-    _undoBeforeSnapshot = null;
+    const beforeState = _lastKnownTaskState[id] || _cloneTaskSnapshot(item);
     try {
         const { error } = await _deleteTaskFromDb(id);
 
@@ -1346,7 +1343,8 @@ gantt.attachEvent("onAfterTaskDelete", async function(id, item) {
             console.error("Error deleting task:", error);
             alert("タスクの削除に失敗しました。\n" + error.message);
         } else {
-            _pushUndoEntry({ type: 'delete', id: id, before: beforeSnap });
+            _pushUndoEntry({ type: 'delete', id: id, before: beforeState });
+            _forgetTaskState(id);
         }
     } catch (e) {
         console.error("Exception in onAfterTaskDelete:", e);
