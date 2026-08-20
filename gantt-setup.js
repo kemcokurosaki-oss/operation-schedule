@@ -10,7 +10,10 @@ var _dateEditOriginal = null; // { id, start_date, end_date }
 var _undoStack = [];
 var _redoStack = [];
 var _UNDO_STACK_LIMIT = 20;
-var _undoBeforeSnapshot = null; // 直前の onBefore* イベントで採取した変更前スナップショット { id, task }
+// id -> 直近にDBへ保存が確認された状態のスナップショット。Undoの「変更前」の基準値として使う。
+// （ドラッグ中・編集中の「onBefore」イベント時点でのスナップショットは、確定直前の値まで
+// 　更新されてしまっていて変更前の値として使えないことがあるため、保存成功時点の値のみを信頼する）
+var _lastKnownTaskState = {};
 
 // gantt内部管理用のプロパティ（$始まり）を除いてタスクの内容を複製する
 function _cloneTaskSnapshot(task) {
@@ -22,6 +25,13 @@ function _cloneTaskSnapshot(task) {
         clone[k] = (v instanceof Date) ? new Date(v.getTime()) : v;
     }
     return clone;
+}
+
+function _rememberTaskState(id, task) {
+    _lastKnownTaskState[id] = _cloneTaskSnapshot(task);
+}
+function _forgetTaskState(id) {
+    delete _lastKnownTaskState[id];
 }
 
 /** DB 保存・表示モード用: task_type は planning / operation（試運転）/ business_trip のみ（drawing・long_lead_item・field_trip は廃止し operation・business_trip に正規化） */
