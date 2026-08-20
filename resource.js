@@ -300,12 +300,12 @@ function updateResourceData() {
         }
     });
 
-    // 担当者未定（is_detailed でない かつ owner 未設定）のタスクがあれば「未定」行を末尾に追加
+    // owner欄に「未定」と入力されているタスクがあれば「未定」行を末尾に追加
     let hasUnassignedTask = false;
     gantt.eachTask(function(task){
         if (hasUnassignedTask) return;
         const isDetailed = (task.is_detailed === true || String(task.is_detailed).toLowerCase() === "true" || String(task.is_detailed).toLowerCase() === "t" || String(task.is_detailed) === "1");
-        if (!isDetailed && String(task.owner || '').trim() === '') {
+        if (!isDetailed && _taskMatchesOwnerName(task, UNASSIGNED_OWNER_LABEL)) {
             hasUnassignedTask = true;
         }
     });
