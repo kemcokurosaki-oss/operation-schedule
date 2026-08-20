@@ -189,12 +189,22 @@ gantt.config.editor_types.owner_select = (function() {
             freeInput.addEventListener('input', updateDisplay);
             chkWrap.addEventListener('change', updateDisplay);
 
-            const rect = placeholder.getBoundingClientRect();
-            dropdown.style.top = rect.bottom + 'px';
-            dropdown.style.left = rect.left + 'px';
-
             document.body.appendChild(dropdown);
             _dropdown = dropdown;
+
+            const rect = placeholder.getBoundingClientRect();
+            const dh = dropdown.offsetHeight;
+            const dw = dropdown.offsetWidth;
+            let top = rect.bottom;
+            if (top + dh > window.innerHeight) {
+                top = Math.max(0, rect.top - dh);
+            }
+            let left = rect.left;
+            if (left + dw > window.innerWidth) {
+                left = Math.max(0, window.innerWidth - dw);
+            }
+            dropdown.style.top = top + 'px';
+            dropdown.style.left = left + 'px';
         },
         hide: function() {
             if (_dropdown) { _dropdown.remove(); _dropdown = null; }
