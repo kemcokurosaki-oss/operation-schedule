@@ -1539,8 +1539,12 @@ async function initialize() {
     // 0. プラグインの有効化
     gantt.plugins({
         marker: true,
-        multiselect: true
+        multiselect: true,
+        undo: true
     });
+    gantt.config.undo = true;
+    gantt.config.redo = true;
+    gantt.config.undo_steps = 20;
 
     // 1. Gantt初期化（デフォルトは読み取り専用、ログイン後に解除）
     // supabaseClient.auth.onAuthStateChange の初回通知（ログイン済みセッションの復元）が
