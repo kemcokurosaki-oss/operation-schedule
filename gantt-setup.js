@@ -1288,8 +1288,12 @@ gantt.attachEvent("onAfterTaskUpdate", async function(id, item) {
     try {
         // 新規（createTask の仮行）の DB 反映は onAfterLightbox 経由の _finalizePendingNewTaskToDb で行う
         if (_pendingNewTaskLightboxId != null && String(id) === String(_pendingNewTaskLightboxId)) {
+            _undoBeforeSnapshot = null;
             return;
         }
+
+        const beforeSnap = (_undoBeforeSnapshot && String(_undoBeforeSnapshot.id) === String(id)) ? _undoBeforeSnapshot.task : null;
+        _undoBeforeSnapshot = null;
 
         const { error } = await _saveTaskToDb(id, item);
 
@@ -1297,6 +1301,9 @@ gantt.attachEvent("onAfterTaskUpdate", async function(id, item) {
             console.error("Error updating task:", error);
             alert("タスクの更新に失敗しました。\n" + error.message);
         } else {
+            if (beforeSnap) {
+                _pushUndoEntry({ type: 'update', id: id, before: beforeSnap, after: _cloneTaskSnapshot(item) });
+            }
             if (isResourceView || isResourceFullscreen) updateResourceData();
             // ▼マークの色を即時更新
             requestAnimationFrame(_renderWishDateMarks);
@@ -1310,10 +1317,13 @@ gantt.attachEvent("onAfterTaskUpdate", async function(id, item) {
 // ドラッグ（移動・リサイズ）後にSupabaseへ保存
 gantt.attachEvent("onAfterTaskDrag", async function(id, mode, e) {
     if (_pendingNewTaskLightboxId != null && String(_pendingNewTaskLightboxId) === String(id)) {
+        _undoBeforeSnapshot = null;
         return;
     }
     const item = gantt.getTask(id);
     const completionDate = gantt.date.add(new Date(item.end_date), -1, 'day');
+    const beforeSnap = (_undoBeforeSnapshot && String(_undoBeforeSnapshot.id) === String(id)) ? _undoBeforeSnapshot.task : null;
+    _undoBeforeSnapshot = null;
     try {
         const { error } = await supabaseClient
             .from('tasks')
@@ -1324,7 +1334,12 @@ gantt.attachEvent("onAfterTaskDrag", async function(id, mode, e) {
             })
             .eq('id', id);
         if (error) console.error("Error saving drag:", error);
-        else if (isResourceView || isResourceFullscreen) updateResourceData();
+        else {
+            if (beforeSnap) {
+                _pushUndoEntry({ type: 'update', id: id, before: beforeSnap, after: _cloneTaskSnapshot(item) });
+            }
+            if (isResourceView || isResourceFullscreen) updateResourceData();
+        }
     } catch(e) {
         console.error("Exception in onAfterTaskDrag:", e);
     }
@@ -1333,14 +1348,19 @@ gantt.attachEvent("onAfterTaskDrag", async function(id, mode, e) {
 gantt.attachEvent("onAfterTaskDelete", async function(id, item) {
     if (_suppressTaskDeleteId != null && String(_suppressTaskDeleteId) === String(id)) {
         _suppressTaskDeleteId = null;
+        _undoBeforeSnapshot = null;
         return;
     }
+    const beforeSnap = (_undoBeforeSnapshot && String(_undoBeforeSnapshot.id) === String(id)) ? _undoBeforeSnapshot.task : _cloneTaskSnapshot(item);
+    _undoBeforeSnapshot = null;
     try {
         const { error } = await _deleteTaskFromDb(id);
 
         if (error) {
             console.error("Error deleting task:", error);
             alert("タスクの削除に失敗しました。\n" + error.message);
+        } else {
+            _pushUndoEntry({ type: 'delete', id: id, before: beforeSnap });
         }
     } catch (e) {
         console.error("Exception in onAfterTaskDelete:", e);
@@ -1349,67 +1369,115 @@ gantt.attachEvent("onAfterTaskDelete", async function(id, item) {
 });
 
 // ===== 元に戻す（Undo）／やり直し（Redo） =====
-// dhtmlxGantt の undo/redo は画面上のタスクを巻き戻すだけで、Supabase への保存は保証されない。
-// そのため巻き戻し後の gantt 内部の状態を正とみなし、対象タスクが存在すれば保存、存在しなければ削除して
-// DB側を突き合わせる（既存の onAfterTaskUpdate 等が二重に発火しても、同じ内容の上書きなので実害はない）。
-async function _reconcileTaskAfterUndoRedo(id) {
-    try {
-        if (gantt.isTaskExists(id)) {
-            const { error } = await _saveTaskToDb(id, gantt.getTask(id));
-            if (error) console.error("Undo/Redo後の保存に失敗:", error);
-        } else {
-            const { error } = await _deleteTaskFromDb(id);
-            if (error) console.error("Undo/Redo後の削除に失敗:", error);
+// dhtmlxGanttの無償版（このアプリが読み込んでいるCDN版）にはUndo/Redo拡張が含まれていないため、
+// 編集前後のタスクの状態をこちらで記録し、Supabaseへの保存とgantt再読込で巻き戻す。
+// 対象は「単一タスクの編集・ドラッグ・単体削除」。新規追加／複数選択削除／一括編集モーダルは対象外。
+const _TASK_DB_FULL_COLUMNS = [
+    'text', 'owner', 'start_date', 'end_date', 'duration', 'progress', 'project_number', 'major_item',
+    'machine', 'unit', 'link', 'sort_order', 'parent', 'customer_name', 'project_details',
+    'sort_order_machine', 'area_group', 'area_number', 'dept_id', 'is_detailed', 'model_type', 'unit2',
+    'hyphen', 'characteristic', 'derivation', 'total_sheets', 'completed_sheets', 'wish_date',
+    'is_business_trip', 'main_owner', 'part_number', 'quantity', 'manufacturer', 'task_type',
+    'is_completed', 'bar_color', 'status', 'is_archived', 'notes', 'last_updated_by', 'split_group_id'
+];
+
+// 削除を取り消す（再INSERT）ための完全な行データを組み立てる
+function _buildFullTaskDbRow(snapshot) {
+    const row = {};
+    _TASK_DB_FULL_COLUMNS.forEach(function(col) {
+        if (!(col in snapshot)) return;
+        if (col === 'end_date') {
+            row.end_date = snapshot.has_no_date
+                ? null
+                : _toDateStr(gantt.date.add(new Date(snapshot.end_date), -1, 'day'));
+            return;
         }
-    } catch (e) {
-        console.error("Exception in _reconcileTaskAfterUndoRedo:", e);
-    }
+        let v = snapshot[col];
+        if (v instanceof Date) v = _toDateStr(v);
+        row[col] = v;
+    });
+    row.total_sheets = Number(row.total_sheets) || 0;
+    row.completed_sheets = Number(row.completed_sheets) || 0;
+    row.last_updated_by = (typeof window._getCurrentEditorName === 'function' ? window._getCurrentEditorName() : '') || '';
+    return row;
 }
 
-function _handleUndoRedoActions(actions) {
-    (actions || []).forEach(function (cmd) {
-        if (!cmd || cmd.entity !== 'task') return; // リンク（依存関係）は対象外
-        const id = (cmd.value && cmd.value.id != null) ? cmd.value.id
-            : (cmd.oldValue && cmd.oldValue.id != null) ? cmd.oldValue.id
-            : null;
-        if (id == null) return;
-        _reconcileTaskAfterUndoRedo(id);
-    });
-    if (isResourceView || isResourceFullscreen) updateResourceData();
+async function _restoreDeletedTaskToDb(id, snapshot) {
+    const row = _buildFullTaskDbRow(snapshot);
+    row.id = id;
+    return supabaseClient.from('tasks').insert(row);
+}
+
+function _pushUndoEntry(entry) {
+    _undoStack.push(entry);
+    if (_undoStack.length > _UNDO_STACK_LIMIT) _undoStack.shift();
+    _redoStack = []; // 新しい操作が入ったらやり直し履歴は破棄
     _updateUndoRedoButtons();
 }
 
-gantt.attachEvent("onAfterUndo", function (actions) {
-    _handleUndoRedoActions(actions);
-});
-gantt.attachEvent("onAfterRedo", function (actions) {
-    _handleUndoRedoActions(actions);
-});
-
-function ganttUndo() {
-    if (!_isEditor) return;
-    if (typeof gantt.undo === 'function') gantt.undo();
+async function ganttUndo() {
+    if (!_isEditor || !_undoStack.length) return;
+    const entry = _undoStack.pop();
+    _updateUndoRedoButtons();
+    try {
+        let error;
+        if (entry.type === 'update') {
+            ({ error } = await _saveTaskToDb(entry.id, entry.before));
+        } else if (entry.type === 'delete') {
+            ({ error } = await _restoreDeletedTaskToDb(entry.id, entry.before));
+        }
+        if (error) {
+            console.error("元に戻す処理に失敗:", error);
+            alert("元に戻す処理に失敗しました。\n" + error.message);
+            _undoStack.push(entry);
+            return;
+        }
+        _redoStack.push(entry);
+        if (_redoStack.length > _UNDO_STACK_LIMIT) _redoStack.shift();
+        await loadData();
+    } catch (e) {
+        console.error("Exception in ganttUndo:", e);
+        alert("元に戻す処理中に予期せぬエラーが発生しました。");
+    } finally {
+        _updateUndoRedoButtons();
+    }
 }
-function ganttRedo() {
-    if (!_isEditor) return;
-    if (typeof gantt.redo === 'function') gantt.redo();
+
+async function ganttRedo() {
+    if (!_isEditor || !_redoStack.length) return;
+    const entry = _redoStack.pop();
+    _updateUndoRedoButtons();
+    try {
+        let error;
+        if (entry.type === 'update') {
+            ({ error } = await _saveTaskToDb(entry.id, entry.after));
+        } else if (entry.type === 'delete') {
+            ({ error } = await _deleteTaskFromDb(entry.id));
+        }
+        if (error) {
+            console.error("やり直し処理に失敗:", error);
+            alert("やり直し処理に失敗しました。\n" + error.message);
+            _redoStack.push(entry);
+            return;
+        }
+        _undoStack.push(entry);
+        if (_undoStack.length > _UNDO_STACK_LIMIT) _undoStack.shift();
+        await loadData();
+    } catch (e) {
+        console.error("Exception in ganttRedo:", e);
+        alert("やり直し処理中に予期せぬエラーが発生しました。");
+    } finally {
+        _updateUndoRedoButtons();
+    }
 }
 
 function _updateUndoRedoButtons() {
     const undoBtn = document.getElementById('undo_btn');
     const redoBtn = document.getElementById('redo_btn');
     if (!undoBtn || !redoBtn) return;
-    const undoStack = (typeof gantt.getUndoStack === 'function') ? gantt.getUndoStack() : [];
-    const redoStack = (typeof gantt.getRedoStack === 'function') ? gantt.getRedoStack() : [];
-    undoBtn.disabled = !(undoStack && undoStack.length);
-    redoBtn.disabled = !(redoStack && redoStack.length);
+    undoBtn.disabled = !_undoStack.length;
+    redoBtn.disabled = !_redoStack.length;
 }
-
-// 編集の度にUndo/Redoボタンの有効・無効を更新
-gantt.attachEvent("onAfterTaskUpdate", function () { _updateUndoRedoButtons(); return true; });
-gantt.attachEvent("onAfterTaskDrag", function () { _updateUndoRedoButtons(); return true; });
-gantt.attachEvent("onAfterTaskDelete", function () { _updateUndoRedoButtons(); return true; });
-gantt.attachEvent("onAfterTaskAdd", function () { _updateUndoRedoButtons(); return true; });
 
 // テキスト入力中（インライン編集・ライトボックス等）はブラウザ標準のUndoに任せ、
 // それ以外の場面でのみ Ctrl+Z / Ctrl+Y（またはCtrl+Shift+Z）でガントのUndo/Redoを実行する
