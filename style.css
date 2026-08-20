@@ -1005,6 +1005,10 @@ html, body { margin: 0; padding: 0; height: 100%; overflow: hidden; font-family:
     min-width: 140px;
     margin: 0;
 }
+.multi-edit-row label.me-owner-label {
+    flex: 1 1 100%;
+    min-width: 100%;
+}
 /* アーカイブドロップダウン */
 #archive_dropdown_menu {
     display: none; position: absolute; top: calc(100% + 2px); right: 0;
