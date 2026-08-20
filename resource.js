@@ -482,12 +482,7 @@ function renderOwnerDetailTimeline(ownerName) {
     const ownerTasks = [];
     gantt.eachTask(t => {
         const isDetailed = (t.is_detailed === true || String(t.is_detailed).toLowerCase() === "true" || String(t.is_detailed).toLowerCase() === "t" || String(t.is_detailed) === "1");
-        let isMatch = false;
-        if (!isDetailed && t.owner) {
-            const taskOwners = String(t.owner).split(/[,、\s]+/).map(o => o.trim());
-            isMatch = taskOwners.includes(ownerName);
-        }
-        if (isMatch) ownerTasks.push(t);
+        if (!isDetailed && _taskMatchesOwnerName(t, ownerName)) ownerTasks.push(t);
     });
 
     // 開始日の昇順でソート（日付未定は末尾）
