@@ -120,6 +120,12 @@ async function loadData() {
         data: parsedTasks
     });
 
+    // Undo/Redo用：DBから読み込み直した直後の状態を「直近の保存済み状態」として記録し直す
+    if (typeof _lastKnownTaskState !== 'undefined' && typeof _rememberTaskState === 'function') {
+        _lastKnownTaskState = {};
+        gantt.eachTask(function(t) { _rememberTaskState(t.id, t); });
+    }
+
     _rebuildMachineFilterFromRows(data);
     _rebuildUnitFilterFromRows(data);
     _rebuildOwnerFilterFromRows(data);
