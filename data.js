@@ -1748,6 +1748,7 @@ async function initialize() {
         { key: 'owner',           label: '担当',   default: true },
         { key: 'start_date',      label: '開始日', default: true },
         { key: 'end_date',        label: '終了日', default: false },
+        { key: 'notes',           label: 'メモ',   default: false },
     ];
     const COPY_OPTS_KEY = 'gantt_copy_opts';
 
