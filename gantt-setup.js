@@ -1048,6 +1048,13 @@ async function _finalizePendingNewTaskToDb(id) {
 
         await loadData();
 
+        if (data && data.length) {
+            const items = data
+                .map(row => gantt.isTaskExists(row.id) ? { type: 'add', id: row.id, after: _cloneTaskSnapshot(gantt.getTask(row.id)) } : null)
+                .filter(Boolean);
+            if (items.length) _pushUndoEntry({ type: 'batch', items: items });
+        }
+
         if (data && data[0]) {
             gantt.showTask(data[0].id);
         }
