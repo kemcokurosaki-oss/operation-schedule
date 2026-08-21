@@ -2098,6 +2098,7 @@ gantt.attachEvent("onLightboxSave", function(id, task, is_new){
 // ライトボックス表示前の処理（担当別モードのタスクバーからも開けるようにする）
 gantt.attachEvent("onBeforeLightbox", function(id) {
     const task = gantt.getTask(id);
+    if (window._isOperationEditRestricted && window._isOperationEditRestricted(task)) return false;
     const isBT = task && (
         _normalizeTaskTypeForDb(task.task_type) === 'business_trip' ||
         task.is_business_trip === true ||
