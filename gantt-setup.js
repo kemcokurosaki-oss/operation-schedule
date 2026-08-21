@@ -1610,6 +1610,7 @@ function _getLightboxSections(taskType) {
             { name: "description",     height: 30, map_to: "text",            type: "task_select_lb" },
             { name: "owner",           height: 30, map_to: "owner",           type: "owner_select_lb" },
             { name: "date_range",      height: 30, map_to: "start_date",      type: "date_range" },
+            { name: "notes",           height: 30, map_to: "notes",           type: "trip_text_lb" },
             { name: "add_row_count",   height: 30, map_to: "add_row_count",   type: "add_row_count_lb" },
         ];
     } else if (tt === 'planning') {
@@ -1621,6 +1622,7 @@ function _getLightboxSections(taskType) {
             { name: "owner",           height: 30, map_to: "owner",           type: "owner_select_lb" },
             { name: "operation_progress", height: 30, map_to: "status",       type: "operation_progress_lb" },
             { name: "date_range",      height: 30, map_to: "start_date",      type: "date_range" },
+            { name: "notes",           height: 30, map_to: "notes",           type: "textarea" },
             { name: "add_row_count",   height: 30, map_to: "add_row_count",   type: "add_row_count_lb" },
         ];
     } else {
@@ -1633,6 +1635,7 @@ function _getLightboxSections(taskType) {
             { name: "owner",            height: 30, map_to: "owner",            type: "owner_select_lb" },
             { name: "operation_progress", height: 30, map_to: "status",         type: "operation_progress_lb" },
             { name: "date_range",       height: 30, map_to: "start_date",       type: "date_range" },
+            { name: "notes",            height: 30, map_to: "notes",            type: "textarea" },
             { name: "add_row_count",    height: 30, map_to: "add_row_count",    type: "add_row_count_lb" },
         ];
     }
