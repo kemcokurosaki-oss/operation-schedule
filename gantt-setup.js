@@ -538,7 +538,76 @@ function _getColsSum(cols) {
     return cols.reduce((sum, c) => sum + (c.width || 0), 0);
 }
 
-_setLayout(_getColsSum(_getDrawingColumns()));
+// ===== 列の表示/非表示（Excel風：列ヘッダー選択→右クリックで非表示） =====
+// ツリー列（タスク名）と＋追加ボタン列は列構造上、非表示にできない
+const _COLUMN_HIDE_EXCLUDE = new Set(["text", "add_btn"]);
+const _HIDDEN_COLUMNS_STORAGE_KEY = 'gantt_hidden_columns_v1';
+
+function _loadHiddenColumnsMap() {
+    const map = { operation: new Set(), planning: new Set(), business_trip: new Set() };
+    try {
+        const raw = JSON.parse(localStorage.getItem(_HIDDEN_COLUMNS_STORAGE_KEY) || '{}');
+        Object.keys(map).forEach((k) => {
+            if (Array.isArray(raw[k])) map[k] = new Set(raw[k]);
+        });
+    } catch (e) {}
+    return map;
+}
+let _hiddenColumnsMap = _loadHiddenColumnsMap();
+
+function _saveHiddenColumnsMap() {
+    const out = {};
+    Object.keys(_hiddenColumnsMap).forEach((k) => { out[k] = Array.from(_hiddenColumnsMap[k]); });
+    try { localStorage.setItem(_HIDDEN_COLUMNS_STORAGE_KEY, JSON.stringify(out)); } catch (e) {}
+}
+
+// 計画モードは社内試運転と列構成が同じだが、非表示設定はモードごとに別管理する
+function _hiddenColumnsModeKey(filterType) {
+    return (filterType === 'planning' || filterType === 'business_trip') ? filterType : 'operation';
+}
+
+function _getHiddenColumnSet(filterType) {
+    const key = _hiddenColumnsModeKey(filterType);
+    if (!_hiddenColumnsMap[key]) _hiddenColumnsMap[key] = new Set();
+    return _hiddenColumnsMap[key];
+}
+
+// 非表示列は、元の位置に幅の細い「非表示帯」疑似列としてまとめて差し替える
+// （Excelの非表示列の目印と同様、その帯を右クリックすると元の列を再表示できる）
+function _applyColumnVisibility(cols, filterType) {
+    const hidden = _getHiddenColumnSet(filterType);
+    if (hidden.size === 0) return cols;
+    const result = [];
+    let pending = [];
+    let gapSeq = 0;
+    function flushGap() {
+        if (pending.length === 0) return;
+        gapSeq++;
+        result.push({
+            name: `_hidden_gap_${filterType}_${gapSeq}`,
+            label: '',
+            width: 8,
+            align: 'center',
+            noFilterBtn: true,
+            template: function() { return ''; },
+            _hiddenGap: true,
+            _hiddenGapCols: pending.slice()
+        });
+        pending = [];
+    }
+    cols.forEach((col) => {
+        if (!_COLUMN_HIDE_EXCLUDE.has(col.name) && hidden.has(col.name)) {
+            pending.push({ name: col.name, label: col.label });
+        } else {
+            flushGap();
+            result.push(col);
+        }
+    });
+    flushGap();
+    return result;
+}
+
+_setLayout(_getColsSum(_applyColumnVisibility(_getDrawingColumns(), 'operation')));
 gantt.config.min_column_width = 22; // カレンダーの列幅を22に設定
 gantt.config.inline_editors_save_on_blur = true; // フォーカスが外れたとき自動保存
 gantt.config.row_height = 30;
