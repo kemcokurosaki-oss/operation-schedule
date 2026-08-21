@@ -927,6 +927,11 @@ async function applyMultiEdit() {
     const _editorForPatch = (typeof window._getCurrentEditorName === 'function' ? window._getCurrentEditorName() : '') || '';
     if (_editorForPatch) patch.last_updated_by = _editorForPatch;
 
+    // Undo用：更新前の内容をスナップショット
+    const beforeStates = ids
+        .map(id => ({ id: id, before: _lastKnownTaskState[id] }))
+        .filter(x => x.before);
+
     try {
         const { error } = await supabaseClient
             .from("tasks")
@@ -939,6 +944,13 @@ async function applyMultiEdit() {
         }
         closeMultiEditModal();
         await loadData();
+
+        if (beforeStates.length) {
+            const items = beforeStates
+                .map(x => gantt.isTaskExists(x.id) ? { type: 'update', id: x.id, before: x.before, after: _cloneTaskSnapshot(gantt.getTask(x.id)) } : null)
+                .filter(Boolean);
+            if (items.length) _pushUndoEntry({ type: 'batch', items: items });
+        }
     } catch (e) {
         console.error("Exception in applyMultiEdit:", e);
         alert("一括編集中に予期せぬエラーが発生しました。");
