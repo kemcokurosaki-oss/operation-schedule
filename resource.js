@@ -1078,6 +1078,7 @@ function _renderWishDateMarks() {
         // ドラッグで wish_date を変更（編集権限がある場合のみ）
         el.addEventListener('mousedown', function(e) {
             if (!_isEditor) return;
+            if (window._isOperationEditRestricted && window._isOperationEditRestricted(task)) return;
             e.stopPropagation();
             e.preventDefault();
             const startClientX = e.clientX;
