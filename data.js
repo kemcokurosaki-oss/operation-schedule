@@ -1736,6 +1736,7 @@ async function initialize() {
         { key: 'status',         label: '進捗',   default: false },
         { key: 'start_date',     label: '開始日', default: true },
         { key: 'end_date',       label: '終了日', default: false },
+        { key: 'notes',          label: 'メモ',   default: false },
     ];
     const COPY_FIELDS_TRIP = [ // 出張モード
         { key: 'project_number',  label: '工番',   default: true },
