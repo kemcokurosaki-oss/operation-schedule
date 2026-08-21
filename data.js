@@ -1950,8 +1950,23 @@ async function initialize() {
         if (_gridSelection.size > 1 && _ctxTaskId && _gridSelection.has(String(_ctxTaskId))) {
             const ids = [..._gridSelection].map(id => Number(id));
             if (!confirm(`選択した ${ids.length} 件のタスクを削除しますか？`)) { _ctxTaskId = null; return; }
+
+            // Undo用：削除前の内容をスナップショット
+            const beforeStates = ids
+                .map(id => ({ id: id, before: _lastKnownTaskState[id] || (gantt.isTaskExists(id) ? _cloneTaskSnapshot(gantt.getTask(id)) : null) }))
+                .filter(x => x.before);
+
             const { error } = await supabaseClient.from('tasks').delete().in('id', ids);
             if (error) { alert("削除に失敗しました。\n" + error.message); _ctxTaskId = null; return; }
+
+            if (beforeStates.length) {
+                _pushUndoEntry({
+                    type: 'batch',
+                    items: beforeStates.map(x => ({ type: 'delete', id: x.id, before: x.before }))
+                });
+                beforeStates.forEach(x => _forgetTaskState(x.id));
+            }
+
             await loadData();
         } else if (_ctxTaskId) {
             if (confirm("このタスクを削除しますか？")) gantt.deleteTask(_ctxTaskId);
