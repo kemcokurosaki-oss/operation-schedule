@@ -2187,7 +2187,7 @@ function _isCompletedForDisplay(task) {
     return false;
 }
 
-// 列幅ドラッグリサイズ（計画・社内試運転モード：ユニ・タスクのみ）の保存/復元
+// 列幅ドラッグリサイズ（計画・社内試運転モード：ユニ・タスク・メモ）の保存/復元
 function _loadDrawingColWidths() {
     try { return JSON.parse(localStorage.getItem('gantt_col_widths_drawing_v1') || '{}'); }
     catch (e) { return {}; }
