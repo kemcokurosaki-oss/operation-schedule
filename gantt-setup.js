@@ -1399,22 +1399,35 @@ function _pushUndoEntry(entry) {
     _updateUndoRedoButtons();
 }
 
+// entry.type: 'update'（編集・ドラッグ）/ 'delete'（削除）/ 'add'（新規追加）の単発、
+// または type:'batch', items:[...] で複数件をまとめて1回のUndo/Redo対象にする
+function _applyEntryForUndo(sub) {
+    if (sub.type === 'update') return _saveTaskToDb(sub.id, sub.before);
+    if (sub.type === 'delete') return _restoreDeletedTaskToDb(sub.id, sub.before);
+    if (sub.type === 'add') return _deleteTaskFromDb(sub.id);
+    return Promise.resolve({ error: null });
+}
+function _applyEntryForRedo(sub) {
+    if (sub.type === 'update') return _saveTaskToDb(sub.id, sub.after);
+    if (sub.type === 'delete') return _deleteTaskFromDb(sub.id);
+    if (sub.type === 'add') return _restoreDeletedTaskToDb(sub.id, sub.after);
+    return Promise.resolve({ error: null });
+}
+
 async function ganttUndo() {
     if (!_isEditor || !_undoStack.length) return;
     const entry = _undoStack.pop();
     _updateUndoRedoButtons();
     try {
-        let error;
-        if (entry.type === 'update') {
-            ({ error } = await _saveTaskToDb(entry.id, entry.before));
-        } else if (entry.type === 'delete') {
-            ({ error } = await _restoreDeletedTaskToDb(entry.id, entry.before));
-        }
-        if (error) {
-            console.error("元に戻す処理に失敗:", error);
-            alert("元に戻す処理に失敗しました。\n" + error.message);
-            _undoStack.push(entry);
-            return;
+        const items = entry.type === 'batch' ? entry.items : [entry];
+        for (const sub of items) {
+            const { error } = await _applyEntryForUndo(sub);
+            if (error) {
+                console.error("元に戻す処理に失敗:", error);
+                alert("元に戻す処理に失敗しました。\n" + error.message);
+                _undoStack.push(entry);
+                return;
+            }
         }
         _redoStack.push(entry);
         if (_redoStack.length > _UNDO_STACK_LIMIT) _redoStack.shift();
@@ -1432,17 +1445,15 @@ async function ganttRedo() {
     const entry = _redoStack.pop();
     _updateUndoRedoButtons();
     try {
-        let error;
-        if (entry.type === 'update') {
-            ({ error } = await _saveTaskToDb(entry.id, entry.after));
-        } else if (entry.type === 'delete') {
-            ({ error } = await _deleteTaskFromDb(entry.id));
-        }
-        if (error) {
-            console.error("やり直し処理に失敗:", error);
-            alert("やり直し処理に失敗しました。\n" + error.message);
-            _redoStack.push(entry);
-            return;
+        const items = entry.type === 'batch' ? entry.items : [entry];
+        for (const sub of items) {
+            const { error } = await _applyEntryForRedo(sub);
+            if (error) {
+                console.error("やり直し処理に失敗:", error);
+                alert("やり直し処理に失敗しました。\n" + error.message);
+                _redoStack.push(entry);
+                return;
+            }
         }
         _undoStack.push(entry);
         if (_undoStack.length > _UNDO_STACK_LIMIT) _undoStack.shift();
