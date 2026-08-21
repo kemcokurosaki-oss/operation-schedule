@@ -1963,7 +1963,6 @@ async function initialize() {
                 if (ids.length === 0) { alert("社内試運転モードのタスクは削除できません。"); _ctxTaskId = null; return; }
                 alert(`社内試運転モードのタスク ${blockedCount} 件は削除できないため、対象から除外します。`);
             }
-            if (ids.length === 0) { _ctxTaskId = null; return; }
             if (!confirm(`選択した ${ids.length} 件のタスクを削除しますか？`)) { _ctxTaskId = null; return; }
 
             // Undo用：削除前の内容をスナップショット
