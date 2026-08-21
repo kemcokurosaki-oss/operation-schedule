@@ -1441,6 +1441,13 @@ gantt.attachEvent("onAfterTaskUpdate", async function(id, item) {
     }
 });
 
+// 社内試運転モードでは制限ユーザーによるバーのドラッグ（移動・リサイズ・進捗）を禁止
+gantt.attachEvent("onBeforeTaskDrag", function(id, mode, e) {
+    const task = gantt.getTask(id);
+    if (window._isOperationEditRestricted && window._isOperationEditRestricted(task)) return false;
+    return true;
+});
+
 // ドラッグ（移動・リサイズ）後にSupabaseへ保存
 gantt.attachEvent("onAfterTaskDrag", async function(id, mode, e) {
     if (_pendingNewTaskLightboxId != null && String(_pendingNewTaskLightboxId) === String(id)) {
