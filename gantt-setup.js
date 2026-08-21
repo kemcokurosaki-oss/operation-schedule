@@ -2322,9 +2322,10 @@ function switchColumns(filterType) {
     if (filterType === 'planning') baseCols = _getPlanningColumns();
     else if (filterType === 'business_trip') baseCols = _getTripColumns();
     else baseCols = _getDrawingColumns();
-    gantt.config.columns = _applyColumnFilterButtons(baseCols);
+    const visibleCols = _applyColumnVisibility(baseCols, filterType);
+    gantt.config.columns = _applyColumnFilterButtons(visibleCols);
     gantt.config._columnFilterType = filterType;
-    _setLayout(_getColsSum(baseCols));
+    _setLayout(_getColsSum(visibleCols));
     // gantt.render() だけでは列数・列幅の DOM 変更が反映されないため resetLayout で再構築する。
     // gantt.init() の再呼び出しはコンテナ DOM を丸ごと作り直してしまい、
     // ダブルクリック編集やバーのドラッグなどのイベントバインディングが失われることがあるため使わない。
