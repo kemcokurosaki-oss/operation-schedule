@@ -622,6 +622,11 @@ async function deleteSelectedTasks() {
     if (ids.length === 0) return;
     if (!confirm(`選択した ${ids.length} 件のタスクを削除しますか？`)) return;
 
+    // Undo用：削除前の内容をスナップショット
+    const beforeStates = ids
+        .map(id => ({ id: id, before: _lastKnownTaskState[id] || (gantt.isTaskExists(id) ? _cloneTaskSnapshot(gantt.getTask(id)) : null) }))
+        .filter(x => x.before);
+
     const { error } = await supabaseClient
         .from('tasks')
         .delete()
@@ -631,6 +636,14 @@ async function deleteSelectedTasks() {
         console.error("Error deleting tasks:", error);
         alert("削除に失敗しました。\n" + error.message);
         return;
+    }
+
+    if (beforeStates.length) {
+        _pushUndoEntry({
+            type: 'batch',
+            items: beforeStates.map(x => ({ type: 'delete', id: x.id, before: x.before }))
+        });
+        beforeStates.forEach(x => _forgetTaskState(x.id));
     }
 
     await loadData();
