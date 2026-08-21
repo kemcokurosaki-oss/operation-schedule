@@ -51,6 +51,22 @@ function _taskTypeMatchesCurrentFilter(task) {
 }
 window._taskTypeMatchesCurrentFilter = _taskTypeMatchesCurrentFilter;
 
+/** タスクIDの配列を、社内試運転モードの制限ユーザーが操作できるものとできないものに分ける */
+function _splitOperationRestrictedIds(ids) {
+    const allowed = [];
+    let blockedCount = 0;
+    ids.forEach(function(id) {
+        const task = gantt.isTaskExists(id) ? gantt.getTask(id) : null;
+        if (task && window._isOperationEditRestricted && window._isOperationEditRestricted(task)) {
+            blockedCount++;
+        } else {
+            allowed.push(id);
+        }
+    });
+    return { allowed: allowed, blockedCount: blockedCount };
+}
+window._splitOperationRestrictedIds = _splitOperationRestrictedIds;
+
 // select で値を選択した時点でインライン編集を確定する
 function _commitInlineSelectEdit(selectEl) {
     if (!selectEl) return;
