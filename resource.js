@@ -557,6 +557,8 @@ function _bindResourceBarInteractions(container) {
 
         bar.addEventListener('mousedown', function(e) {
             if (!_isEditor) return;
+            const barTask = gantt.isTaskExists(taskId) ? gantt.getTask(taskId) : null;
+            if (window._isOperationEditRestricted && window._isOperationEditRestricted(barTask)) return;
             const roleEl = e.target.closest('[data-role]');
             const mode = roleEl ? roleEl.dataset.role : 'move';
             _startResourceBarDrag(e, bar, taskId, mode);
