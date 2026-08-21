@@ -2333,16 +2333,18 @@ function switchColumns(filterType) {
     gantt.render();
 }
 
-// ===== 列幅ドラッグリサイズ（計画・社内試運転：ユニ・タスク／出張：ユニ・客先・工事名） =====
+// ===== 列幅ドラッグリサイズ（計画・社内試運転：ユニ・タスク・メモ／出張：ユニ・客先・工事名・メモ） =====
 (function() {
     const DRAWING_RESIZABLE = [
         { name: "unit", minW: 60 },
-        { name: "text", minW: 150 }
+        { name: "text", minW: 150 },
+        { name: "notes", minW: 60 }
     ];
     const TRIP_RESIZABLE = [
         { name: "unit", minW: 45 },
         { name: "customer_name", minW: 100 },
-        { name: "project_details", minW: 100 }
+        { name: "project_details", minW: 100 },
+        { name: "notes", minW: 60 }
     ];
 
     // 現在のモードに応じた対象列と保存関数を返す（対象外のモードなら null）
