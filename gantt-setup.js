@@ -2286,7 +2286,7 @@ function _getDrawingColumns() {
           editor: { type: "start_date_editor", map_to: "start_date" } },
         { name: "end_date",       label: "終了日",       width: 84, align: "center", template: _fmtDate, editor: { type: "completion_date", map_to: "end_date" } },
         { name: "notes",          label: "メモ",         width: 100, align: "left",   editor: { type: "text", map_to: "notes" } },
-        { name: "add_btn",        label: "",             width: 25, align: "center", template: (task) => _isEditor ? `<div class='custom_add_btn' onclick='createTask(${task.id})'>+</div>` : '' }
+        { name: "add_btn",        label: "",             width: 25, align: "center", template: (task) => (_isEditor && !(window._isOperationEditRestricted && window._isOperationEditRestricted(task))) ? `<div class='custom_add_btn' onclick='createTask(${task.id})'>+</div>` : '' }
     ]);
 }
 // 図面列合計: 18+18+120+16+16+14+16+16+16+16+16+20+20+20 = 342px
