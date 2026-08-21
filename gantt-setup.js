@@ -1235,6 +1235,10 @@ function _getSingleFilterValue(filterValues) {
 // 新規タスク追加：まずライトボックスで入力 → 保存で Supabase に挿入
 // afterTaskId: グリッドの+ボタンから呼ばれた場合はその行の機械・ユニットを初期値に使う
 function createTask(afterTaskId) {
+    if (window._isRestrictedOperationEditor && window._isRestrictedOperationEditor()
+        && _normalizeTaskTypeForDb(currentTaskTypeFilter || "operation") === "operation") {
+        return; // 社内試運転モードでは制限ユーザーによる新規タスク追加を禁止
+    }
     if (_pendingNewTaskLightboxId != null) {
         alert("新規追加の編集画面が開いています。先に保存またはキャンセルしてください。");
         return;
