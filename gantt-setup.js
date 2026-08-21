@@ -2288,7 +2288,7 @@ function _saveTripColWidth(name, width) {
 }
 function _applyStoredTripWidths(cols) {
     const stored = _loadTripColWidths();
-    ['unit', 'customer_name', 'project_details'].forEach((name) => {
+    ['unit', 'customer_name', 'project_details', 'notes'].forEach((name) => {
         const w = stored[name];
         if (!w) return;
         const col = cols.find((c) => c.name === name);
