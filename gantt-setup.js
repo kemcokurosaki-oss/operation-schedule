@@ -715,7 +715,6 @@ async function deleteSelectedTasks() {
         }
         alert(`社内試運転モードのタスク ${blockedCount} 件は削除できないため、対象から除外します。`);
     }
-    if (ids.length === 0) return;
     if (!confirm(`選択した ${ids.length} 件のタスクを削除しますか？`)) return;
 
     // Undo用：削除前の内容をスナップショット
