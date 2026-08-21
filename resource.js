@@ -968,12 +968,18 @@ function _toDateStr(d) {
         String(d.getDate()).padStart(2, '0');
 }
 
-async function _saveWishDate(taskId, dateStr) {
+async function _saveWishDate(taskId, dateStr, beforeState) {
     const { error } = await supabaseClient
         .from('tasks')
         .update({ wish_date: dateStr })
         .eq('id', taskId);
-    if (error) console.error('wish_date 保存エラー:', error);
+    if (error) {
+        console.error('wish_date 保存エラー:', error);
+    } else if (beforeState && typeof _pushUndoEntry === 'function' && gantt.isTaskExists(taskId)) {
+        const afterState = _cloneTaskSnapshot(gantt.getTask(taskId));
+        _pushUndoEntry({ type: 'update', id: taskId, before: beforeState, after: afterState });
+        _rememberTaskState(taskId, gantt.getTask(taskId));
+    }
 }
 
 // onBeforeTaskDisplay と同じフィルター条件を手動で判定（data.js の _taskVisibleOnGantt と同期）
