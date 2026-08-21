@@ -2266,7 +2266,7 @@ function _getLongtermColumns() {
 // 長納期品列合計: 32+42+190+85+28+70+32+60+20 = 559px
 
 // 列設定の初期化（固定初期幅）
-gantt.config.columns = _applyColumnFilterButtons(_getDrawingColumns());
+gantt.config.columns = _applyColumnFilterButtons(_applyColumnVisibility(_getDrawingColumns(), 'operation'));
 gantt.config._columnFilterType = 'operation';
 
 // プログラム作成列定義（社内試運転と同構成）
