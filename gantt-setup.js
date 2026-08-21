@@ -1281,6 +1281,7 @@ async function _saveTaskToDb(id, item) {
             status: item.status,
             customer_name: item.customer_name,
             project_details: item.project_details,
+            notes: item.notes,
             hyphen: item.hyphen ?? null,
             characteristic: item.characteristic,
             derivation: item.derivation,
