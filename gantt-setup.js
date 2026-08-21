@@ -2479,6 +2479,156 @@ function switchColumns(filterType) {
 })();
 // ===== 列幅ドラッグリサイズ ここまで =====
 
+// ===== 列ヘッダーの選択・非表示/再表示（Excel風） =====
+(function() {
+    // 選択中の列名（複数選択可）。クリックで単一選択、Ctrl+クリックで追加/除外、Shift+クリックで範囲選択
+    let _selectedHeaderCols = [];
+    let _lastHeaderClickIdx = null;
+
+    function _clearHeaderColSelection() {
+        document.querySelectorAll('#gantt_here .gantt_grid_head_cell.col-selected').forEach((el) => el.classList.remove('col-selected'));
+        _selectedHeaderCols = [];
+        _lastHeaderClickIdx = null;
+    }
+
+    function _setHeaderColSelection(names) {
+        _selectedHeaderCols = names;
+        const cols = gantt.config.columns;
+        document.querySelectorAll('#gantt_here .gantt_grid_head_cell').forEach((cell, i) => {
+            const c = cols[i];
+            if (c && names.includes(c.name)) cell.classList.add('col-selected');
+            else cell.classList.remove('col-selected');
+        });
+    }
+
+    function _handleHeaderColClick(colName, idx, e) {
+        const cols = gantt.config.columns;
+        if (e.shiftKey && _lastHeaderClickIdx != null) {
+            const from = Math.min(_lastHeaderClickIdx, idx);
+            const to = Math.max(_lastHeaderClickIdx, idx);
+            const names = [];
+            for (let i = from; i <= to; i++) {
+                const c = cols[i];
+                if (c && !c._hiddenGap && !_COLUMN_HIDE_EXCLUDE.has(c.name)) names.push(c.name);
+            }
+            _setHeaderColSelection(names);
+        } else if (e.ctrlKey || e.metaKey) {
+            let next = _selectedHeaderCols.slice();
+            if (next.includes(colName)) next = next.filter((n) => n !== colName);
+            else next.push(colName);
+            _setHeaderColSelection(next);
+            _lastHeaderClickIdx = idx;
+        } else {
+            _setHeaderColSelection([colName]);
+            _lastHeaderClickIdx = idx;
+        }
+    }
+
+    // 列の非表示/再表示用の右クリックメニュー（既存のタスク行用コンテキストメニューとは別に用意）
+    const _colCtxMenu = document.createElement('div');
+    _colCtxMenu.id = 'col_visibility_ctx_menu';
+    document.body.appendChild(_colCtxMenu);
+
+    function _closeColCtxMenu() {
+        _colCtxMenu.style.display = 'none';
+    }
+
+    function _openColCtxMenu(e, items) {
+        _colCtxMenu.innerHTML = items.map((it) => {
+            const namesAttr = it.namesJson ? ` data-names='${it.namesJson}'` : '';
+            return `<div class="gantt_ctx_item" data-action="${it.action}" data-name="${it.name || ''}"${namesAttr}>${it.label}</div>`;
+        }).join('<div class="gantt_ctx_sep"></div>');
+        _colCtxMenu.style.display = 'block';
+        const menuH = _colCtxMenu.offsetHeight;
+        const menuW = _colCtxMenu.offsetWidth;
+        const top = (e.clientY + menuH > window.innerHeight) ? e.clientY - menuH : e.clientY;
+        const left = (e.clientX + menuW > window.innerWidth) ? e.clientX - menuW : e.clientX;
+        _colCtxMenu.style.top = (top + window.scrollY) + 'px';
+        _colCtxMenu.style.left = (left + window.scrollX) + 'px';
+    }
+
+    _colCtxMenu.addEventListener('click', function(e) {
+        const item = e.target.closest('.gantt_ctx_item');
+        if (!item) return;
+        const action = item.dataset.action;
+        const filterType = gantt.config._columnFilterType || 'operation';
+        const hidden = _getHiddenColumnSet(filterType);
+        if (action === 'hide-selected') {
+            _selectedHeaderCols.forEach((n) => hidden.add(n));
+            _clearHeaderColSelection();
+        } else if (action === 'show-one') {
+            hidden.delete(item.dataset.name);
+        } else if (action === 'show-all-gap') {
+            JSON.parse(item.dataset.names || '[]').forEach((n) => hidden.delete(n));
+        }
+        _saveHiddenColumnsMap();
+        _closeColCtxMenu();
+        switchColumns(filterType);
+    });
+
+    document.addEventListener('click', function(e) {
+        if (!e.target.closest('#col_visibility_ctx_menu')) _closeColCtxMenu();
+        if (!e.target.closest('.gantt_grid_head_cell')) _clearHeaderColSelection();
+    });
+
+    // ヘッダーセルに選択・右クリックイベントを注入（render のたびに再注入が必要）
+    function _injectHeaderColumnInteractions() {
+        const cols = gantt.config.columns;
+        const allCells = document.querySelectorAll('#gantt_here .gantt_grid_head_cell');
+        allCells.forEach((cell, idx) => {
+            const col = cols[idx];
+            if (!col || cell.dataset.colVisBound) return;
+            cell.dataset.colVisBound = '1';
+
+            if (col._hiddenGap) {
+                cell.classList.add('hidden-col-gap');
+                cell.title = '非表示中: ' + col._hiddenGapCols.map((c) => c.label || c.name).join('、') + '（右クリックで表示）';
+                cell.addEventListener('contextmenu', function(e) {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    const items = col._hiddenGapCols.map((c) => ({
+                        action: 'show-one', name: c.name, label: `「${c.label || c.name}」を表示`
+                    }));
+                    if (col._hiddenGapCols.length > 1) {
+                        items.push({
+                            action: 'show-all-gap',
+                            label: 'すべて表示',
+                            namesJson: JSON.stringify(col._hiddenGapCols.map((c) => c.name))
+                        });
+                    }
+                    _openColCtxMenu(e, items);
+                });
+                return;
+            }
+
+            if (_COLUMN_HIDE_EXCLUDE.has(col.name)) return;
+
+            cell.classList.add('col-selectable');
+            cell.addEventListener('click', function(e) {
+                if (e.target.closest('.col-filter-btn') || e.target.closest('.col-resize-handle')) return;
+                _handleHeaderColClick(col.name, idx, e);
+            });
+            cell.addEventListener('contextmenu', function(e) {
+                if (e.target.closest('.col-filter-btn')) return;
+                e.preventDefault();
+                e.stopPropagation();
+                if (!_selectedHeaderCols.includes(col.name)) {
+                    _setHeaderColSelection([col.name]);
+                    _lastHeaderClickIdx = idx;
+                }
+                const count = _selectedHeaderCols.length;
+                _openColCtxMenu(e, [{
+                    action: 'hide-selected',
+                    label: count > 1 ? `選択した${count}列を非表示` : `「${col.label}」を非表示`
+                }]);
+            });
+        });
+    }
+
+    gantt.attachEvent("onGanttRender", () => { setTimeout(_injectHeaderColumnInteractions, 0); });
+})();
+// ===== 列ヘッダーの選択・非表示/再表示 ここまで =====
+
 // スタイルとテンプレート
 gantt.templates.task_text = function(start, end, task) {
     const colorClass = getOwnerColorClass(task.owner);
