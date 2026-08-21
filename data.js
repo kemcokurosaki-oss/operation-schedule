@@ -1671,6 +1671,8 @@ async function initialize() {
         const colIndex = cells.indexOf(cell);
         const col = gantt.config.columns[colIndex];
         if (col && col.editor) {
+            const task = gantt.isTaskExists(taskId) ? gantt.getTask(taskId) : null;
+            if (!window._isOperationCellAllowed(task, col.name)) return;
             gantt.ext.inlineEditors.startEdit(taskId, col.name);
         }
     }, true);
