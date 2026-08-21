@@ -2197,7 +2197,7 @@ function _saveDrawingColWidth(name, width) {
 }
 function _applyStoredDrawingWidths(cols) {
     const stored = _loadDrawingColWidths();
-    ['unit', 'text'].forEach((name) => {
+    ['unit', 'text', 'notes'].forEach((name) => {
         const w = stored[name];
         if (!w) return;
         const col = cols.find((c) => c.name === name);
