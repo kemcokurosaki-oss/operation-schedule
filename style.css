@@ -872,6 +872,42 @@ html, body { margin: 0; padding: 0; height: 100%; overflow: hidden; font-family:
 #gantt_ctx_delete { color: #c62828; }
 #gantt_ctx_delete:hover { background: #ffebee; }
 .gantt_ctx_sep { border-top: 1px solid #eee; margin: 3px 0; }
+
+/* 列ヘッダーの選択・非表示（Excel風） */
+.gantt_grid_head_cell.col-selectable {
+    cursor: pointer;
+}
+.gantt_grid_head_cell.col-selected {
+    background-color: #29434c !important;
+    box-shadow: inset 0 0 0 2px #90caf9;
+}
+/* 非表示にした列の位置に残る細い帯（Excelの非表示列インジケーターと同様、右クリックで再表示） */
+.gantt_grid_head_cell.hidden-col-gap {
+    background: repeating-linear-gradient(
+        45deg,
+        #37474f,
+        #37474f 2px,
+        #78909c 2px,
+        #78909c 4px
+    ) !important;
+    cursor: pointer;
+    padding: 0 !important;
+}
+#col_visibility_ctx_menu {
+    display: none;
+    position: fixed;
+    z-index: 99999;
+    background: #fff;
+    border: 1px solid #ccc;
+    border-radius: 4px;
+    box-shadow: 2px 4px 8px rgba(0,0,0,0.2);
+    min-width: 150px;
+    max-width: 260px;
+    padding: 4px 0;
+    font-family: "メイリオ", Meiryo, sans-serif;
+}
+#col_visibility_ctx_menu .gantt_ctx_item:hover { background: #e3f2fd; }
+
 /* グリッド行の複数選択ハイライト */
 #gantt_here .gantt_row.grid-row-selected,
 #gantt_here .gantt_row.gantt_row_task.grid-row-selected {
