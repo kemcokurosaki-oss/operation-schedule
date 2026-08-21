@@ -1355,7 +1355,8 @@ gantt.attachEvent("onAfterTaskDelete", async function(id, item) {
 // ===== 元に戻す（Undo）／やり直し（Redo） =====
 // dhtmlxGanttの無償版（このアプリが読み込んでいるCDN版）にはUndo/Redo拡張が含まれていないため、
 // 編集前後のタスクの状態をこちらで記録し、Supabaseへの保存とgantt再読込で巻き戻す。
-// 対象は「単一タスクの編集・ドラッグ・単体削除」。新規追加／複数選択削除／一括編集モーダルは対象外。
+// 対象：単一タスクの編集・ドラッグ・削除・新規追加、複数選択削除、一括編集モーダル、
+//       リソースパネル（担当別画面含む）でのバードラッグ・希望日変更。
 const _TASK_DB_FULL_COLUMNS = [
     'text', 'owner', 'start_date', 'end_date', 'duration', 'progress', 'project_number', 'major_item',
     'machine', 'unit', 'link', 'sort_order', 'parent', 'customer_name', 'project_details',
