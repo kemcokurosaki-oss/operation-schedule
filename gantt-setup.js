@@ -986,11 +986,20 @@ function closeMultiEditModal() {
 }
 
 async function applyMultiEdit() {
-    const ids = [..._gridSelection].map(function(id) { return Number(id); }).filter(Boolean);
-    if (ids.length === 0) {
+    const rawIds = [..._gridSelection].map(function(id) { return Number(id); }).filter(Boolean);
+    if (rawIds.length === 0) {
         alert("対象行がありません。");
         closeMultiEditModal();
         return;
+    }
+    const { allowed: ids, blockedCount } = _splitOperationRestrictedIds(rawIds);
+    if (blockedCount > 0) {
+        if (ids.length === 0) {
+            alert("社内試運転モードのタスクは一括編集できません。");
+            closeMultiEditModal();
+            return;
+        }
+        alert(`社内試運転モードのタスク ${blockedCount} 件は一括編集の対象から除外します。`);
     }
 
     const patch = {};
