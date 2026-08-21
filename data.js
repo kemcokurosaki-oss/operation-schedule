@@ -1955,7 +1955,13 @@ async function initialize() {
         _ctxMenu.style.display = 'none';
         // 複数選択中かつ右クリック行が選択に含まれる場合 → 一括削除
         if (_gridSelection.size > 1 && _ctxTaskId && _gridSelection.has(String(_ctxTaskId))) {
-            const ids = [..._gridSelection].map(id => Number(id));
+            const rawIds = [..._gridSelection].map(id => Number(id));
+            const { allowed: ids, blockedCount } = _splitOperationRestrictedIds(rawIds);
+            if (blockedCount > 0) {
+                if (ids.length === 0) { alert("社内試運転モードのタスクは削除できません。"); _ctxTaskId = null; return; }
+                alert(`社内試運転モードのタスク ${blockedCount} 件は削除できないため、対象から除外します。`);
+            }
+            if (ids.length === 0) { _ctxTaskId = null; return; }
             if (!confirm(`選択した ${ids.length} 件のタスクを削除しますか？`)) { _ctxTaskId = null; return; }
 
             // Undo用：削除前の内容をスナップショット
