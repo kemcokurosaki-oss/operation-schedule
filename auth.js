@@ -53,6 +53,36 @@ window._getCurrentEditorName = function() {
     return EDITOR_NAMES[_currentEditorEmail] || _currentEditorEmail.split('@')[0];
 };
 
+// 社内試運転モードでは「担当」「メモ」欄以外の編集操作（新規追加・削除・一括編集・
+// コピー＆貼り付け・タスクバーのドラッグ等）を禁止するユーザー
+const RESTRICTED_OPERATION_EDITORS = new Set([
+    'k-horio@kusakabe.com',
+    'm-hongou@kusakabe.com',
+    't-kuromi@kusakabe.com',
+    'y-notsu@kusakabe.com',
+]);
+window._isRestrictedOperationEditor = function() {
+    return _isEditor && RESTRICTED_OPERATION_EDITORS.has((_currentEditorEmail || '').toLowerCase());
+};
+
+// 制限ユーザーにとって、そのタスクが「社内試運転モードの編集禁止対象」かどうか
+// （計画・出張タスクはこれまで通り編集可能。task_type が未設定の場合は社内試運転として扱う）
+window._isOperationEditRestricted = function(task) {
+    if (!task || !window._isRestrictedOperationEditor()) return false;
+    const norm = typeof window._normalizeTaskTypeForDb === 'function' ? window._normalizeTaskTypeForDb : function(v) { return v; };
+    const isBT = task.is_business_trip === true
+        || String(task.is_business_trip).toUpperCase() === 'TRUE'
+        || norm(task.task_type) === 'business_trip';
+    if (isBT) return false;
+    return norm(task.task_type || 'operation') === 'operation';
+};
+
+// 制限ユーザーが、この列（担当=owner／メモ=notes）を編集してよいか
+window._isOperationCellAllowed = function(task, columnName) {
+    if (!window._isOperationEditRestricted(task)) return true;
+    return columnName === 'owner' || columnName === 'notes';
+};
+
 function _updateUIForAuth(isEditor) {
     _isEditor = isEditor;
     gantt.config.readonly = !isEditor;
