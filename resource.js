@@ -1096,9 +1096,12 @@ function _renderWishDateMarks() {
                     : null;
                 if (!newDate) return;
                 const dateStr = _toDateStr(newDate);
+                const beforeState = (typeof _lastKnownTaskState !== 'undefined' && _lastKnownTaskState[task.id])
+                    ? _lastKnownTaskState[task.id]
+                    : (typeof _cloneTaskSnapshot === 'function' ? _cloneTaskSnapshot(task) : null);
                 task.wish_date = dateStr;
                 el.title = label + ': ' + dateStr;
-                _saveWishDate(task.id, dateStr);
+                _saveWishDate(task.id, dateStr, beforeState);
                 requestAnimationFrame(_renderWishDateMarks);
             }
             document.addEventListener('mousemove', onMove);
