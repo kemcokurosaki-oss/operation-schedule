@@ -1395,7 +1395,9 @@ function updateFilterButtons() {
     const unitWrap = document.getElementById('unit_filter_wrap');
     if (unitWrap) unitWrap.style.display = isResourceFullscreen ? 'none' : '';
     const addBtn = document.getElementById('create_task_btn');
-    if (addBtn) addBtn.style.display = (isResourceFullscreen || !_isEditor) ? 'none' : '';
+    const _restrictedInOperation = window._isRestrictedOperationEditor && window._isRestrictedOperationEditor()
+        && currentTaskTypeFilter === 'operation';
+    if (addBtn) addBtn.style.display = (isResourceFullscreen || !_isEditor || _restrictedInOperation) ? 'none' : '';
 }
 
 // タスクバークリック時の編集（担当別モードでは無効）
