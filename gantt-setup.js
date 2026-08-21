@@ -703,7 +703,16 @@ function _applyGridSelection() {
 
 // 複数タスク一括削除
 async function deleteSelectedTasks() {
-    const ids = [..._gridSelection].map(id => Number(id));
+    const rawIds = [..._gridSelection].map(id => Number(id));
+    if (rawIds.length === 0) return;
+    const { allowed: ids, blockedCount } = _splitOperationRestrictedIds(rawIds);
+    if (blockedCount > 0) {
+        if (ids.length === 0) {
+            alert("社内試運転モードのタスクは削除できません。");
+            return;
+        }
+        alert(`社内試運転モードのタスク ${blockedCount} 件は削除できないため、対象から除外します。`);
+    }
     if (ids.length === 0) return;
     if (!confirm(`選択した ${ids.length} 件のタスクを削除しますか？`)) return;
 
