@@ -1005,6 +1005,7 @@ async function _finalizePendingNewTaskToDb(id) {
             status: item.status || "",
             customer_name: item.customer_name || "",
             project_details: item.project_details || "",
+            notes: item.notes || "",
             characteristic: item.characteristic || "",
             derivation: item.derivation || "",
             owner: item.owner || "",
