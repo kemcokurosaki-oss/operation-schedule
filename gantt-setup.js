@@ -680,7 +680,9 @@ function setZoom(level, btn) {
 function _updateMultiDeleteBtn() {
     const btn = document.getElementById('multi_delete_btn');
     const editBtn = document.getElementById('multi_edit_btn');
-    const count = _gridSelection.size;
+    const rawIds = [..._gridSelection].map(id => Number(id));
+    const { allowed } = _splitOperationRestrictedIds(rawIds);
+    const count = allowed.length;
     const show = _isEditor && count >= 1;
     if (btn) {
         const delCount = document.getElementById('multi_delete_count');
