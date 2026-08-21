@@ -1666,6 +1666,7 @@ gantt.locale.labels.section_customer_name    = "客先";
 gantt.locale.labels.section_project_details  = "工事名";
 gantt.locale.labels.section_wish_date_lb     = "出図希望日 / 手配期日";
 gantt.locale.labels.section_add_row_count    = "追加行数";
+gantt.locale.labels.section_notes            = "メモ";
 
 // showLightbox をオーバーライド：DHTMLX がDOMをビルドする前にセクションをリセット
 (function() {
