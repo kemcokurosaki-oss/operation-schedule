@@ -1450,13 +1450,11 @@ function _applyEntryForRedo(sub) {
 async function ganttUndo() {
     if (!_isEditor || !_undoStack.length) return;
     const entry = _undoStack.pop();
-    console.log('[Undo] popped entry:', JSON.parse(JSON.stringify(entry)));
     _updateUndoRedoButtons();
     try {
         const items = entry.type === 'batch' ? entry.items : [entry];
         for (const sub of items) {
             const { error } = await _applyEntryForUndo(sub);
-            console.log('[Undo] applied sub-entry', sub.type, sub.id, 'error=', error);
             if (error) {
                 console.error("元に戻す処理に失敗:", error);
                 alert("元に戻す処理に失敗しました。\n" + error.message);
