@@ -2163,6 +2163,7 @@ function _getDrawingColumns() {
           template: _fmtStartDateCell,
           editor: { type: "start_date_editor", map_to: "start_date" } },
         { name: "end_date",       label: "終了日",       width: 84, align: "center", template: _fmtDate, editor: { type: "completion_date", map_to: "end_date" } },
+        { name: "notes",          label: "メモ",         width: 100, align: "left",   editor: { type: "text", map_to: "notes" } },
         { name: "add_btn",        label: "",             width: 25, align: "center", template: (task) => _isEditor ? `<div class='custom_add_btn' onclick='createTask(${task.id})'>+</div>` : '' }
     ]);
 }
