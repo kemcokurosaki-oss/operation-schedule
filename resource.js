@@ -633,6 +633,11 @@ function _startResourceBarDrag(e, bar, taskId, mode) {
             if (newEnd <= origStart) newEnd = gantt.date.add(origStart, 1, 'day');
         }
 
+        // Undo用：ドラッグで書き換える前の状態をスナップショット（直近のDB確定値を基準にする）
+        const beforeState = (typeof _lastKnownTaskState !== 'undefined' && _lastKnownTaskState[taskId])
+            ? _lastKnownTaskState[taskId]
+            : (typeof _cloneTaskSnapshot === 'function' ? _cloneTaskSnapshot(task) : null);
+
         task.start_date = newStart;
         task.end_date = newEnd;
         task.duration = gantt.calculateDuration(newStart, newEnd);
@@ -641,7 +646,7 @@ function _startResourceBarDrag(e, bar, taskId, mode) {
         if (!isResourceFullscreen && typeof gantt.isTaskExists === 'function' && gantt.isTaskExists(taskId) && typeof gantt.refreshTask === 'function') {
             gantt.refreshTask(taskId);
         }
-        await _saveResourceBarDates(taskId, newStart, newEnd);
+        await _saveResourceBarDates(taskId, newStart, newEnd, beforeState);
         updateResourceData();
     }
 
@@ -649,7 +654,7 @@ function _startResourceBarDrag(e, bar, taskId, mode) {
     document.addEventListener('mouseup', onUp);
 }
 
-async function _saveResourceBarDates(taskId, startDate, endDate) {
+async function _saveResourceBarDates(taskId, startDate, endDate, beforeState) {
     const completionDate = gantt.date.add(new Date(endDate), -1, 'day');
     try {
         const { error } = await supabaseClient
@@ -660,7 +665,13 @@ async function _saveResourceBarDates(taskId, startDate, endDate) {
                 last_updated_by: (typeof window._getCurrentEditorName === 'function' ? window._getCurrentEditorName() : '') || ''
             })
             .eq('id', taskId);
-        if (error) console.error('リソースバー日付保存エラー:', error);
+        if (error) {
+            console.error('リソースバー日付保存エラー:', error);
+        } else if (beforeState && typeof _pushUndoEntry === 'function' && gantt.isTaskExists(taskId)) {
+            const afterState = _cloneTaskSnapshot(gantt.getTask(taskId));
+            _pushUndoEntry({ type: 'update', id: taskId, before: beforeState, after: afterState });
+            _rememberTaskState(taskId, gantt.getTask(taskId));
+        }
     } catch (e) {
         console.error('Exception in _saveResourceBarDates:', e);
     }
