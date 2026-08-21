@@ -1697,8 +1697,11 @@ async function initialize() {
         if (!_isEditor) return;
         const row = e.target.closest("[task_id]");
         if (!row) return;
+        const ctxRowTaskId = row.getAttribute("task_id");
+        const ctxRowTask = gantt.isTaskExists(ctxRowTaskId) ? gantt.getTask(ctxRowTaskId) : null;
+        if (window._isOperationEditRestricted && window._isOperationEditRestricted(ctxRowTask)) return;
         e.preventDefault();
-        _ctxTaskId = row.getAttribute("task_id");
+        _ctxTaskId = ctxRowTaskId;
         // 複数選択中は一括編集・一括削除が対象。コピーは1行専用のため複数選択中は選択不可（表示は維持）
         const isMultiEdit = _gridSelection.size > 1 && _gridSelection.has(String(_ctxTaskId));
         document.getElementById("gantt_ctx_edit_multi").style.display = isMultiEdit ? "" : "none";
