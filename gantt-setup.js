@@ -1203,6 +1203,7 @@ function createTask(afterTaskId) {
         status: "",
         customer_name: "",
         project_details: "",
+        notes: "",
         characteristic: "",
         derivation: "",
         owner: inheritOwner,
