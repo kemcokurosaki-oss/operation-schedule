@@ -626,7 +626,6 @@ async function deleteSelectedTasks() {
     const beforeStates = ids
         .map(id => ({ id: id, before: _lastKnownTaskState[id] || (gantt.isTaskExists(id) ? _cloneTaskSnapshot(gantt.getTask(id)) : null) }))
         .filter(x => x.before);
-    console.log('[Undo][bulkDelete] ids=', ids, 'beforeStates.length=', beforeStates.length);
 
     const { error } = await supabaseClient
         .from('tasks')
@@ -645,9 +644,6 @@ async function deleteSelectedTasks() {
             items: beforeStates.map(x => ({ type: 'delete', id: x.id, before: x.before }))
         });
         beforeStates.forEach(x => _forgetTaskState(x.id));
-        console.log('[Undo][bulkDelete] pushed batch. undoStack length=', _undoStack.length);
-    } else {
-        console.warn('[Undo][bulkDelete] beforeStates empty — no undo entry pushed');
     }
 
     await loadData();
