@@ -2278,7 +2278,7 @@ function _getPlanningColumns() {
     return _getDrawingColumns();
 }
 
-// 列幅ドラッグリサイズ（出張モード：ユニ・客先・工事名のみ）の保存/復元
+// 列幅ドラッグリサイズ（出張モード：ユニ・客先・工事名・メモ）の保存/復元
 function _loadTripColWidths() {
     try { return JSON.parse(localStorage.getItem('gantt_col_widths_trip_v1') || '{}'); }
     catch (e) { return {}; }
