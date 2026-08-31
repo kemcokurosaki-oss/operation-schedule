@@ -7,6 +7,7 @@ const HISTORY_SOURCE = '操業工程表';
 const HISTORY_MERGE_WINDOW_MS = 5000;
 
 const HISTORY_FIELDS = [
+    { key: 'task_type',        label: 'モード' },
     { key: 'text',             label: 'タスク名' },
     { key: 'project_number',   label: '工事番号' },
     { key: 'machine',          label: '機械' },
@@ -18,6 +19,8 @@ const HISTORY_FIELDS = [
     { key: 'notes',            label: 'メモ' },
     { key: 'is_business_trip', label: '出張予定' }
 ];
+
+const _TASK_TYPE_HISTORY_LABELS = { planning: '計画', operation: '社内試運転', business_trip: '出張' };
 
 // "<taskId>::<field>" -> { label, firstOldDisp, lastNewDisp, task, editor, timer }
 const _historyPending = new Map();
