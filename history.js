@@ -97,7 +97,7 @@ function _flushHistoryPending(key) {
     if (p.firstOldDisp === p.lastNewDisp) return; // 最終的に変化なしなら記録しない
     const oldTxt = p.firstOldDisp === '' ? '(未設定)' : p.firstOldDisp;
     const newTxt = p.lastNewDisp === '' ? '(未設定)' : p.lastNewDisp;
-    _insertHistoryRow(p.task, `${p.label}を変更：${oldTxt} → ${newTxt}`, p.editor);
+    _insertHistoryRow(p.task, _tagDescriptionWithMode(p.task, `${p.label}を変更：${oldTxt} → ${newTxt}`), p.editor);
 }
 
 function _queueHistoryChange(id, label, fieldKey, oldDisp, newDisp, task, editor) {
