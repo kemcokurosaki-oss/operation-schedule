@@ -51,10 +51,6 @@ function _escHtml(s) {
 }
 
 function _histDisp(key, v, task) {
-    if (key === 'task_type') {
-        const norm = (typeof _normalizeTaskTypeForDb === 'function') ? _normalizeTaskTypeForDb(v) : String(v || '');
-        return _TASK_TYPE_HISTORY_LABELS[norm] || (v == null ? '' : String(v).trim());
-    }
     if (key === 'end_date' && task && task.has_no_date) return '未定';
     if (key === 'start_date' || key === 'end_date') {
         if (v == null || v === '') return '';
