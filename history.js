@@ -103,8 +103,8 @@ function _logTaskHistoryOnUpdate(id, before, after) {
     if (!before || !after) return;
     const editor = _historyEditorName(after);
     HISTORY_FIELDS.forEach(function(f) {
-        const oldDisp = _histDisp(f.key, before[f.key]);
-        const newDisp = _histDisp(f.key, after[f.key]);
+        const oldDisp = _histDisp(f.key, before[f.key], before);
+        const newDisp = _histDisp(f.key, after[f.key], after);
         if (oldDisp === newDisp) return;
         _queueHistoryChange(id, f.label, f.key, oldDisp, newDisp, after, editor);
     });
