@@ -1548,6 +1548,8 @@ function _pushUndoEntry(entry) {
     if (_undoStack.length > _UNDO_STACK_LIMIT) _undoStack.shift();
     _redoStack = []; // 新しい操作が入ったらやり直し履歴は破棄
     _updateUndoRedoButtons();
+    // 変更履歴（history.js）へ記録。Undo/Redoによる巻き戻し自体は対象外
+    if (typeof _recordTaskHistory === 'function') _recordTaskHistory(entry);
 }
 
 // entry.type: 'update'（編集・ドラッグ）/ 'delete'（削除）/ 'add'（新規追加）の単発、
