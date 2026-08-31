@@ -15,6 +15,7 @@ const HISTORY_FIELDS = [
     { key: 'status',           label: '進捗' },
     { key: 'start_date',       label: '開始日' },
     { key: 'end_date',         label: '終了日' },
+    { key: 'notes',            label: 'メモ' },
     { key: 'is_business_trip', label: '出張予定' }
 ];
 
