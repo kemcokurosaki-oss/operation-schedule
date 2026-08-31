@@ -273,20 +273,20 @@ function _getFilteredHistoryRows() {
 function _renderHistoryLog() {
     const wrap = document.getElementById('history_log_wrap');
     wrap.innerHTML = `
-        <div style="position:sticky;top:0;z-index:5;background:#fff;padding:0 0 8px;">
-            <div style="display:flex;gap:8px;align-items:center;margin-bottom:6px;">
-                <label style="font-size:12px;color:#555;white-space:nowrap;">キーワード</label>
-                <input type="text" value="${_escHtml(_historyLogFilter.keyword || '')}" placeholder="工事番号・機械・タスク名・変更内容・変更者..." oninput="setHistoryFilterKeyword(this.value)" style="flex:1;min-width:220px;padding:4px 8px;border:1px solid #ccc;border-radius:4px;font-size:12px;">
+        <div style="position:sticky;top:0;z-index:5;background:#fff;padding:8px 4px 14px;">
+            <div style="display:flex;gap:10px;align-items:center;margin-bottom:10px;">
+                <label style="font-size:13px;color:#555;white-space:nowrap;">キーワード</label>
+                <input type="text" value="${_escHtml(_historyLogFilter.keyword || '')}" placeholder="工事番号・機械・タスク名・変更内容・変更者..." oninput="setHistoryFilterKeyword(this.value)" style="flex:1;min-width:220px;padding:7px 10px;border:1px solid #ccc;border-radius:4px;font-size:13px;">
             </div>
-            <div style="display:flex;gap:6px;align-items:center;flex-wrap:wrap;">
-                <label style="font-size:12px;color:#555;">期間</label>
-                <input type="date" value="${_escHtml(_historyLogFilter.dateFrom || '')}" onchange="setHistoryFilterDateFrom(this.value)" style="padding:3px 6px;border:1px solid #ccc;border-radius:4px;font-size:12px;">
-                <span style="font-size:12px;color:#666;">〜</span>
-                <input type="date" value="${_escHtml(_historyLogFilter.dateTo || '')}" onchange="setHistoryFilterDateTo(this.value)" style="padding:3px 6px;border:1px solid #ccc;border-radius:4px;font-size:12px;">
-                <button class="btn" style="font-size:11px;padding:2px 8px;${_historyLogFilter.preset === 'thisWeek' ? 'background:#1565c0;color:#fff;' : ''}" onclick="setHistoryFilterPreset('thisWeek')">今週</button>
-                <button class="btn" style="font-size:11px;padding:2px 8px;${_historyLogFilter.preset === 'lastWeek' ? 'background:#1565c0;color:#fff;' : ''}" onclick="setHistoryFilterPreset('lastWeek')">先週</button>
-                <button class="btn" style="font-size:11px;padding:2px 8px;" onclick="clearHistoryFilter()">クリア</button>
-                <span id="history_log_count" style="margin-left:auto;font-size:12px;color:#666;white-space:nowrap;"></span>
+            <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap;">
+                <label style="font-size:13px;color:#555;">期間</label>
+                <input type="date" value="${_escHtml(_historyLogFilter.dateFrom || '')}" onchange="setHistoryFilterDateFrom(this.value)" style="padding:6px 8px;border:1px solid #ccc;border-radius:4px;font-size:13px;">
+                <span style="font-size:13px;color:#666;">〜</span>
+                <input type="date" value="${_escHtml(_historyLogFilter.dateTo || '')}" onchange="setHistoryFilterDateTo(this.value)" style="padding:6px 8px;border:1px solid #ccc;border-radius:4px;font-size:13px;">
+                <button class="btn" style="font-size:12px;padding:4px 10px;${_historyLogFilter.preset === 'thisWeek' ? 'background:#1565c0;color:#fff;' : ''}" onclick="setHistoryFilterPreset('thisWeek')">今週</button>
+                <button class="btn" style="font-size:12px;padding:4px 10px;${_historyLogFilter.preset === 'lastWeek' ? 'background:#1565c0;color:#fff;' : ''}" onclick="setHistoryFilterPreset('lastWeek')">先週</button>
+                <button class="btn" style="font-size:12px;padding:4px 10px;" onclick="clearHistoryFilter()">クリア</button>
+                <span id="history_log_count" style="margin-left:auto;font-size:13px;color:#666;white-space:nowrap;"></span>
             </div>
         </div>
         <div id="history_log_table"></div>`;
