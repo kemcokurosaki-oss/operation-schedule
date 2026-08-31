@@ -7,7 +7,6 @@ const HISTORY_SOURCE = '操業工程表';
 const HISTORY_MERGE_WINDOW_MS = 5000;
 
 const HISTORY_FIELDS = [
-    { key: 'task_type',        label: 'モード' },
     { key: 'text',             label: 'タスク名' },
     { key: 'project_number',   label: '工事番号' },
     { key: 'machine',          label: '機械' },
@@ -21,6 +20,26 @@ const HISTORY_FIELDS = [
 ];
 
 const _TASK_TYPE_HISTORY_LABELS = { planning: '計画', operation: '社内試運転', business_trip: '出張' };
+
+// change_log に「タブ」列が無いため、description の先頭に [タブ名] を埋め込んで記録し、
+// 一覧表示側（_renderHistoryTable）で切り出して専用列に表示する
+function _taskModeLabel(task) {
+    if (!task) return '';
+    const isBT = task.is_business_trip === true || String(task.is_business_trip).toUpperCase() === 'TRUE';
+    if (isBT) return '出張';
+    const norm = (typeof _normalizeTaskTypeForDb === 'function') ? _normalizeTaskTypeForDb(task.task_type) : String(task.task_type || '');
+    return _TASK_TYPE_HISTORY_LABELS[norm] || '社内試運転';
+}
+
+function _tagDescriptionWithMode(task, description) {
+    return `[${_taskModeLabel(task)}] ${description}`;
+}
+
+const HISTORY_MODE_TAG_RE = /^\[(.+?)\]\s*/;
+function _splitHistoryModeTag(description) {
+    const m = HISTORY_MODE_TAG_RE.exec(description || '');
+    return m ? { mode: m[1], rest: (description || '').slice(m[0].length) } : { mode: '', rest: description || '' };
+}
 
 // "<taskId>::<field>" -> { label, firstOldDisp, lastNewDisp, task, editor, timer }
 const _historyPending = new Map();
