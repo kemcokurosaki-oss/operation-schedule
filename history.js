@@ -331,17 +331,19 @@ function _renderHistoryTable() {
     const td = 'font-size:13px;';
     let html = `<table>
         <thead><tr>
-            <th style="${th}">更新日時</th><th style="${th}">工事番号</th><th style="${th}">機械</th><th style="${th}">ユニット</th><th style="${th}">タスク名</th><th style="${th}">変更内容</th><th style="${th}">変更者</th>
+            <th style="${th}">更新日時</th><th style="${th}">タブ</th><th style="${th}">工事番号</th><th style="${th}">機械</th><th style="${th}">ユニット</th><th style="${th}">タスク名</th><th style="${th}">変更内容</th><th style="${th}">変更者</th>
         </tr></thead>
         <tbody>`;
     rows.forEach(function(r) {
+        const { mode, rest } = _splitHistoryModeTag(r.description);
         html += `<tr>
             <td style="${td}">${_escHtml(fmtDt(r.changed_at))}</td>
+            <td style="${td}">${_escHtml(mode)}</td>
             <td style="${td}">${_escHtml(r.project_number)}</td>
             <td style="${td}">${_escHtml(r.machine)}</td>
             <td style="${td}">${_escHtml(r.unit)}</td>
             <td style="white-space:normal;${td}">${_escHtml(r.task_text)}</td>
-            <td style="white-space:normal;${td}">${_escHtml(r.description)}</td>
+            <td style="white-space:normal;${td}">${_escHtml(rest)}</td>
             <td style="${td}">${_escHtml(r.changed_by)}</td>
         </tr>`;
     });
