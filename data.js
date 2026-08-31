@@ -1941,11 +1941,14 @@ async function initialize() {
             };
         });
 
-        const { error } = await supabaseClient.from('tasks').insert(insertRows);
+        const { data: pastedRows, error } = await supabaseClient.from('tasks').insert(insertRows).select();
         if (error) {
             console.error("Error pasting tasks:", error);
             alert("貼り付けに失敗しました。\n" + error.message);
             return;
+        }
+        if (pastedRows && typeof _logTaskHistoryOnAdd === 'function') {
+            pastedRows.forEach(row => _logTaskHistoryOnAdd(row));
         }
 
         await loadData();
