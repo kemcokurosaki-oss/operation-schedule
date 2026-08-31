@@ -135,12 +135,12 @@ function _logTaskHistoryOnUpdate(id, before, after) {
 
 function _logTaskHistoryOnAdd(task) {
     if (!task) return;
-    _insertHistoryRow(task, 'タスクを追加しました', _historyEditorName(task));
+    _insertHistoryRow(task, _tagDescriptionWithMode(task, 'タスクを追加しました'), _historyEditorName(task));
 }
 
 function _logTaskHistoryOnDelete(task) {
     if (!task) return;
-    _insertHistoryRow(task, 'タスクを削除しました', _historyEditorName(task));
+    _insertHistoryRow(task, _tagDescriptionWithMode(task, 'タスクを削除しました'), _historyEditorName(task));
 }
 
 // _pushUndoEntry（gantt-setup.js）から呼び出される共通フック
