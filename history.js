@@ -27,7 +27,8 @@ function _escHtml(s) {
     });
 }
 
-function _histDisp(key, v) {
+function _histDisp(key, v, task) {
+    if (key === 'end_date' && task && task.has_no_date) return '未定';
     if (key === 'start_date' || key === 'end_date') {
         if (v == null || v === '') return '';
         const d = (v instanceof Date) ? v : new Date(v);
