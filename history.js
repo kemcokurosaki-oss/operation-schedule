@@ -312,20 +312,22 @@ function _renderHistoryTable() {
             String(d.getHours()).padStart(2, '0') + ':' + String(d.getMinutes()).padStart(2, '0');
     };
 
+    const th = 'font-size:13px;';
+    const td = 'font-size:13px;';
     let html = `<table>
         <thead><tr>
-            <th>更新日時</th><th>工事番号</th><th>機械</th><th>ユニット</th><th>タスク名</th><th>変更内容</th><th>変更者</th>
+            <th style="${th}">更新日時</th><th style="${th}">工事番号</th><th style="${th}">機械</th><th style="${th}">ユニット</th><th style="${th}">タスク名</th><th style="${th}">変更内容</th><th style="${th}">変更者</th>
         </tr></thead>
         <tbody>`;
     rows.forEach(function(r) {
         html += `<tr>
-            <td>${_escHtml(fmtDt(r.changed_at))}</td>
-            <td>${_escHtml(r.project_number)}</td>
-            <td>${_escHtml(r.machine)}</td>
-            <td>${_escHtml(r.unit)}</td>
-            <td style="white-space:normal;">${_escHtml(r.task_text)}</td>
-            <td style="white-space:normal;">${_escHtml(r.description)}</td>
-            <td>${_escHtml(r.changed_by)}</td>
+            <td style="${td}">${_escHtml(fmtDt(r.changed_at))}</td>
+            <td style="${td}">${_escHtml(r.project_number)}</td>
+            <td style="${td}">${_escHtml(r.machine)}</td>
+            <td style="${td}">${_escHtml(r.unit)}</td>
+            <td style="white-space:normal;${td}">${_escHtml(r.task_text)}</td>
+            <td style="white-space:normal;${td}">${_escHtml(r.description)}</td>
+            <td style="${td}">${_escHtml(r.changed_by)}</td>
         </tr>`;
     });
     html += '</tbody></table>';
