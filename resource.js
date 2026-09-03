@@ -321,6 +321,27 @@ function updateResourceData() {
     }
 }
 
+// 期間が重なるタスクを別レーン（段）に振り分ける（区間スケジューリングのgreedy割り当て）。
+// end_date は gantt 内部で排他的終了日のため、あるレーンの終了時刻 <= 次のタスクの開始時刻なら同じレーンに詰められる。
+function _assignResourceLanes(tasks) {
+    const sorted = tasks.slice().sort((a, b) => new Date(a.start_date) - new Date(b.start_date));
+    const laneEndTimes = [];
+    const laneOf = new Map();
+    sorted.forEach(t => {
+        const start = new Date(t.start_date).getTime();
+        const end = new Date(t.end_date).getTime();
+        let lane = laneEndTimes.findIndex(endTime => endTime <= start);
+        if (lane === -1) {
+            lane = laneEndTimes.length;
+            laneEndTimes.push(end);
+        } else {
+            laneEndTimes[lane] = end;
+        }
+        laneOf.set(t.id, lane);
+    });
+    return { laneOf, laneCount: Math.max(1, laneEndTimes.length) };
+}
+
 function renderResourceTimeline(owners) {
     const container = document.getElementById("resource_content_inner");
     if (!container) return;
@@ -388,6 +409,13 @@ function renderResourceTimeline(owners) {
             const isFirstRow = rowIndex === 0;
             const isLastRow  = rowIndex === TASK_TYPE_ROWS.length - 1;
 
+            // タスクの期間が重なる場合は段（レーン）を分けて表示する
+            const ROW_LANE_HEIGHT = 30;
+            const { laneOf, laneCount } = _assignResourceLanes(rowTasks);
+            const rowHeight = laneCount * ROW_LANE_HEIGHT;
+            const leftAlign = laneCount > 1 ? 'flex-start' : 'center';
+            const leftPaddingTop = laneCount > 1 ? '4px' : '0';
+
             // 担当者の区切り線（先頭行の上に太線）
             const borderTop    = isFirstRow ? 'border-top: 2px solid #aaa;' : '';
             const borderBottom = isLastRow  ? 'border-bottom: 2px solid #aaa;' : 'border-bottom: 1px solid #eee;';
@@ -396,21 +424,21 @@ function renderResourceTimeline(owners) {
             const typeClr = TASK_TYPE_COLORS[rowDef.type] || { bg: '#e0e0e0', color: '#555' };
             const leftCellContent = isFirstRow
                 ? (isResourceFullscreen
-                    ? `<div style="width:100%;display:flex;align-items:center;justify-content:space-between;padding:0 5px;box-sizing:border-box;">
+                    ? `<div style="width:100%;display:flex;align-items:${leftAlign};justify-content:space-between;padding:${leftPaddingTop} 5px 0;box-sizing:border-box;">
                            <div class="resource-owner-link" onclick="showOwnerDetail('${ownerName}')" title="クリックして詳細表示" style="font-weight:bold;font-size:12px;color:#333;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;flex:1;">${ownerName}</div>
                            <div style="font-size:10px;color:${typeClr.color};background:${typeClr.bg};border-radius:2px;padding:1px 4px;margin-left:3px;white-space:nowrap;font-weight:bold;">${rowDef.label}</div>
                        </div>`
-                    : `<div style="width:100%;display:flex;align-items:center;justify-content:flex-end;padding:0 8px 0 5px;box-sizing:border-box;gap:10px;">
+                    : `<div style="width:100%;display:flex;align-items:${leftAlign};justify-content:flex-end;padding:${leftPaddingTop} 8px 0 5px;box-sizing:border-box;gap:10px;">
                            <div class="resource-owner-link" onclick="showOwnerDetail('${ownerName}')" title="クリックして詳細表示" style="font-weight:bold;font-size:12px;color:#333;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;flex:0 0 110px;width:110px;text-align:left;padding:1px 2px;">${ownerName}</div>
                            <div style="font-size:10px;color:${typeClr.color};background:${typeClr.bg};border-radius:2px;padding:1px 4px;white-space:nowrap;font-weight:bold;flex-shrink:0;">${rowDef.label}</div>
                        </div>`)
-                : `<div style="width:100%;display:flex;align-items:center;justify-content:flex-end;padding-right:5px;">
+                : `<div style="width:100%;display:flex;align-items:${leftAlign};justify-content:flex-end;padding-top:${leftPaddingTop};padding-right:5px;">
                        <div style="font-size:10px;color:${typeClr.color};background:${typeClr.bg};border-radius:2px;padding:1px 4px;white-space:nowrap;font-weight:bold;">${rowDef.label}</div>
                    </div>`;
 
             html += `
-                <div class="resource-item" style="display:flex;${borderTop}${borderBottom}min-height:30px;height:30px;align-items:stretch;width:${totalWidth}px;">
-                    <div class="resource-grid-container" style="width:${actualGridWidth}px;min-width:${actualGridWidth}px;flex-shrink:0;display:flex;border-right:1px solid #ddd;background:${isFirstRow ? '#efefef' : '#f9f9f9'};position:sticky;left:0;z-index:5;">
+                <div class="resource-item" style="display:flex;${borderTop}${borderBottom}min-height:${rowHeight}px;height:${rowHeight}px;align-items:stretch;width:${totalWidth}px;">
+                    <div class="resource-grid-container" style="width:${actualGridWidth}px;min-width:${actualGridWidth}px;flex-shrink:0;display:flex;border-right:1px solid #ddd;background:${isFirstRow ? `linear-gradient(to bottom, #efefef ${ROW_LANE_HEIGHT}px, #f9f9f9 ${ROW_LANE_HEIGHT}px)` : '#f9f9f9'};position:sticky;left:0;z-index:5;">
                         ${leftCellContent}
                     </div>
                     <div class="resource-timeline" style="width:${timelineWidth}px;flex-shrink:0;position:relative;background:#fff;">
@@ -423,9 +451,10 @@ function renderResourceTimeline(owners) {
                 const left  = gantt.posFromDate(t.start_date);
                 const right = gantt.posFromDate(t.end_date);
                 const width = Math.max(2, right - left);
+                const top = laneOf.get(t.id) * ROW_LANE_HEIGHT + 4;
                 html += `
                     <div class="resource-cell-bar ${colorClass}" data-task-id="${t.id}"
-                         style="position:absolute;top:4px;height:22px;left:${left}px;width:${width}px;z-index:10;"
+                         style="position:absolute;top:${top}px;height:22px;left:${left}px;width:${width}px;z-index:10;"
                          title="${t.text} (${t.project_number})">
                          <div class="resource-bar-handle resource-bar-handle-left" data-role="resize-left"></div>
                          <span class="resource-bar-text" style="color:${textColor};font-size:11px;font-weight:bold;">${[t.project_number, t.machine, t.text].filter(Boolean).join(" ")}</span>
