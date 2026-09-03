@@ -296,10 +296,10 @@ function _passesDrawingModeFilter(task) {
     // planning・long_lead_item は他モード専用タスクなので試運転モードでは非表示
     const tt = String(task.task_type || '').trim().toLowerCase();
     if (tt === 'planning' || tt === 'long_lead_item') return false;
-    if (_isOperationMajorItem(task.major_item)) return true;
-    // task_type === 'operation' のタスクは操業工程表専用タイプとして表示
+    // task_type === 'operation' は操業工程表自身で作成した専用タスクなので、タスク名を問わず表示する
     if (tt === 'operation') return true;
-    // major_item 未設定などで「操業」が付いていない試運転行も表示（後方互換）
+    // 全体工程表からの連携タスクは「部署＝操業」かつ「タスク名（型式・機種含む）に試運転キーワードを含む」の両方を満たす場合のみ表示する
+    if (!_isOperationMajorItem(task.major_item)) return false;
     if (!_passesDrawingModeTaskTypeForTrialName(task)) return false;
     return _textContainsTrialRunKeyword(_trialKeywordBlob(task));
 }
