@@ -90,14 +90,19 @@ async function _insertHistoryRow(task, description, editor) {
     }
 }
 
-function _flushHistoryPending(key) {
+// Undo/Redo経由の変更は、変更内容の末尾に「（元に戻す）」「（やり直し）」を付けて通常編集と区別する
+function _historySuffix(tag) {
+    return tag ? `（${tag}）` : '';
+}
+
+async function _flushHistoryPending(key) {
     const p = _historyPending.get(key);
     if (!p) return;
     _historyPending.delete(key);
     if (p.firstOldDisp === p.lastNewDisp) return; // 最終的に変化なしなら記録しない
     const oldTxt = p.firstOldDisp === '' ? '(未設定)' : p.firstOldDisp;
     const newTxt = p.lastNewDisp === '' ? '(未設定)' : p.lastNewDisp;
-    _insertHistoryRow(p.task, _tagDescriptionWithMode(p.task, `${p.label}を変更：${oldTxt} → ${newTxt}`), p.editor);
+    await _insertHistoryRow(p.task, _tagDescriptionWithMode(p.task, `${p.label}を変更：${oldTxt} → ${newTxt}`), p.editor);
 }
 
 function _queueHistoryChange(id, label, fieldKey, oldDisp, newDisp, task, editor) {
@@ -122,9 +127,39 @@ function _queueHistoryChange(id, label, fieldKey, oldDisp, newDisp, task, editor
     }
 }
 
-function _logTaskHistoryOnUpdate(id, before, after) {
+// 対象タスクの保留中（マージ待ち）の通常編集があれば、今すぐ確定させて記録する。
+// Undo/Redo の記録より先に await で待つことで、DB上の記録順序（changed_at）が
+// 実際の操作順（先に確定した通常編集 → 後のUndo/Redo）と入れ替わるのを防ぐ。
+async function _flushPendingForTask(id) {
+    for (const f of HISTORY_FIELDS) {
+        const key = String(id) + '::' + f.key;
+        const p = _historyPending.get(key);
+        if (!p) continue;
+        clearTimeout(p.timer);
+        await _flushHistoryPending(key);
+    }
+}
+
+async function _logTaskHistoryOnUpdate(id, before, after, tag) {
     if (!before || !after) return;
     const editor = _historyEditorName(after);
+    if (tag) {
+        // Undo/Redo は「ボタン一発」の単発操作。マージ待ちすると、直前の通常編集と
+        // 差し引きゼロに見えて記録が消えてしまうことがあるため、待たずに即時記録する。
+        await _flushPendingForTask(id);
+        const changes = [];
+        HISTORY_FIELDS.forEach(function(f) {
+            const oldDisp = _histDisp(f.key, before[f.key], before);
+            const newDisp = _histDisp(f.key, after[f.key], after);
+            if (oldDisp === newDisp) return;
+            const oldTxt = oldDisp === '' ? '(未設定)' : oldDisp;
+            const newTxt = newDisp === '' ? '(未設定)' : newDisp;
+            changes.push(`${f.label}を変更：${oldTxt} → ${newTxt}`);
+        });
+        if (changes.length === 0) return;
+        await _insertHistoryRow(after, _tagDescriptionWithMode(after, changes.join('／') + _historySuffix(tag)), editor);
+        return;
+    }
     HISTORY_FIELDS.forEach(function(f) {
         const oldDisp = _histDisp(f.key, before[f.key], before);
         const newDisp = _histDisp(f.key, after[f.key], after);
@@ -133,29 +168,47 @@ function _logTaskHistoryOnUpdate(id, before, after) {
     });
 }
 
-function _logTaskHistoryOnAdd(task) {
+async function _logTaskHistoryOnAdd(task, tag) {
     if (!task) return;
-    _insertHistoryRow(task, _tagDescriptionWithMode(task, 'タスクを追加しました'), _historyEditorName(task));
+    if (tag) await _flushPendingForTask(task.id);
+    await _insertHistoryRow(task, _tagDescriptionWithMode(task, 'タスクを追加しました' + _historySuffix(tag)), _historyEditorName(task));
 }
 
-function _logTaskHistoryOnDelete(task) {
+async function _logTaskHistoryOnDelete(task, tag) {
     if (!task) return;
-    _insertHistoryRow(task, _tagDescriptionWithMode(task, 'タスクを削除しました'), _historyEditorName(task));
+    if (tag) await _flushPendingForTask(task.id);
+    await _insertHistoryRow(task, _tagDescriptionWithMode(task, 'タスクを削除しました' + _historySuffix(tag)), _historyEditorName(task));
 }
 
-// _pushUndoEntry（gantt-setup.js）から呼び出される共通フック
-function _recordTaskHistory(entry) {
+// _pushUndoEntry（gantt-setup.js）から呼び出される共通フック。
+// tag を渡すと Undo/Redo による変更であることを履歴に付記する（通常編集時は未指定）。
+// batch内の複数項目は for...of + await で直列実行し、記録順序を操作順と一致させる。
+async function _recordTaskHistory(entry, tag) {
     try {
         const items = (entry && entry.type === 'batch') ? entry.items : [entry];
-        items.forEach(function(sub) {
-            if (!sub) return;
-            if (sub.type === 'update') _logTaskHistoryOnUpdate(sub.id, sub.before, sub.after);
-            else if (sub.type === 'delete') _logTaskHistoryOnDelete(sub.before);
-            else if (sub.type === 'add') _logTaskHistoryOnAdd(sub.after);
-        });
+        for (const sub of items) {
+            if (!sub) continue;
+            if (sub.type === 'update') await _logTaskHistoryOnUpdate(sub.id, sub.before, sub.after, tag);
+            else if (sub.type === 'delete') await _logTaskHistoryOnDelete(sub.before, tag);
+            else if (sub.type === 'add') await _logTaskHistoryOnAdd(sub.after, tag);
+        }
     } catch (e) {
         console.warn('変更履歴の記録エラー:', e);
     }
+}
+
+// Undo は DB を「before」状態へ戻す操作なので、変化の向きを反転させてから履歴に渡す
+// （update: before/afterを入替、delete: 復元＝追加として記録、add: 取消＝削除として記録）
+function _invertEntryForHistory(entry) {
+    function invertSub(sub) {
+        if (!sub) return sub;
+        if (sub.type === 'update') return { type: 'update', id: sub.id, before: sub.after, after: sub.before };
+        if (sub.type === 'delete') return { type: 'add', id: sub.id, after: sub.before };
+        if (sub.type === 'add') return { type: 'delete', id: sub.id, before: sub.after };
+        return sub;
+    }
+    if (entry && entry.type === 'batch') return { type: 'batch', items: entry.items.map(invertSub) };
+    return invertSub(entry);
 }
 
 // タブを離れる・閉じる直前に保留中の履歴をできる限り書き込む

@@ -1584,6 +1584,10 @@ async function ganttUndo() {
         }
         _redoStack.push(entry);
         if (_redoStack.length > _UNDO_STACK_LIMIT) _redoStack.shift();
+        if (typeof _recordTaskHistory === 'function') {
+            const historyEntry = typeof _invertEntryForHistory === 'function' ? _invertEntryForHistory(entry) : entry;
+            await _recordTaskHistory(historyEntry, '元に戻す');
+        }
         await loadData();
     } catch (e) {
         console.error("Exception in ganttUndo:", e);
@@ -1610,6 +1614,7 @@ async function ganttRedo() {
         }
         _undoStack.push(entry);
         if (_undoStack.length > _UNDO_STACK_LIMIT) _undoStack.shift();
+        if (typeof _recordTaskHistory === 'function') await _recordTaskHistory(entry, 'やり直し');
         await loadData();
     } catch (e) {
         console.error("Exception in ganttRedo:", e);
