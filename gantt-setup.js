@@ -2252,7 +2252,7 @@ function _isCompletedForDisplay(task) {
     return false;
 }
 
-// 列幅ドラッグリサイズ（計画・社内試運転モード：ユニ・タスク・メモ）の保存/復元
+// 列幅ドラッグリサイズ（計画・社内試運転モード：ユニ・タスク・担当・メモ）の保存/復元
 function _loadDrawingColWidths() {
     try { return JSON.parse(localStorage.getItem('gantt_col_widths_drawing_v1') || '{}'); }
     catch (e) { return {}; }
@@ -2266,7 +2266,7 @@ function _saveDrawingColWidth(name, width) {
 }
 function _applyStoredDrawingWidths(cols) {
     const stored = _loadDrawingColWidths();
-    ['unit', 'text', 'notes'].forEach((name) => {
+    ['unit', 'text', 'owner', 'notes'].forEach((name) => {
         const w = stored[name];
         if (!w) return;
         const col = cols.find((c) => c.name === name);
@@ -2402,11 +2402,12 @@ function switchColumns(filterType) {
     gantt.render();
 }
 
-// ===== 列幅ドラッグリサイズ（計画・社内試運転：ユニ・タスク・メモ／出張：ユニ・客先・工事名・メモ） =====
+// ===== 列幅ドラッグリサイズ（計画・社内試運転：ユニ・タスク・担当・メモ／出張：ユニ・客先・工事名・メモ） =====
 (function() {
     const DRAWING_RESIZABLE = [
         { name: "unit", minW: 60 },
         { name: "text", minW: 150 },
+        { name: "owner", minW: 40 },
         { name: "notes", minW: 60 }
     ];
     const TRIP_RESIZABLE = [
