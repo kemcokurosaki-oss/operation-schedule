@@ -619,6 +619,14 @@ html, body { margin: 0; padding: 0; height: 100%; overflow: hidden; font-family:
 .gantt_row.gantt-row-completed:hover {
     background-color: #e0e0e0 !important;
 }
+/* 開始日が終了日より後になっている行の警告表示 */
+.gantt_row.gantt-row-date-error,
+.gantt_row.odd.gantt-row-date-error {
+    background-color: #ffcdd2 !important;
+}
+.gantt_row.gantt-row-date-error:hover {
+    background-color: #ef9a9a !important;
+}
 /* 試運転モード：進捗列（テキスト表示。編集はセルクリックでインラインエディタ） */
 .op-progress-cell {
     width: 100%;
