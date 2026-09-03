@@ -555,8 +555,8 @@ function _getColsSum(cols) {
 }
 
 // ===== 列の表示/非表示（Excel風：列ヘッダー選択→右クリックで非表示） =====
-// ツリー列（タスク名）と＋追加ボタン列は列構造上、非表示にできない
-const _COLUMN_HIDE_EXCLUDE = new Set(["text", "add_btn"]);
+// ＋追加ボタン列は列構造上、非表示にできない
+const _COLUMN_HIDE_EXCLUDE = new Set(["add_btn"]);
 const _HIDDEN_COLUMNS_STORAGE_KEY = 'gantt_hidden_columns_v1';
 
 function _loadHiddenColumnsMap() {
