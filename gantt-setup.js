@@ -2229,6 +2229,17 @@ function _operationProgressTemplate(obj) {
     return `<div class="op-progress-cell ${cellClass}"${style}><span class="op-progress-label">${label}</span></div>`;
 }
 
+// 計画・社内試運転・出張モードで、開始日が終了日より後になっているタスクを警告表示する対象にする
+const _DATE_ERROR_MODES = new Set(['planning', 'operation', 'business_trip']);
+function _hasInvalidDateRange(task) {
+    if (!_DATE_ERROR_MODES.has(currentTaskTypeFilter)) return false;
+    if (task.has_no_date || !task.start_date || !task.end_date) return false;
+    const s = new Date(task.start_date);
+    const e = new Date(task.end_date);
+    if (Number.isNaN(s.getTime()) || Number.isNaN(e.getTime())) return false;
+    return s.getTime() > e.getTime();
+}
+
 function _isCompletedForDisplay(task) {
     const raw = String(task.task_type || "");
     if (raw === "long_lead_item") {
@@ -2709,6 +2720,7 @@ gantt.templates.timeline_cell_class = function(task, date) {
 };
 
 gantt.templates.grid_row_class = function(start, end, task) {
+    if (_hasInvalidDateRange(task)) return "gantt-row-date-error";
     return _isCompletedForDisplay(task) ? "gantt-row-completed" : "";
 };
 // スケールヘッダーの土日・社内休日セルにクラスを付与（描画時に適用されるためスクロールで崩れない）
