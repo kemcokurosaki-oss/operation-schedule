@@ -2235,7 +2235,8 @@ function _hasInvalidDateRange(task) {
     if (!_DATE_ERROR_MODES.has(currentTaskTypeFilter)) return false;
     if (task.has_no_date || !task.start_date || !task.end_date) return false;
     const s = new Date(task.start_date);
-    const e = new Date(task.end_date);
+    // gantt内部のend_dateは排他的終了日（実際の完了日+1日）なので-1日して比較する
+    const e = gantt.date.add(new Date(task.end_date), -1, 'day');
     if (Number.isNaN(s.getTime()) || Number.isNaN(e.getTime())) return false;
     return s.getTime() > e.getTime();
 }
