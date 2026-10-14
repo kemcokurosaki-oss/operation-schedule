@@ -1,6 +1,36 @@
 // Gantt 基本構成
 gantt.config.date_format = "%Y-%m-%d";
 
+// DB の値を HTML に埋め込むときは必ずこれを通す（書き込まれた文字列がタグやスクリプトとして動かないようにする）
+function _escapeGridText(v) {
+    return String(v == null ? '' : v).replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+}
+
+// 表示方法（template）のない列は、ガントのライブラリが DB の値をそのまま HTML として描画する。
+// 列を設定した時点で、無害化して表示する template を補う（$autoEscape の付いたものはフィルター比較では使わない）
+(function () {
+    const RAW_COLUMNS = ['start_date', 'end_date', 'duration', 'add'];
+    const fill = (cols) => {
+        (cols || []).forEach(col => {
+            if (!col || col.template || RAW_COLUMNS.includes(col.name)) return;
+            col.template = (task) => _escapeGridText(task[col.name]);
+            col.template.$autoEscape = true;
+        });
+        return cols;
+    };
+    let current = fill(gantt.config.columns);
+    try {
+        Object.defineProperty(gantt.config, 'columns', {
+            configurable: true,
+            enumerable: true,
+            get: () => current,
+            set: (v) => { current = fill(v); },
+        });
+    } catch (e) {
+        console.warn('列の無害化設定に失敗しました', e);
+    }
+})();
+
 // 開始日/終了日インライン編集中に、編集していない側の日付が連動して変わらないようにするための一時退避
 var _dateEditField = null;    // 'start' | 'end' | null
 var _dateEditOriginal = null; // { id, start_date, end_date }
@@ -2707,7 +2737,7 @@ gantt.templates.task_text = function(start, end, task) {
     const colorClass = getOwnerColorClass(task.owner);
     const textColor = (["owner-hongo", "owner-default"].includes(colorClass)) ? "#222" : "#fff";
     const label = [task.project_number, task.machine, task.text].filter(Boolean).join(" ");
-    return `<span style="color:${textColor};">${label}</span>`;
+    return `<span style="color:${textColor};">${_escapeGridText(label)}</span>`;
 };
 
 gantt.templates.task_class = function(start, end, task) {
